@@ -12,7 +12,6 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV production
 ENV SENTRY_ENVIRONMENT production
-ENV DOMAIN stats.filspark.com
 ENV REQUEST_LOGGING false
 
 #######################################################################
