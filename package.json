@@ -1,0 +1,22 @@
+{
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node bin/spark-stats.js",
+    "test": "standard && mocha"
+  },
+  "devDependencies": {
+    "mocha": "^10.2.0",
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "@sentry/node": "^7.93.0",
+    "debug": "^4.3.4",
+    "pg": "^8.11.3"
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ]
+  }
+}
