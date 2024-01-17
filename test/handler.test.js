@@ -51,6 +51,11 @@ describe('HTTP request handler', () => {
     await assertResponseStatus(res, 404)
   })
 
+  it('returns 404 when the path starts with double slash', async () => {
+    const res = await fetch(`${baseUrl}//path-not-found`)
+    await assertResponseStatus(res, 404)
+  })
+
   describe('GET /retrieval-success-rate', () => {
     beforeEach(async () => {
       await pgPool.query('DELETE FROM retrieval_stats')
