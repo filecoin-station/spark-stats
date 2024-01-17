@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: 20
       - run: npm ci
+      - run: npm run migrate
       - run: npm test
 
   docker-build:

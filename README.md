@@ -29,6 +29,12 @@ docker run -d --name spark-db \
   postgres
 ```
 
+Finally, run database schema migration scripts from spark-evaluate.
+
+```bash
+npm run migrate
+```
+
 ### Run the test suite
 
 ```sh
