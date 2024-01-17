@@ -2,11 +2,13 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "migrate": "node node_modules/spark-evaluate/bin/migrate.js",
     "start": "node bin/spark-stats.js",
     "test": "standard && mocha"
   },
   "devDependencies": {
     "mocha": "^10.2.0",
+    "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
   "dependencies": {
