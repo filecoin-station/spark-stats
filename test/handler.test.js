@@ -41,9 +41,14 @@ describe('HTTP request handler', () => {
     await pgPool.end()
   })
 
+  it('returns 200 for GET /', async () => {
+    const res = await fetch(new URL('/', baseUrl))
+    await assertResponseStatus(res, 200)
+  })
+
   it('returns 404 for unknown routes', async () => {
     const res = await fetch(new URL('/unknown-path', baseUrl))
-    assertResponseStatus(res, 404)
+    await assertResponseStatus(res, 404)
   })
 
   describe('GET /retrieval-success-rate', () => {
