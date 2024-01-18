@@ -8,7 +8,7 @@
   },
   "devDependencies": {
     "mocha": "^10.2.0",
-    "spark-evaluate": "filecoin-station/spark-evaluate#7a2d14d11f",
+    "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
   "dependencies": {
