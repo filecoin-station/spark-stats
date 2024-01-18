@@ -215,6 +215,4 @@ const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
     day,
     ids
   ])
-
-// todo
 }
