@@ -3,6 +3,7 @@ import { once } from 'node:events'
 import assert, { AssertionError } from 'node:assert'
 import pg from 'pg'
 import createDebug from 'debug'
+import { mapParticipantsToIds } from 'spark-evaluate/lib/public-stats.js'
 
 import { createHandler, today } from '../lib/handler.js'
 import { DATABASE_URL } from '../lib/config.js'
@@ -132,6 +133,59 @@ describe('HTTP request handler', () => {
       assert.strictEqual(res.headers.get('cache-control'), 'public, max-age=31536000, immutable')
     })
   })
+
+  describe('GET /participants/daily', () => {
+    it('returns daily active participants for the given date range', async () => {
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      await givenDailyParticipants(pgPool, '2024-01-13', ['0x10'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', participants: 3 },
+        { day: '2024-01-12', participants: 4 }
+      ])
+    })
+  })
+
+  describe('GET /participants/monthly', () => {
+    it('returns montly active participants for the given date range ignoring the day number', async () => {
+      // before the range
+      await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
+      // in the range
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      await givenDailyParticipants(pgPool, '2024-02-13', ['0x10', '0x60'])
+      // after the range
+      await givenDailyParticipants(pgPool, '2024-03-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/monthly?from=2024-01-12&to=2024-02-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { month: '2024-01-01', participants: 5 },
+        { month: '2024-02-01', participants: 2 }
+      ])
+    })
+  })
 })
 
 const assertResponseStatus = async (res, status) => {
@@ -149,4 +203,16 @@ const givenRetrievalStats = async (pgPool, { day, total, successful }) => {
     'INSERT INTO retrieval_stats (day, total, successful) VALUES ($1, $2, $3)',
     [day, total, successful]
   )
+}
+
+const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
+  const ids = await mapParticipantsToIds(pgPool, new Set(participantAddresses))
+  await pgPool.query(`
+    INSERT INTO daily_participants (day, participant_id)
+    SELECT $1 as day, UNNEST($2::INT[]) AS participant_id
+    ON CONFLICT DO NOTHING
+  `, [
+    day,
+    ids
+  ])
 }
