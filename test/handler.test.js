@@ -132,6 +132,28 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       assert.strictEqual(res.headers.get('cache-control'), 'public, max-age=31536000, immutable')
     })
+
+    it('sums daily retrievals from all miners', async () => {
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 60 })
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-success-rate?from=2024-01-10&to=2024-01-11',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', success_rate: 51 / 110 },
+        { day: '2024-01-11', success_rate: 61 / 220 }
+      ])
+    })
   })
 
   describe('GET /participants/daily', () => {
