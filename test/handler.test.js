@@ -198,10 +198,10 @@ const assertResponseStatus = async (res, status) => {
   }
 }
 
-const givenRetrievalStats = async (pgPool, { day, total, successful }) => {
+const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
   await pgPool.query(
-    'INSERT INTO retrieval_stats (day, total, successful) VALUES ($1, $2, $3)',
-    [day, total, successful]
+    'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
+    [day, minerId ?? 'f1test', total, successful]
   )
 }
 
