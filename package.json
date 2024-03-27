@@ -7,7 +7,7 @@
     "test": "standard && mocha"
   },
   "devDependencies": {
-    "mocha": "^10.3.0",
+    "mocha": "^10.4.0",
     "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
