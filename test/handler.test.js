@@ -42,6 +42,11 @@ describe('HTTP request handler', () => {
     await pgPool.end()
   })
 
+  beforeEach(async () => {
+    await pgPool.query('DELETE FROM retrieval_stats')
+    await pgPool.query('DELETE FROM daily_participants')
+  })
+
   it('returns 200 for GET /', async () => {
     const res = await fetch(new URL('/', baseUrl))
     await assertResponseStatus(res, 200)
@@ -148,7 +153,9 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
+      /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
+      stats.sort((a, b) => new Date(a.day) - new Date(b.day))
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 51 / 110 },
         { day: '2024-01-11', success_rate: 61 / 220 }
@@ -181,7 +188,7 @@ describe('HTTP request handler', () => {
   })
 
   describe('GET /participants/monthly', () => {
-    it('returns montly active participants for the given date range ignoring the day number', async () => {
+    it('returns monthly active participants for the given date range ignoring the day number', async () => {
       // before the range
       await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
       // in the range
@@ -205,6 +212,35 @@ describe('HTTP request handler', () => {
       assert.deepStrictEqual(stats, [
         { month: '2024-01-01', participants: 5 },
         { month: '2024-02-01', participants: 2 }
+      ])
+    })
+  })
+
+  describe('GET /miners/retrieval-success-rate/summary', () => {
+    it('returns a summary of miners RSR for the given date range', async () => {
+      // before the range
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
+      // in the range
+      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 150 })
+      // after the range
+      await givenRetrievalStats(pgPool, { day: '2024-01-12', minerId: 'f1one', total: 30, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-12', minerId: 'f1two', total: 300, successful: 60 })
+
+      const res = await fetch(
+        new URL(
+          '/miners/retrieval-success-rate/summary?from=2024-01-11&to=2024-01-11',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { miner_id: 'f1one', success_rate: 0.05 },
+        { miner_id: 'f1two', success_rate: 0.75 }
       ])
     })
   })
