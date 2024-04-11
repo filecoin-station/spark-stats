@@ -45,6 +45,7 @@ describe('HTTP request handler', () => {
   beforeEach(async () => {
     await pgPool.query('DELETE FROM retrieval_stats')
     await pgPool.query('DELETE FROM daily_participants')
+    await pgPool.query('DELETE FROM daily_node_metrics')
   })
 
   it('returns 200 for GET /', async () => {
@@ -244,6 +245,30 @@ describe('HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /nodes/daily', () => {
+    it('returns daily node metrics for the given date range', async () => {
+      await givenDailyNodeMetrics(pgPool, '2024-01-10', 'station1')
+      await givenDailyNodeMetrics(pgPool, '2024-01-11', 'station2')
+      await givenDailyNodeMetrics(pgPool, '2024-01-12', 'station3')
+      await givenDailyNodeMetrics(pgPool, '2024-01-13', 'station1')
+
+      const res = await fetch(
+        new URL(
+          '/nodes/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { metric_date: '2024-01-11', station_id: 'station2' },
+        { metric_date: '2024-01-12', station_id: 'station3' }
+      ])
+    })
+  })
 })
 
 const assertResponseStatus = async (res, status) => {
@@ -273,4 +298,11 @@ const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
     day,
     ids
   ])
+}
+
+const givenDailyNodeMetrics = async (pgPool, day, stationId) => {
+  await pgPool.query(
+    'INSERT INTO daily_node_metrics (metric_date, station_id) VALUES ($1, $2)',
+    [day, stationId]
+  )
 }
