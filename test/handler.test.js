@@ -216,6 +216,69 @@ describe('HTTP request handler', () => {
     })
   })
 
+  describe('GET /participants/churn-rate', () => {
+    it('returns monthly churn rates for the given date range ignoring the day number', async () => {
+      // before the range
+      await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
+      // the last month before the range
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      // the first month in the range - 0x50 is gone
+      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-02-13', ['0x20', '0x30', '0x40'])
+      // the second month in the range - 0x30 and 0x40 is gone, new participant 0x60
+      await givenDailyParticipants(pgPool, '2024-03-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-03-13', ['0x10', '0x60'])
+      // after the range
+      await givenDailyParticipants(pgPool, '2024-04-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/churn-rate?from=2024-02-28&to=2024-03-01',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        // January: 5 participants
+        // February: 1 participant lost
+        // Churn = 1/5 = 20%
+        { month: '2024-02-01', churnRate: 0.2 },
+        // February: 4 participants
+        // March: 2 participants lost
+        // Churn: 2/4 = 50%
+        { month: '2024-03-01', churnRate: 0.5 }
+      ])
+    })
+
+    it('returns handles single-month range', async () => {
+      // the last month before the range
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      // the only month in the range - 0x20 is gone
+      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10'])
+      // after the range
+      await givenDailyParticipants(pgPool, '2024-03-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/churn-rate?from=2024-02-11&to=2024-02-11',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { month: '2024-02-01', churnRate: 0.5 }
+      ])
+    })
+  })
+
   describe('GET /miners/retrieval-success-rate/summary', () => {
     it('returns a summary of miners RSR for the given date range', async () => {
       // before the range
