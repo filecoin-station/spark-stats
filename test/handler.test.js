@@ -255,7 +255,7 @@ describe('HTTP request handler', () => {
       ])
     })
 
-    it('returns handles single-month range', async () => {
+    it('handles a single-month range', async () => {
       // the last month before the range
       await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
       // the only month in the range - 0x20 is gone
