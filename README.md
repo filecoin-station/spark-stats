@@ -6,8 +6,8 @@ API exposing public statistics about Spark
 
 Base URL: http://stats.filspark.com/
 
-- `GET /participants/churn-rate?from=<day>&to=<day>`
-  http://stats.filspark.com/participants/churn-rate
+- `GET /participants/change-rate?from=<day>&to=<day>`
+  http://stats.filspark.com/participants/change-rate
 
 ## Development
 
