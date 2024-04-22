@@ -217,7 +217,26 @@ describe('HTTP request handler', () => {
   })
 
   describe('GET /miners/retrieval-success-rate/summary', () => {
-    it('returns a summary of miners RSR for the given date range', async () => {
+    it('returns a redirect to /storage-providers/retrieval-success-rate/summary', async () => {
+      const res = await fetch(
+        new URL(
+          '/miners/retrieval-success-rate/summary?from=2024-01-10&to=2024-01-15',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+
+      await assertResponseStatus(res, 301)
+      assert.strictEqual(
+        res.headers.get('location'),
+        '/storage-providers/retrieval-success-rate/summary?from=2024-01-10&to=2024-01-15'
+      )
+    })
+  })
+
+  describe('GET /storage-providers/retrieval-success-rate/summary', () => {
+    it('returns a summary of RSR for the given date range', async () => {
       // before the range
       await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
       await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
@@ -230,7 +249,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/miners/retrieval-success-rate/summary?from=2024-01-11&to=2024-01-11',
+          '/storage-providers/retrieval-success-rate/summary?from=2024-01-11&to=2024-01-11',
           baseUrl
         ), {
           redirect: 'manual'
