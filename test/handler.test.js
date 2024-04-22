@@ -264,8 +264,8 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { metric_date: '2024-01-11', station_id: 'station2' },
-        { metric_date: '2024-01-12', station_id: 'station3' }
+        { day: '2024-01-11', station_id: 'station2' },
+        { day: '2024-01-12', station_id: 'station3' }
       ])
     })
   })
@@ -302,7 +302,7 @@ const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
 
 const givenDailyNodeMetrics = async (pgPool, day, stationId) => {
   await pgPool.query(
-    'INSERT INTO daily_node_metrics (metric_date, station_id) VALUES ($1, $2)',
+    'INSERT INTO daily_node_metrics (day, station_id) VALUES ($1, $2)',
     [day, stationId]
   )
 }
