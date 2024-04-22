@@ -245,13 +245,27 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
         // January: 5 participants
-        // February: 1 participant lost
-        // Churn = 1/5 = 20%
-        { month: '2024-02-01', churnRate: 0.2 },
+        // February: 1 participant lost, no new participants
+        {
+          month: '2024-02-01',
+          // Churn: 1/5 = 20%
+          churnRate: 0.2,
+          // Growth: 0/5 = 20%
+          growthRate: 0,
+          // Retention: 4/5 = 80%
+          retentionRate: 0.8
+        },
         // February: 4 participants
-        // March: 2 participants lost
-        // Churn: 2/4 = 50%
-        { month: '2024-03-01', churnRate: 0.5 }
+        // March: 2 participants lost, 1 new participant
+        {
+          month: '2024-03-01',
+          // Churn: 2/4 = 50%
+          churnRate: 0.5,
+          // Growth: 1/4 = 25%
+          growthRate: 0.25,
+          // Retention: 2/4 = 50%
+          retentionRate: 0.5
+        }
       ])
     })
 
@@ -273,9 +287,12 @@ describe('HTTP request handler', () => {
       )
       await assertResponseStatus(res, 200)
       const stats = await res.json()
-      assert.deepStrictEqual(stats, [
-        { month: '2024-02-01', churnRate: 0.5 }
-      ])
+      assert.deepStrictEqual(stats, [{
+        month: '2024-02-01',
+        churnRate: 0.5,
+        growthRate: 0,
+        retentionRate: 0.5
+      }])
     })
   })
 
