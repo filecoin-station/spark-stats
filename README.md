@@ -2,6 +2,14 @@
 
 API exposing public statistics about Spark
 
+## Public API
+
+Base URL: http://stats.filspark.com/
+
+- `GET /storage-providers/retrieval-success-rate/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/storage-providers/retrieval-success-rate/summary
+
 ## Development
 
 ### Database
