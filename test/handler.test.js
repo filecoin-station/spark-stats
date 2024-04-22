@@ -216,8 +216,8 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('GET /participants/churn-rate', () => {
-    it('returns monthly churn rates for the given date range ignoring the day number', async () => {
+  describe('GET /participants/change-rates', () => {
+    it('returns monthly change rates for the given date range ignoring the day number', async () => {
       // before the range
       await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
       // the last month before the range
@@ -235,7 +235,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/participants/churn-rate?from=2024-02-28&to=2024-03-01',
+          '/participants/change-rates?from=2024-02-28&to=2024-03-01',
           baseUrl
         ), {
           redirect: 'manual'
@@ -265,7 +265,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/participants/churn-rate?from=2024-02-11&to=2024-02-11',
+          '/participants/change-rates?from=2024-02-11&to=2024-02-11',
           baseUrl
         ), {
           redirect: 'manual'
