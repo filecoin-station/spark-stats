@@ -6,8 +6,25 @@ API exposing public statistics about Spark
 
 Base URL: http://stats.filspark.com/
 
+- `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miners/retrieval-success-rate/summary
+
+- `GET /participants/daily?from=<day>&to=<day>`
+
+  http://stats.filspark.com/participants/daily
+
+- `GET /participants/monthly?from=<day>&to=<day>`
+
+  http://stats.filspark.com/participants/monthly
+
 - `GET /participants/change-rate?from=<day>&to=<day>`
+
   http://stats.filspark.com/participants/change-rate
+
+- `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miners/retrieval-success-rate/summary
 
 ## Development
 
