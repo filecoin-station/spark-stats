@@ -155,10 +155,30 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
-      stats.sort((a, b) => new Date(a.day) - new Date(b.day))
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 51 / 110 },
         { day: '2024-01-11', success_rate: 61 / 220 }
+      ])
+    })
+
+    it('sorts items by date ascending', async () => {
+      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', total: 10, successful: 5 })
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-success-rate?from=2024-01-01&to=2024-01-31',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      /** @type {{ day: string, success_rate: number }[]} */
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', success_rate: 5 / 10 },
+        { day: '2024-01-20', success_rate: 1 / 10 }
       ])
     })
   })
