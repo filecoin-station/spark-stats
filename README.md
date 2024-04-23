@@ -2,6 +2,13 @@
 
 API exposing public statistics about Spark
 
+## Public API
+
+Base URL: http://stats.filspark.com/
+
+- `GET /participants/change-rate?from=<day>&to=<day>`
+  http://stats.filspark.com/participants/change-rate
+
 ## Development
 
 ### Database
