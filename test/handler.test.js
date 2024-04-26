@@ -1,11 +1,13 @@
 import http from 'node:http'
 import { once } from 'node:events'
-import assert, { AssertionError } from 'node:assert'
+import assert from 'node:assert'
 import pg from 'pg'
 import createDebug from 'debug'
 import { mapParticipantsToIds } from 'spark-evaluate/lib/public-stats.js'
 
-import { createHandler, today } from '../lib/handler.js'
+import { assertResponseStatus } from './test-helpers.js'
+import { createHandler } from '../lib/handler.js'
+import { today } from '../lib/request-helpers.js'
 import { DATABASE_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
@@ -245,41 +247,7 @@ describe('HTTP request handler', () => {
       ])
     })
   })
-
-  describe('GET /nodes/daily', () => {
-    it('returns daily node metrics for the given date range', async () => {
-      await givenDailyNodeMetrics(pgPool, '2024-01-10', 'station1')
-      await givenDailyNodeMetrics(pgPool, '2024-01-11', 'station2')
-      await givenDailyNodeMetrics(pgPool, '2024-01-12', 'station3')
-      await givenDailyNodeMetrics(pgPool, '2024-01-13', 'station1')
-
-      const res = await fetch(
-        new URL(
-          '/nodes/daily?from=2024-01-11&to=2024-01-12',
-          baseUrl
-        ), {
-          redirect: 'manual'
-        }
-      )
-      await assertResponseStatus(res, 200)
-      const metrics = await res.json()
-      assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', station_id: 'station2' },
-        { day: '2024-01-12', station_id: 'station3' }
-      ])
-    })
-  })
 })
-
-const assertResponseStatus = async (res, status) => {
-  if (res.status !== status) {
-    throw new AssertionError({
-      actual: res.status,
-      expected: status,
-      message: await res.text()
-    })
-  }
-}
 
 const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
   await pgPool.query(
@@ -298,11 +266,4 @@ const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
     day,
     ids
   ])
-}
-
-const givenDailyNodeMetrics = async (pgPool, day, stationId) => {
-  await pgPool.query(
-    'INSERT INTO daily_node_metrics (day, station_id) VALUES ($1, $2)',
-    [day, stationId]
-  )
 }
