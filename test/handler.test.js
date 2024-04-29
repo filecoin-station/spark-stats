@@ -47,7 +47,6 @@ describe('HTTP request handler', () => {
   beforeEach(async () => {
     await pgPool.query('DELETE FROM retrieval_stats')
     await pgPool.query('DELETE FROM daily_participants')
-    await pgPool.query('DELETE FROM daily_node_metrics')
   })
 
   it('returns 200 for GET /', async () => {

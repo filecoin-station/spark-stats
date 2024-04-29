@@ -43,15 +43,15 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   beforeEach(async () => {
-    await pgPool.query('DELETE FROM daily_node_metrics')
+    await pgPool.query('DELETE FROM daily_stations')
   })
 
   describe('GET /stations/raw', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyStationMetrics(pgPool, '2024-01-10', 'station1')
-      await givenDailyStationMetrics(pgPool, '2024-01-11', 'station2')
-      await givenDailyStationMetrics(pgPool, '2024-01-12', 'station3')
-      await givenDailyStationMetrics(pgPool, '2024-01-13', 'station1')
+      await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', ['station2', 'station3'])
+      await givenDailyStationMetrics(pgPool, '2024-01-13', ['station1'])
 
       const res = await fetch(
         new URL(
@@ -65,15 +65,20 @@ describe('Platform Routes HTTP request handler', () => {
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
         { day: '2024-01-11', station_id: 'station2' },
+        { day: '2024-01-12', station_id: 'station2' },
         { day: '2024-01-12', station_id: 'station3' }
       ])
     })
   })
 })
 
-const givenDailyStationMetrics = async (pgPool, day, stationId) => {
-  await pgPool.query(
-    'INSERT INTO daily_node_metrics (day, station_id) VALUES ($1, $2)',
-    [day, stationId]
-  )
+const givenDailyStationMetrics = async (pgPool, day, stationIds) => {
+  await pgPool.query(`
+    INSERT INTO daily_stations (day, station_id)
+    SELECT $1 AS day, UNNEST($2::text[]) AS station_id
+    ON CONFLICT DO NOTHING
+    `, [
+    day,
+    stationIds
+  ])
 }
