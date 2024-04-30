@@ -1,11 +1,13 @@
 import http from 'node:http'
 import { once } from 'node:events'
-import assert, { AssertionError } from 'node:assert'
+import assert from 'node:assert'
 import pg from 'pg'
 import createDebug from 'debug'
 import { mapParticipantsToIds } from 'spark-evaluate/lib/public-stats.js'
 
-import { createHandler, today } from '../lib/handler.js'
+import { assertResponseStatus } from './test-helpers.js'
+import { createHandler } from '../lib/handler.js'
+import { today } from '../lib/request-helpers.js'
 import { DATABASE_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
@@ -345,16 +347,6 @@ describe('HTTP request handler', () => {
     })
   })
 })
-
-const assertResponseStatus = async (res, status) => {
-  if (res.status !== status) {
-    throw new AssertionError({
-      actual: res.status,
-      expected: status,
-      message: await res.text()
-    })
-  }
-}
 
 const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
   await pgPool.query(
