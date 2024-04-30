@@ -48,10 +48,19 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', ['station2', 'station3'])
-      await givenDailyStationMetrics(pgPool, '2024-01-13', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+        { station_id: 'station1', honest_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+        { station_id: 'station2', honest_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+        { station_id: 'station2', honest_measurement_count: 2 },
+        { station_id: 'station3', honest_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-13', [
+        { station_id: 'station1', honest_measurement_count: 1 }
+      ])
 
       const res = await fetch(
         new URL(
@@ -100,13 +109,14 @@ describe('Platform Routes HTTP request handler', () => {
   })
 })
 
-const givenDailyStationMetrics = async (pgPool, day, stationIds) => {
+const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
   await pgPool.query(`
-    INSERT INTO daily_stations (day, station_id)
-    SELECT $1 AS day, UNNEST($2::text[]) AS station_id
+    INSERT INTO daily_stations (day, station_id, honest_measurement_count)
+    SELECT $1 AS day, UNNEST($2::text[]) AS station_id, UNNEST($3::int[]) AS honest_measurement_count
     ON CONFLICT DO NOTHING
     `, [
     day,
-    stationIds
+    stationStats.map(s => s.station_id),
+    stationStats.map(s => s.honest_measurement_count)
   ])
 }
