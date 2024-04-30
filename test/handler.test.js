@@ -157,10 +157,30 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
-      stats.sort((a, b) => new Date(a.day) - new Date(b.day))
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 51 / 110 },
         { day: '2024-01-11', success_rate: 61 / 220 }
+      ])
+    })
+
+    it('sorts items by date ascending', async () => {
+      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPool, { day: '2024-01-10', total: 10, successful: 5 })
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-success-rate?from=2024-01-01&to=2024-01-31',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      /** @type {{ day: string, success_rate: number }[]} */
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', success_rate: 5 / 10 },
+        { day: '2024-01-20', success_rate: 1 / 10 }
       ])
     })
   })
@@ -215,6 +235,86 @@ describe('HTTP request handler', () => {
         { month: '2024-01-01', participants: 5 },
         { month: '2024-02-01', participants: 2 }
       ])
+    })
+  })
+
+  describe('GET /participants/change-rates', () => {
+    it('returns monthly change rates for the given date range ignoring the day number', async () => {
+      // before the range
+      await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
+      // the last month before the range
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      // the first month in the range - 0x50 is gone
+      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-02-13', ['0x20', '0x30', '0x40'])
+      // the second month in the range - 0x30 and 0x40 is gone, new participant 0x60
+      await givenDailyParticipants(pgPool, '2024-03-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPool, '2024-03-13', ['0x10', '0x60'])
+      // after the range
+      await givenDailyParticipants(pgPool, '2024-04-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/change-rates?from=2024-02-28&to=2024-03-01',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        // January: 5 participants
+        // February: 1 participant lost, no new participants
+        {
+          month: '2024-02-01',
+          // Churn: 1/5 = 20%
+          churnRate: 0.2,
+          // Growth: 0/5 = 20%
+          growthRate: 0,
+          // Retention: 4/5 = 80%
+          retentionRate: 0.8
+        },
+        // February: 4 participants
+        // March: 2 participants lost, 1 new participant
+        {
+          month: '2024-03-01',
+          // Churn: 2/4 = 50%
+          churnRate: 0.5,
+          // Growth: 1/4 = 25%
+          growthRate: 0.25,
+          // Retention: 2/4 = 50%
+          retentionRate: 0.5
+        }
+      ])
+    })
+
+    it('handles a single-month range', async () => {
+      // the last month before the range
+      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      // the only month in the range - 0x20 is gone
+      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10'])
+      // after the range
+      await givenDailyParticipants(pgPool, '2024-03-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/change-rates?from=2024-02-11&to=2024-02-11',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [{
+        month: '2024-02-01',
+        churnRate: 0.5,
+        growthRate: 0,
+        retentionRate: 0.5
+      }])
     })
   })
 
