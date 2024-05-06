@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import assert from 'node:assert'
 import pg from 'pg'
 import createDebug from 'debug'
-import { mapParticipantsToIds } from 'spark-evaluate/lib/public-stats.js'
+import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
