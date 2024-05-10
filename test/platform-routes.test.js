@@ -46,7 +46,7 @@ describe('Platform Routes HTTP request handler', () => {
     await pgPool.query('DELETE FROM daily_stations')
   })
 
-  describe('GET /stations/raw', () => {
+  describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
       await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
       await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
@@ -55,7 +55,7 @@ describe('Platform Routes HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/stations/raw?from=2024-01-11&to=2024-01-12',
+          '/stations/daily?from=2024-01-11&to=2024-01-12',
           baseUrl
         ), {
           redirect: 'manual'
@@ -64,9 +64,37 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', station_id: 'station2' },
-        { day: '2024-01-12', station_id: 'station2' },
-        { day: '2024-01-12', station_id: 'station3' }
+        { day: '2024-01-11', station_id_count: 1 },
+        { day: '2024-01-12', station_id_count: 2 }
+      ])
+    })
+  })
+
+  describe('GET /stations/monthly', () => {
+    it('returns monthly station metrics for the given date range ignoring the day number', async () => {
+      // before the date range
+      await givenDailyStationMetrics(pgPool, '2023-12-31', ['station1'])
+      // in the date range
+      await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', ['station2', 'station3'])
+      await givenDailyStationMetrics(pgPool, '2024-02-13', ['station1'])
+      // after the date range
+      await givenDailyStationMetrics(pgPool, '2024-03-01', ['station1'])
+
+      const res = await fetch(
+        new URL(
+          '/stations/monthly?from=2024-01-11&to=2024-02-11',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { month: '2024-01-01', station_id_count: 3 },
+        { month: '2024-02-01', station_id_count: 1 }
       ])
     })
   })
