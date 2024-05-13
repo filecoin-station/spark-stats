@@ -48,10 +48,19 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', ['station2', 'station3'])
-      await givenDailyStationMetrics(pgPool, '2024-01-13', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+        { station_id: 'station2', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+        { station_id: 'station2', accepted_measurement_count: 2 },
+        { station_id: 'station3', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-13', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
 
       const res = await fetch(
         new URL(
@@ -73,14 +82,27 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /stations/monthly', () => {
     it('returns monthly station metrics for the given date range ignoring the day number', async () => {
       // before the date range
-      await givenDailyStationMetrics(pgPool, '2023-12-31', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2023-12-31', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
       // in the date range
-      await givenDailyStationMetrics(pgPool, '2024-01-10', ['station1'])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', ['station2'])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', ['station2', 'station3'])
-      await givenDailyStationMetrics(pgPool, '2024-02-13', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+        { station_id: 'station2', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+        { station_id: 'station2', accepted_measurement_count: 2 },
+        { station_id: 'station3', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-02-13', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
       // after the date range
-      await givenDailyStationMetrics(pgPool, '2024-03-01', ['station1'])
+      await givenDailyStationMetrics(pgPool, '2024-03-01', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
 
       const res = await fetch(
         new URL(
@@ -98,15 +120,49 @@ describe('Platform Routes HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /measurements/daily', () => {
+    it('returns daily total accepted measurement count for the given date range', async () => {
+      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+        { station_id: 'station2', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+        { station_id: 'station2', accepted_measurement_count: 2 },
+        { station_id: 'station3', accepted_measurement_count: 1 }
+      ])
+      await givenDailyStationMetrics(pgPool, '2024-01-13', [
+        { station_id: 'station1', accepted_measurement_count: 1 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          '/measurements/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { day: '2024-01-11', accepted_measurement_count: '1' },
+        { day: '2024-01-12', accepted_measurement_count: '3' }
+      ])
+    })
+  })
 })
 
-const givenDailyStationMetrics = async (pgPool, day, stationIds) => {
+const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
   await pgPool.query(`
-    INSERT INTO daily_stations (day, station_id)
-    SELECT $1 AS day, UNNEST($2::text[]) AS station_id
+    INSERT INTO daily_stations (day, station_id, accepted_measurement_count)
+    SELECT $1 AS day, UNNEST($2::text[]) AS station_id, UNNEST($3::int[]) AS accepted_measurement_count
     ON CONFLICT DO NOTHING
     `, [
     day,
-    stationIds
+    stationStats.map(s => s.station_id),
+    stationStats.map(s => s.accepted_measurement_count)
   ])
 }
