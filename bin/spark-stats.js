@@ -2,30 +2,14 @@ import '../lib/instrument.js'
 import http from 'node:http'
 import { once } from 'node:events'
 import pg from 'pg'
-import fs from 'node:fs/promises'
-import { join, dirname } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
 import { createHandler } from '../lib/handler.js'
 import { DATABASE_URL } from '../lib/config.js'
 
 const {
   PORT = 8080,
   HOST = '127.0.0.1',
-  SENTRY_ENVIRONMENT = 'development',
   REQUEST_LOGGING = 'true'
 } = process.env
-
-const pkg = JSON.parse(
-  await fs.readFile(
-    join(
-      dirname(fileURLToPath(import.meta.url)),
-      '..',
-      'package.json'
-    ),
-    'utf8'
-  )
-)
 
 const pgPool = new pg.Pool({
   connectionString: DATABASE_URL,
