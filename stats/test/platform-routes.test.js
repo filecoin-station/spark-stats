@@ -44,6 +44,7 @@ describe('Platform Routes HTTP request handler', () => {
 
   beforeEach(async () => {
     await pgPool.query('DELETE FROM daily_stations')
+    await pgPool.query('DELETE FROM daily_fil')
   })
 
   describe('GET /stations/daily', () => {
@@ -153,6 +154,39 @@ describe('Platform Routes HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /fil/daily', () => {
+    it('returns daily total FIL sent for the given date range', async () => {
+      await givenDailyFilMetrics(pgPool, '2024-01-10', [
+        { to_address: 'to1', amount: 100 }
+      ])
+      await givenDailyFilMetrics(pgPool, '2024-01-11', [
+        { to_address: 'to2', amount: 150 }
+      ])
+      await givenDailyFilMetrics(pgPool, '2024-01-12', [
+        { to_address: 'to2', amount: 300 },
+        { to_address: 'to3', amount: 250 }
+      ])
+      await givenDailyFilMetrics(pgPool, '2024-01-13', [
+        { to_address: 'to1', amount: 100 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          '/fil/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { day: '2024-01-11', amount: '150' },
+        { day: '2024-01-12', amount: '550' }
+      ])
+    })
+  })
 })
 
 const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
@@ -164,5 +198,17 @@ const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
     day,
     stationStats.map(s => s.station_id),
     stationStats.map(s => s.accepted_measurement_count)
+  ])
+}
+
+const givenDailyFilMetrics = async (pgPool, day, filStats) => {
+  await pgPool.query(`
+    INSERT INTO daily_fil (day, to_address, amount)
+    SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount
+    ON CONFLICT DO NOTHING
+    `, [
+    day,
+    filStats.map(s => s.to_address),
+    filStats.map(s => s.amount)
   ])
 }

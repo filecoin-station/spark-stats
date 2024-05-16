@@ -67,4 +67,6 @@ ieContract.on('Transfer', (to, amount, ...args) => {
   const blockNumber = args.pop()
   console.log('Transfer %s FIL to %s at epoch %s', amount, to, blockNumber)
   // TODO: update the database
+  const transferEvent = { to_address: to, amount }
+  updateDailyFilStats(pgPool, transferEvent)
 })

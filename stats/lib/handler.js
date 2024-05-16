@@ -42,41 +42,24 @@ const handler = async (req, res, pgPool) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
-  if (req.method === 'GET' && segs[0] === 'retrieval-success-rate' && segs.length === 1) {
+
+  const fetchFunctionMap = {
+    'retrieval-success-rate': fetchRetrievalSuccessRate,
+    'participants/daily': fetchDailyParticipants,
+    'participants/monthly': fetchMonthlyParticipants,
+    'participants/change-rates': fetchParticipantChangeRates,
+    'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
+  }
+
+  const fetchStatsFn = fetchFunctionMap[segs.join('/')]
+  if (req.method === 'GET' && fetchStatsFn) {
     await getStatsWithFilterAndCaching(
       pathname,
       searchParams,
       res,
       pgPool,
-      fetchRetrievalSuccessRate)
-  } else if (req.method === 'GET' && segs[0] === 'participants' && segs[1] === 'daily' && segs.length === 2) {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPool,
-      fetchDailyParticipants)
-  } else if (req.method === 'GET' && segs[0] === 'participants' && segs[1] === 'monthly' && segs.length === 2) {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPool,
-      fetchMonthlyParticipants)
-  } else if (req.method === 'GET' && segs.join('/') === 'participants/change-rates') {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPool,
-      fetchParticipantChangeRates)
-  } else if (req.method === 'GET' && segs.join('/') === 'miners/retrieval-success-rate/summary') {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPool,
-      fetchMinersRSRSummary)
+      fetchStatsFn
+    )
   } else if (await handlePlatformRoutes(req, res, pgPool)) {
     // no-op, request was handled by handlePlatformRoute
   } else {
