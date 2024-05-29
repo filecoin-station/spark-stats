@@ -18,9 +18,9 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/monthly
 
-- `GET /participants/change-rate?from=<day>&to=<day>`
+- `GET /participants/change-rates?from=<day>&to=<day>`
 
-  http://stats.filspark.com/participants/change-rate
+  http://stats.filspark.com/participants/change-rates
 
 - `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
 
