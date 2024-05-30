@@ -1,0 +1,23 @@
+{
+  "name": "@filecoin-station/spark-stats-db-migrations",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "lint": "standard",
+    "test": "mocha"
+  },
+  "devDependencies": {
+    "standard": "^17.1.0"
+  },
+  "dependencies": {
+    "pg": "^8.11.5",
+    "postgrator": "^7.2.0"
+  },
+  "standard": {
+    "env": [
+      "mocha"
+    ]
+  }
+}

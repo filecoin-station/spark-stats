@@ -6,7 +6,7 @@ import createDebug from 'debug'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { DATABASE_URL } from '../lib/config.js'
+import { EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
@@ -19,7 +19,7 @@ describe('Platform Routes HTTP request handler', () => {
   let baseUrl
 
   before(async () => {
-    pgPool = new pg.Pool({ connectionString: DATABASE_URL })
+    pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
 
     const handler = createHandler({
       pgPool,

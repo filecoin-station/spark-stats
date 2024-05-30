@@ -8,7 +8,7 @@ import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
-import { DATABASE_URL } from '../lib/config.js'
+import { EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
@@ -21,7 +21,7 @@ describe('HTTP request handler', () => {
   let baseUrl
 
   before(async () => {
-    pgPool = new pg.Pool({ connectionString: DATABASE_URL })
+    pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
 
     const handler = createHandler({
       pgPool,

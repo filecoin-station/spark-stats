@@ -3,13 +3,16 @@
   "private": true,
   "type": "module",
   "workspaces": [
+    "migrations",
     "observer",
     "stats"
   ],
   "scripts": {
-    "migrate": "npm run migrate --workspaces",
+    "migrate": "npm run migrate --workspaces --if-present",
     "lint": "standard",
-    "test": "npm run lint && npm test --workspaces"
+    "test:observer": "npm t -w observer",
+    "test:stats": "npm t -w stats",
+    "test": "npm run lint && npm test --workspaces --if-present"
   },
   "devDependencies": {
     "standard": "^17.1.0"
