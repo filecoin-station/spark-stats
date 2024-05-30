@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "migrate": "node bin/migrate.js",
     "start": "node bin/spark-observer.js",
     "lint": "standard",
     "test": "mocha"
@@ -13,6 +14,7 @@
   },
   "dependencies": {
     "@filecoin-station/spark-impact-evaluator": "^1.1.1",
+    "@filecoin-station/spark-stats-db-migrations": "^1.0.0",
     "@sentry/node": "^8.7.0",
     "debug": "^4.3.4",
     "ethers": "^6.12.1",

@@ -3,7 +3,7 @@ import http from 'node:http'
 import { once } from 'node:events'
 import pg from 'pg'
 import { createHandler } from '../lib/handler.js'
-import { DATABASE_URL } from '../lib/config.js'
+import { EVALUATE_DB_URL } from '../lib/config.js'
 
 const {
   PORT = 8080,
@@ -12,7 +12,7 @@ const {
 } = process.env
 
 const pgPool = new pg.Pool({
-  connectionString: DATABASE_URL,
+  connectionString: EVALUATE_DB_URL,
   // allow the pool to close all connections and become empty
   min: 0,
   // this values should correlate with service concurrency hard_limit configured in fly.toml

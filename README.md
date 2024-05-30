@@ -46,7 +46,7 @@ Set up [PostgreSQL](https://www.postgresql.org/) with default settings:
  - Port: 5432
  - User: _your system user name_
  - Password: _blank_
- - Database: spark_public
+ - Database: spark_stats
 
 Alternatively, set the environment variable `$DATABASE_URL` with
 `postgres://${USER}:${PASS}@${HOST}:${POST}/${DATABASE}`.
@@ -60,12 +60,18 @@ You can also run the following command to set up the PostgreSQL server via Docke
 docker run -d --name spark-db \
   -e POSTGRES_HOST_AUTH_METHOD=trust \
   -e POSTGRES_USER=$USER \
-  -e POSTGRES_DB=spark_public \
+  -e POSTGRES_DB=spark_stats \
   -p 5432:5432 \
   postgres
 ```
 
-Finally, run database schema migration scripts from spark-evaluate.
+Next, you need to create `spark_evaluate` database.
+
+```bash
+psql postgres://localhost:5432/ -c "CREATE DATABASE spark_evaluate"
+```
+
+Finally, run database schema migration scripts.
 
 ```bash
 npm run migrate
@@ -80,7 +86,7 @@ npm test
 ### Run the `spark-stats` service
 
 ```sh
-npm start --workspace stats
+npm start -w stats
 ```
 
 You can also run the service against live data in Spark DB running on Fly.io.
@@ -97,14 +103,16 @@ You can also run the service against live data in Spark DB running on Fly.io.
 2. Start the service and configure the database connection string to use the proxied connection.
   Look up the user and the password in our shared 1Password vault.
 
-  ```
-  DATABASE_URL="postgres://user:password@localhost:5455/spark_public" npm start
+  ```bash
+  DATABASE_URL="postgres://user:password@localhost:5455/spark_stats" \
+    DB_EVALUATE_URL="postgres://user:password@localhost:5455/spark_evaluate" \
+    npm start
   ```
 
 ### Run the `spark-observer` service
 
 ```sh
-npm start --workspace observer
+npm start -w observer
 ```
 
 ## Deployment
