@@ -1,5 +1,5 @@
 {
-  "name": "@filecoin-stations/spark-observer",
+  "name": "@filecoin-station/spark-observer",
   "type": "module",
   "private": true,
   "scripts": {
