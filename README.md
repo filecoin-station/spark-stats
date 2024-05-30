@@ -105,8 +105,8 @@ You can also run the service against live data in Spark DB running on Fly.io.
 
   ```bash
   DATABASE_URL="postgres://user:password@localhost:5455/spark_stats" \
-    DB_EVALUATE_URL="postgres://user:password@localhost:5455/spark_evaluate" \
-    npm start
+    EVALUATE_DB_URL="postgres://user:password@localhost:5455/spark_evaluate" \
+    npm start -w stats
   ```
 
 ### Run the `spark-observer` service
