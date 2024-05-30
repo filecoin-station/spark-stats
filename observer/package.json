@@ -12,8 +12,10 @@
     "standard": "^17.1.0"
   },
   "dependencies": {
+    "@filecoin-station/spark-impact-evaluator": "^1.1.1",
     "@sentry/node": "^8.7.0",
     "debug": "^4.3.4",
+    "ethers": "^6.12.1",
     "pg": "^8.11.5"
   },
   "standard": {
