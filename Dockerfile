@@ -12,7 +12,6 @@ WORKDIR /app
 # Set production environment
 ENV NODE_ENV production
 ENV SENTRY_ENVIRONMENT production
-ENV REQUEST_LOGGING false
 
 #######################################################################
 # Throw-away build stage to reduce size of final image
@@ -27,7 +26,12 @@ RUN apt-get update -qq && \
 # to install all modules: "npm install --production=false".
 # Ref: https://docs.npmjs.com/cli/v9/commands/npm-install#description
 COPY --link package-lock.json package.json ./
-RUN npm ci
+
+# We cannot use a wildcard until `COPY --parents` is stabilised
+# See https://docs.docker.com/reference/dockerfile/#copy---parents
+COPY --link stats/package.json ./stats/
+
+RUN npm ci --workspaces
 
 # Copy application code
 COPY --link . .
@@ -39,5 +43,8 @@ FROM base
 # Copy built application
 COPY --from=build /app /app
 
-# Start the server by default, this can be overwritten at runtime
-CMD [ "npm", "run", "start" ]
+# Set to `publish` or `api`
+# This argument controls the value passed to npm start --workspace parameter
+ENV SERVICE=""
+
+CMD npm start --workspace ${SERVICE}

@@ -6,7 +6,7 @@ on:
     branches: [main]
 
 jobs:
-  build:
+  build-stats:
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -24,6 +24,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+      NPM_CONFIG_WORKSPACE: stats
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -32,6 +33,16 @@ jobs:
       - run: npm ci
       - run: npm run migrate
       - run: npm test
+
+  lint-all:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run lint
 
   docker-build:
     runs-on: ubuntu-latest
@@ -49,7 +60,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build Docker image
+      - name: Build monorepo Docker image
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -58,12 +69,12 @@ jobs:
 
   deploy:
     if: github.ref == 'refs/heads/main'
-    needs: [build,  docker-build]
+    needs: [build-stats,  docker-build]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: superfly/flyctl-actions/setup-flyctl@master
-      - run: flyctl deploy --remote-only
+      - run: flyctl deploy --remote-only -c stats/fly.toml
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - if: failure()
