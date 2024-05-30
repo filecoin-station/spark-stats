@@ -2,22 +2,8 @@ import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { migrateWithPgClient } from '@filecoin-station/spark-stats-db-migrations'
 import { ethers } from 'ethers'
 import pg from 'pg'
-
-// TODO: move this to a config.js file
-const {
-  DATABASE_URL = 'postgres://localhost:5432/spark_stats',
-  RPC_URLS = 'https://api.node.glif.io/rpc/v0',
-  GLIF_TOKEN
-} = process.env
-
-const rpcUrls = RPC_URLS.split(',')
-const RPC_URL = rpcUrls[Math.floor(Math.random() * rpcUrls.length)]
-console.log(`Selected JSON-RPC endpoint ${RPC_URL}`)
-
-const rpcHeaders = {}
-if (RPC_URL.includes('glif')) {
-  rpcHeaders.Authorization = `Bearer ${GLIF_TOKEN}`
-}
+import { RPC_URL, DATABASE_URL, rpcHeaders } from '../lib/config.js'
+import { updateDailyFilStats } from '../lib/platform-stats-generator.js'
 
 // TODO: move this to a different file
 const fetchRequest = new ethers.FetchRequest(RPC_URL)
@@ -62,17 +48,23 @@ await pgPool.query('SELECT 1')
 
 console.log('Listening for impact evaluator events')
 
+// Get the last block we checked. Even though there should be only one row, use MAX just to be safe
+const lastCheckedBlock = await pgPool.query(
+  'SELECT MAX(last_block) AS last_block FROM reward_transfer_last_block'
+).then(res => res.rows[0].last_block)
+
 // Listen for Transfer events from the IE contract
-const onTransfer = async (to, amount, blockNumber) => {
-  // TODO update in database
-  const transferEvent = { to_address: to, amount }
-  updateDailyFilStats(pgPool, transferEvent)
-}
-const lastCheckedBlock = 0  // TODO: get this from the database
 ieContract.queryFilter(ieContract.filters.Transfer(), lastCheckedBlock)
   .then(events => {
     for (const event of events) {
-      console.log('Transfer %s FIL to %s at epoch %s', event.args.value, event.args.to, event.blockNumber)
-      onTransfer(event.args.to, event.args.value, event.blockNumber)
+      console.log('%s FIL to %s at block %s', event.args.amount, event.args.to, event.blockNumber)
+      updateDailyFilStats(
+        pgPool,
+        {
+          to_address: event.args.to,
+          amount: event.args.amount,
+          blockNumber: event.blockNumber
+        }
+      )
     }
-})
+  })

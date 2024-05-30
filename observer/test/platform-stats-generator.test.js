@@ -19,7 +19,7 @@ describe('platform-stats-generator', () => {
 
   let today
   beforeEach(async () => {
-    await pgClient.query('DELETE FROM daily_fil')
+    await pgClient.query('DELETE FROM daily_reward_transfers')
 
     // Run all tests inside a transaction to ensure `now()` always returns the same value
     // See https://dba.stackexchange.com/a/63549/125312
@@ -38,11 +38,11 @@ describe('platform-stats-generator', () => {
 
   describe('updateDailyFilStats', () => {
     it('should correctly update daily FIL stats with new transfer events', async () => {
-      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 100 })
-      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 200 })
+      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 100, blockNumber: 1 })
+      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 200, blockNumber: 1 })
 
       const { rows } = await pgClient.query(`
-        SELECT day::TEXT, to_address, amount FROM daily_fil
+        SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
         WHERE to_address = $1
       `, ['address1'])
       assert.strictEqual(rows.length, 1)
@@ -50,11 +50,11 @@ describe('platform-stats-generator', () => {
     })
 
     it('should handle multiple addresses in daily FIL stats', async () => {
-      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 50 })
-      await updateDailyFilStats(pgClient, { to_address: 'address2', amount: 150 })
+      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 50, blockNumber: 1 })
+      await updateDailyFilStats(pgClient, { to_address: 'address2', amount: 150, blockNumber: 1 })
 
       const { rows } = await pgClient.query(`
-        SELECT day::TEXT, to_address, amount FROM daily_fil
+        SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
         ORDER BY to_address
       `)
       assert.strictEqual(rows.length, 2)
@@ -63,6 +63,15 @@ describe('platform-stats-generator', () => {
         { day: today, to_address: 'address1', amount: '50' },
         { day: today, to_address: 'address2', amount: '150' }
       ])
+    })
+
+    it('should update the last block number', async () => {
+      await updateDailyFilStats(pgClient, { to_address: 'address1', amount: 100, blockNumber: 1 })
+      await updateDailyFilStats(pgClient, { to_address: 'address2', amount: 200, blockNumber: 2 })
+
+      const { rows } = await pgClient.query('SELECT last_block FROM reward_transfer_last_block')
+      assert.strictEqual(rows.length, 1)
+      assert.strictEqual(rows[0].last_block, 2)
     })
   })
 

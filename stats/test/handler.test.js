@@ -21,10 +21,12 @@ describe('HTTP request handler', () => {
   let baseUrl
 
   before(async () => {
+    // handler doesn't use Stats DB
     pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
 
     const handler = createHandler({
-      pgPool,
+      pgPoolEvaluateDb: pgPool,
+      pgPoolStatsDb: undefined,
       logger: {
         info: debug,
         error: console.error,
