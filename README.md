@@ -77,7 +77,7 @@ npm run migrate
 npm test
 ```
 
-### Run the service
+### Run the `spark-stats` service
 
 ```sh
 npm start --workspace stats
@@ -100,6 +100,12 @@ You can also run the service against live data in Spark DB running on Fly.io.
   ```
   DATABASE_URL="postgres://user:password@localhost:5455/spark_public" npm start
   ```
+
+### Run the `spark-observer` service
+
+```sh
+npm start --workspace observer
+```
 
 ## Deployment
 

@@ -1,0 +1,9 @@
+app = "spark-observer"
+primary_region = "cdg"
+
+[env]
+  SENTRY_ENVIRONMENT = "production"
+  SERVICE = "observer"
+
+[deploy]
+  strategy = "rolling"
