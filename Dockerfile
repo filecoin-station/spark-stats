@@ -43,7 +43,7 @@ FROM base
 # Copy built application
 COPY --from=build /app /app
 
-# Set to `publish` or `api`
+# Set to `stats` or `observer`
 # This argument controls the value passed to npm start --workspace parameter
 ENV SERVICE=""
 
