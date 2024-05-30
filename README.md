@@ -26,6 +26,18 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
 
+- `GET /stations/daily?from=<day>&to=<day>`
+
+  http://stats.filspark.com/stations/daily
+
+- `GET /stations/monthly?from=<day>&to=<day>`
+
+  http://stats.filspark.com/stations/monthly
+
+- `GET /measurements/daily?from=<day>&to=<day>`
+
+  http://stats.filspark.com/measurements/daily
+
 ## Development
 
 ### Database
