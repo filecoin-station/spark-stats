@@ -62,11 +62,17 @@ await pgPool.query('SELECT 1')
 
 console.log('Listening for impact evaluator events')
 
-ieContract.on('Transfer', (to, amount, ...args) => {
-  /** @type {number} */
-  const blockNumber = args.pop()
-  console.log('Transfer %s FIL to %s at epoch %s', amount, to, blockNumber)
-  // TODO: update the database
+// Listen for Transfer events from the IE contract
+const onTransfer = async (to, amount, blockNumber) => {
+  // TODO update in database
   const transferEvent = { to_address: to, amount }
   updateDailyFilStats(pgPool, transferEvent)
+}
+const lastCheckedBlock = 0  // TODO: get this from the database
+ieContract.queryFilter(ieContract.filters.Transfer(), lastCheckedBlock)
+  .then(events => {
+    for (const event of events) {
+      console.log('Transfer %s FIL to %s at epoch %s', event.args.value, event.args.to, event.blockNumber)
+      onTransfer(event.args.to, event.args.value, event.blockNumber)
+    }
 })
