@@ -80,7 +80,7 @@ npm test
 ### Run the service
 
 ```sh
-npm start
+npm start --workspace stats
 ```
 
 You can also run the service against live data in Spark DB running on Fly.io.
