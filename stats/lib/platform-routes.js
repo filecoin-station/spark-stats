@@ -2,7 +2,7 @@ import { getStatsWithFilterAndCaching } from './request-helpers.js'
 import {
   fetchDailyStationCount,
   fetchMonthlyStationCount,
-  fetchDailyFilSent,
+  fetchDailyRewardTransfers,
   fetchDailyStationAcceptedMeasurementCount
 } from './platform-stats-fetchers.js'
 
@@ -24,8 +24,8 @@ export const handlePlatformRoutes = async (req, res, pgPoolEvaluateDb, pgPoolSta
       fetchFunction: fetchDailyStationAcceptedMeasurementCount,
       pgPool: pgPoolEvaluateDb
     },
-    'fil/daily': {
-      fetchFunction: fetchDailyFilSent,
+    'transfers/daily': {
+      fetchFunction: fetchDailyRewardTransfers,
       pgPool: pgPoolStatsDb
     }
   }

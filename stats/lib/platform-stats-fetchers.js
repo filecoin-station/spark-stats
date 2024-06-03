@@ -41,7 +41,7 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
   return rows
 }
 
-export const fetchDailyFilSent = async (pgPool, filter) => {
+export const fetchDailyRewardTransfers = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, SUM(amount) as amount
     FROM daily_reward_transfers

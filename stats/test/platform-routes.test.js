@@ -160,25 +160,25 @@ describe('Platform Routes HTTP request handler', () => {
     })
   })
 
-  describe('GET /fil/daily', () => {
-    it('returns daily total FIL sent for the given date range', async () => {
-      await givenDailyFilMetrics(pgPoolStatsDb, '2024-01-10', [
+  describe('GET /transfers/daily', () => {
+    it('returns daily total Rewards sent for the given date range', async () => {
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-10', [
         { to_address: 'to1', amount: 100 }
       ])
-      await givenDailyFilMetrics(pgPoolStatsDb, '2024-01-11', [
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-11', [
         { to_address: 'to2', amount: 150 }
       ])
-      await givenDailyFilMetrics(pgPoolStatsDb, '2024-01-12', [
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-12', [
         { to_address: 'to2', amount: 300 },
         { to_address: 'to3', amount: 250 }
       ])
-      await givenDailyFilMetrics(pgPoolStatsDb, '2024-01-13', [
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-13', [
         { to_address: 'to1', amount: 100 }
       ])
 
       const res = await fetch(
         new URL(
-          '/fil/daily?from=2024-01-11&to=2024-01-12',
+          '/transfers/daily?from=2024-01-11&to=2024-01-12',
           baseUrl
         ), {
           redirect: 'manual'
@@ -206,14 +206,14 @@ const givenDailyStationMetrics = async (pgPoolEvaluateDb, day, stationStats) => 
   ])
 }
 
-const givenDailyFilMetrics = async (pgPoolStatsDb, day, filStats) => {
+const givenDailyRewardTransferMetrics = async (pgPoolStatsDb, day, transferStats) => {
   await pgPoolStatsDb.query(`
     INSERT INTO daily_reward_transfers (day, to_address, amount)
     SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount
     ON CONFLICT DO NOTHING
     `, [
     day,
-    filStats.map(s => s.to_address),
-    filStats.map(s => s.amount)
+    transferStats.map(s => s.to_address),
+    transferStats.map(s => s.amount)
   ])
 }
