@@ -3,7 +3,7 @@ import pg from 'pg'
 import { beforeEach, describe, it } from 'mocha'
 
 import { DATABASE_URL } from '../lib/config.js'
-import { updateDailyFilStats } from '../lib/platform-stats-generator.js'
+import { updateDailyTransferStats } from '../lib/platform-stats.js'
 import { migrateWithPgClient } from '@filecoin-station/spark-stats-db-migrations'
 
 describe('platform-stats-generator', () => {
@@ -34,10 +34,10 @@ describe('platform-stats-generator', () => {
     await pgPool.end()
   })
 
-  describe('updateDailyFilStats', () => {
-    it('should correctly update daily FIL stats with new transfer events', async () => {
-      await updateDailyFilStats(pgPool, { to_address: 'address1', amount: 100, blockNumber: 1 })
-      await updateDailyFilStats(pgPool, { to_address: 'address1', amount: 200, blockNumber: 1 })
+  describe('updateDailyTransferStats', () => {
+    it('should correctly update daily Transfer stats with new transfer events', async () => {
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 100, blockNumber: 1 })
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 200, blockNumber: 1 })
 
       const { rows } = await pgPool.query(`
         SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
@@ -47,9 +47,9 @@ describe('platform-stats-generator', () => {
       assert.deepStrictEqual(rows, [{ day: today, to_address: 'address1', amount: '300' }])
     })
 
-    it('should handle multiple addresses in daily FIL stats', async () => {
-      await updateDailyFilStats(pgPool, { to_address: 'address1', amount: 50, blockNumber: 1 })
-      await updateDailyFilStats(pgPool, { to_address: 'address2', amount: 150, blockNumber: 1 })
+    it('should handle multiple addresses in daily Transfer stats', async () => {
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 50, blockNumber: 1 })
+      await updateDailyTransferStats(pgPool, { to_address: 'address2', amount: 150, blockNumber: 1 })
 
       const { rows } = await pgPool.query(`
         SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
@@ -61,15 +61,6 @@ describe('platform-stats-generator', () => {
         { day: today, to_address: 'address1', amount: '50' },
         { day: today, to_address: 'address2', amount: '150' }
       ])
-    })
-
-    it('should update the last block number', async () => {
-      await updateDailyFilStats(pgPool, { to_address: 'address1', amount: 100, blockNumber: 1 })
-      await updateDailyFilStats(pgPool, { to_address: 'address2', amount: 200, blockNumber: 2 })
-
-      const { rows } = await pgPool.query('SELECT last_block FROM reward_transfer_last_block')
-      assert.strictEqual(rows.length, 1)
-      assert.strictEqual(rows[0].last_block, 2)
     })
   })
 

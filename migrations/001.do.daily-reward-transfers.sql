@@ -1,7 +1,7 @@
 CREATE TABLE daily_reward_transfers (
     day DATE NOT NULL,
     to_address TEXT NOT NULL,
-    amount BIGINT NOT NULL,
+    amount NUMERIC NOT NULL,
     PRIMARY KEY (day, to_address)
 );
 
