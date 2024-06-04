@@ -6,7 +6,7 @@ import pg from 'pg'
 // TODO: move this to a config.js file
 const {
   DATABASE_URL = 'postgres://localhost:5432/spark_stats',
-  RPC_URLS = 'https://api.node.glif.io/rpc/v0',
+  RPC_URLS = 'https://api.node.glif.io/rpc/v0,https://api.chain.love/rpc/v1,https://filecoin.chainup.net/rpc/v1',
   GLIF_TOKEN
 } = process.env
 
