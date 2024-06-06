@@ -72,9 +72,9 @@ const handler = async (req, res, pgPool) => {
       pgPool,
       fetchParticipantChangeRates)
   } else if (
-    req.method === 'GET'
-    && segs[0] === 'participants'
-    && segs[1] === 'scheduled-rewards'
+    req.method === 'GET' &&
+    segs[0] === 'participants' &&
+    segs[1] === 'scheduled-rewards'
   ) {
     await getStatsWithFilterAndCaching(
       pathname,

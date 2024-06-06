@@ -113,9 +113,8 @@ export const fetchParticipantChangeRates = async (pgPool, filter) => {
 }
 
 /**
- * 
- * @param {import('pg').Pool} pgPool 
- * @param {import('./typings').Filter} filter 
+ * @param {import('pg').Pool} pgPool
+ * @param {import('./typings').Filter} filter
  */
 export const fetchParticipantScheduledRewards = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
