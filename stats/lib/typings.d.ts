@@ -7,4 +7,5 @@ export interface Logger {
 export interface Filter {
   from: string;
   to: string;
+  address?: string;
 }

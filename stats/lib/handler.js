@@ -7,6 +7,7 @@ import {
   fetchMinersRSRSummary,
   fetchMonthlyParticipants,
   fetchParticipantChangeRates,
+  fetchParticipantScheduledRewards,
   fetchRetrievalSuccessRate
 } from './stats-fetchers.js'
 
@@ -70,6 +71,17 @@ const handler = async (req, res, pgPool) => {
       res,
       pgPool,
       fetchParticipantChangeRates)
+  } else if (
+    req.method === 'GET'
+    && segs[0] === 'participants'
+    && segs[1] === 'scheduled-rewards'
+  ) {
+    await getStatsWithFilterAndCaching(
+      pathname,
+      searchParams,
+      res,
+      pgPool,
+      fetchParticipantScheduledRewards)
   } else if (req.method === 'GET' && segs.join('/') === 'miners/retrieval-success-rate/summary') {
     await getStatsWithFilterAndCaching(
       pathname,
