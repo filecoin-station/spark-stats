@@ -163,17 +163,17 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /transfers/daily', () => {
     it('returns daily total Rewards sent for the given date range', async () => {
       await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-10', [
-        { to_address: 'to1', amount: 100 }
+        { to_address: 'to1', amount: 100, last_checked_block: 1 }
       ])
       await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-11', [
-        { to_address: 'to2', amount: 150 }
+        { to_address: 'to2', amount: 150, last_checked_block: 1 }
       ])
       await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-12', [
-        { to_address: 'to2', amount: 300 },
-        { to_address: 'to3', amount: 250 }
+        { to_address: 'to2', amount: 300, last_checked_block: 1 },
+        { to_address: 'to3', amount: 250, last_checked_block: 1 }
       ])
       await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-13', [
-        { to_address: 'to1', amount: 100 }
+        { to_address: 'to1', amount: 100, last_checked_block: 1 }
       ])
 
       const res = await fetch(
@@ -208,12 +208,13 @@ const givenDailyStationMetrics = async (pgPoolEvaluateDb, day, stationStats) => 
 
 const givenDailyRewardTransferMetrics = async (pgPoolStatsDb, day, transferStats) => {
   await pgPoolStatsDb.query(`
-    INSERT INTO daily_reward_transfers (day, to_address, amount)
-    SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount
+    INSERT INTO daily_reward_transfers (day, to_address, amount, last_checked_block)
+    SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount, UNNEST($4::int[]) AS last_checked_block
     ON CONFLICT DO NOTHING
     `, [
     day,
     transferStats.map(s => s.to_address),
-    transferStats.map(s => s.amount)
+    transferStats.map(s => s.amount),
+    transferStats.map(s => s.last_checked_block)
   ])
 }

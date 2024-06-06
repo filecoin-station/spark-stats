@@ -36,8 +36,8 @@ describe('platform-stats-generator', () => {
 
   describe('updateDailyTransferStats', () => {
     it('should correctly update daily Transfer stats with new transfer events', async () => {
-      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 100, blockNumber: 1 })
-      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 200, blockNumber: 1 })
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 100 }, 1)
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 200 }, 1)
 
       const { rows } = await pgPool.query(`
         SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
@@ -48,18 +48,18 @@ describe('platform-stats-generator', () => {
     })
 
     it('should handle multiple addresses in daily Transfer stats', async () => {
-      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 50, blockNumber: 1 })
-      await updateDailyTransferStats(pgPool, { to_address: 'address2', amount: 150, blockNumber: 1 })
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 50 }, 1)
+      await updateDailyTransferStats(pgPool, { to_address: 'address2', amount: 150 }, 1)
 
       const { rows } = await pgPool.query(`
-        SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
+        SELECT day::TEXT, to_address, amount, last_checked_block FROM daily_reward_transfers
         ORDER BY to_address
       `)
       assert.strictEqual(rows.length, 2)
 
       assert.deepStrictEqual(rows, [
-        { day: today, to_address: 'address1', amount: '50' },
-        { day: today, to_address: 'address2', amount: '150' }
+        { day: today, to_address: 'address1', amount: '50', last_checked_block: 1 },
+        { day: today, to_address: 'address2', amount: '150', last_checked_block: 1 }
       ])
     })
   })

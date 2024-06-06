@@ -1,5 +1,6 @@
 import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
+import * as Sentry from '@sentry/node'
 
 import { RPC_URL, rpcHeaders, OBSERVATION_INTERVAL_MS } from '../lib/config.js'
 import { getPgPool } from '../lib/db.js'
@@ -15,6 +16,11 @@ const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpact
 
 // Listen for Transfer events from the IE contract
 while (true) {
-  observeTransferEvents(pgPool, ieContract, provider)
+  try {
+    await observeTransferEvents(pgPool, ieContract, provider)
+  } catch (e) {
+    console.error(e)
+    Sentry.captureException(e)
+  }
   await new Promise(resolve => setTimeout(resolve, OBSERVATION_INTERVAL_MS))
 }
