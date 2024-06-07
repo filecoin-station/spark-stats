@@ -1,12 +1,22 @@
 import { updateDailyTransferStats } from './platform-stats.js'
 
 /**
+ * Observe all events
+ * @param {import('pg').Pool} pgPool
+ * @param {import('ethers').Contract} ieContract
+ * @param {import('ethers').Provider} provider
+ */
+export const observe = async (pgPool, ieContract, provider) => {
+  await observeTransferEvents(pgPool, ieContract, provider)
+}
+
+/**
  * Observe the transfer events on the Filecoin blockchain
  * @param {import('pg').Pool} pgPool
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
-export const observeTransferEvents = async (pgPool, ieContract, provider) => {
+const observeTransferEvents = async (pgPool, ieContract, provider) => {
   const { rows } = await pgPool.query(
     'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
   )

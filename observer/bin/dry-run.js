@@ -2,7 +2,7 @@ import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { observeTransferEvents } from '../lib/observer.js'
+import { observe } from '../lib/observer.js'
 import { getPgPool } from '../lib/db.js'
 
 /** @type {pg.Pool} */
@@ -16,6 +16,6 @@ const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpact
 
 await pgPool.query('DELETE FROM daily_reward_transfers')
 
-await observeTransferEvents(pgPool, ieContract, provider)
+await observe(pgPool, ieContract, provider)
 
 await pgPool.end()

@@ -5,7 +5,7 @@ import timers from 'node:timers/promises'
 
 import { RPC_URL, rpcHeaders, OBSERVATION_INTERVAL_MS } from '../lib/config.js'
 import { getPgPool } from '../lib/db.js'
-import { observeTransferEvents } from '../lib/observer.js'
+import { observe } from '../lib/observer.js'
 
 const pgPool = await getPgPool()
 
@@ -15,10 +15,10 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
-// Listen for Transfer events from the IE contract
+// Listen for events from the IE contract
 while (true) {
   try {
-    await observeTransferEvents(pgPool, ieContract, provider)
+    await observe(pgPool, ieContract, provider)
   } catch (e) {
     console.error(e)
     Sentry.captureException(e)
