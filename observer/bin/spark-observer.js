@@ -15,13 +15,15 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
-// Listen for events from the IE contract
 while (true) {
+  const start = new Date()
   try {
     await observe(pgPool, ieContract, provider)
   } catch (e) {
     console.error(e)
     Sentry.captureException(e)
   }
-  await timers.setTimeout(OBSERVATION_INTERVAL_MS)
+  const dt = new Date() - start
+  console.log(`Observation took ${dt}ms`)
+  await timers.setTimeout(OBSERVATION_INTERVAL_MS - dt)
 }

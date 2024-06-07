@@ -1,4 +1,5 @@
 import { updateDailyTransferStats } from './platform-stats.js'
+import { updateDailyScheduledRewardsStats } from './scheduled-rewards.js'
 
 /**
  * Observe all events
@@ -7,7 +8,10 @@ import { updateDailyTransferStats } from './platform-stats.js'
  * @param {import('ethers').Provider} provider
  */
 export const observe = async (pgPool, ieContract, provider) => {
-  await observeTransferEvents(pgPool, ieContract, provider)
+  await Promise.all([
+    observeTransferEvents(pgPool, ieContract, provider),
+    observeScheduledRewards(pgPool, ieContract, provider)
+  ])
 }
 
 /**
@@ -47,3 +51,23 @@ const observeTransferEvents = async (pgPool, ieContract, provider) => {
     await updateDailyTransferStats(pgPool, transferEvent, currentBlockNumber)
   }
 }
+
+/**
+ * Observe scheduled rewards on the Filecoin blockchain
+ * @param {import('pg').Pool} pgPool
+ * @param {import('ethers').Contract} ieContract
+ * @param {import('ethers').Provider} provider
+ */
+const observeScheduledRewards = async (pgPool, ieContract, provider) => {
+  console.log('Querying scheduled rewards from impact evaluator')
+  const participants = [] // TODO
+  for (const address of participants) {
+    const amount = await ieContract.scheduledRewards(address)
+    console.log('Scheduled rewards for', address, amount)
+    await updateDailyScheduledRewardsStats(
+      pgPool,
+      { address, amount }
+    )
+  }
+}
+
