@@ -3,7 +3,7 @@ import http from 'node:http'
 import { once } from 'node:events'
 import pg from 'pg'
 import { createHandler } from '../lib/handler.js'
-import { EVALUATE_DB_URL } from '../lib/config.js'
+import { DATABASE_URL, EVALUATE_DB_URL } from '../lib/config.js'
 
 const {
   PORT = 8080,
@@ -11,8 +11,7 @@ const {
   REQUEST_LOGGING = 'true'
 } = process.env
 
-const pgPool = new pg.Pool({
-  connectionString: EVALUATE_DB_URL,
+const pgPoolConfig = {
   // allow the pool to close all connections and become empty
   min: 0,
   // this values should correlate with service concurrency hard_limit configured in fly.toml
@@ -23,17 +22,31 @@ const pgPool = new pg.Pool({
   idleTimeoutMillis: 1000,
   // automatically close connections older than 60 seconds
   maxLifetimeSeconds: 60
-})
-
-pgPool.on('error', err => {
+}
+const pgPoolErrFn = err => {
   // Prevent crashing the process on idle client errors, the pool will recover
   // itself. If all connections are lost, the process will still crash.
   // https://github.com/brianc/node-postgres/issues/1324#issuecomment-308778405
   console.error('An idle client has experienced an error', err.stack)
-})
+}
 
+// Connect and set up the Evaluate DB
+const pgPoolEvaluateDb = new pg.Pool({
+  connectionString: EVALUATE_DB_URL,
+  ...pgPoolConfig
+})
+pgPoolEvaluateDb.on('error', pgPoolErrFn)
 // Check that we can talk to the database
-await pgPool.query('SELECT 1')
+await pgPoolEvaluateDb.query('SELECT 1')
+
+// Connect and set up the Stats DB
+const pgPoolStatsDb = new pg.Pool({
+  connectionString: DATABASE_URL,
+  ...pgPoolConfig
+})
+pgPoolStatsDb.on('error', pgPoolErrFn)
+// Check that we can talk to the database
+await pgPoolStatsDb.query('SELECT 1')
 
 const logger = {
   error: console.error,
@@ -42,7 +55,8 @@ const logger = {
 }
 
 const handler = createHandler({
-  pgPool,
+  pgPoolEvaluateDb,
+  pgPoolStatsDb,
   logger
 })
 const server = http.createServer(handler)
