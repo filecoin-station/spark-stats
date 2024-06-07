@@ -1,6 +1,7 @@
 import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
+import timers from 'node:timers/promises'
 
 import { RPC_URL, rpcHeaders, OBSERVATION_INTERVAL_MS } from '../lib/config.js'
 import { getPgPool } from '../lib/db.js'
