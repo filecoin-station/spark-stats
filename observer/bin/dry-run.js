@@ -1,12 +1,11 @@
 import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
-import * as Sentry from '@sentry/node'
-import timers from 'node:timers/promises'
 
-import { RPC_URL, rpcHeaders, OBSERVATION_INTERVAL_MS } from '../lib/config.js'
-import { getPgPool } from '../lib/db.js'
+import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { observeTransferEvents } from '../lib/observer.js'
+import { getPgPool } from '../lib/db.js'
 
+/** @type {pg.Pool} */
 const pgPool = await getPgPool()
 
 const fetchRequest = new ethers.FetchRequest(RPC_URL)
@@ -15,13 +14,8 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
-// Listen for Transfer events from the IE contract
-while (true) {
-  try {
-    await observeTransferEvents(pgPool, ieContract, provider)
-  } catch (e) {
-    console.error(e)
-    Sentry.captureException(e)
-  }
-  await timers.setTimeout(OBSERVATION_INTERVAL_MS)
-}
+await pgPool.query('DELETE FROM daily_reward_transfers')
+
+await observeTransferEvents(pgPool, ieContract, provider)
+
+await pgPool.end()

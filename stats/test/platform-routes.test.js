@@ -6,23 +6,27 @@ import createDebug from 'debug'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { EVALUATE_DB_URL } from '../lib/config.js'
+import { DATABASE_URL, EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
   /** @type {pg.Pool} */
-  let pgPool
+  let pgPoolEvaluateDb
+  /** @type {pg.Pool} */
+  let pgPoolStatsDb
   /** @type {http.Server} */
   let server
   /** @type {string} */
   let baseUrl
 
   before(async () => {
-    pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
+    pgPoolEvaluateDb = new pg.Pool({ connectionString: EVALUATE_DB_URL })
+    pgPoolStatsDb = new pg.Pool({ connectionString: DATABASE_URL })
 
     const handler = createHandler({
-      pgPool,
+      pgPoolEvaluateDb,
+      pgPoolStatsDb,
       logger: {
         info: debug,
         error: console.error,
@@ -39,26 +43,28 @@ describe('Platform Routes HTTP request handler', () => {
   after(async () => {
     server.closeAllConnections()
     server.close()
-    await pgPool.end()
+    await pgPoolEvaluateDb.end()
+    await pgPoolStatsDb.end()
   })
 
   beforeEach(async () => {
-    await pgPool.query('DELETE FROM daily_stations')
+    await pgPoolEvaluateDb.query('DELETE FROM daily_stations')
+    await pgPoolStatsDb.query('DELETE FROM daily_reward_transfers')
   })
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
         { station_id: 'station2', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
         { station_id: 'station2', accepted_measurement_count: 2 },
         { station_id: 'station3', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-13', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-13', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
 
@@ -82,25 +88,25 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /stations/monthly', () => {
     it('returns monthly station metrics for the given date range ignoring the day number', async () => {
       // before the date range
-      await givenDailyStationMetrics(pgPool, '2023-12-31', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2023-12-31', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
       // in the date range
-      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
         { station_id: 'station2', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
         { station_id: 'station2', accepted_measurement_count: 2 },
         { station_id: 'station3', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-02-13', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-02-13', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
       // after the date range
-      await givenDailyStationMetrics(pgPool, '2024-03-01', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-03-01', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
 
@@ -123,17 +129,17 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /measurements/daily', () => {
     it('returns daily total accepted measurement count for the given date range', async () => {
-      await givenDailyStationMetrics(pgPool, '2024-01-10', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-11', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
         { station_id: 'station2', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-12', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
         { station_id: 'station2', accepted_measurement_count: 2 },
         { station_id: 'station3', accepted_measurement_count: 1 }
       ])
-      await givenDailyStationMetrics(pgPool, '2024-01-13', [
+      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-13', [
         { station_id: 'station1', accepted_measurement_count: 1 }
       ])
 
@@ -153,10 +159,43 @@ describe('Platform Routes HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /transfers/daily', () => {
+    it('returns daily total Rewards sent for the given date range', async () => {
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-10', [
+        { to_address: 'to1', amount: 100, last_checked_block: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-11', [
+        { to_address: 'to2', amount: 150, last_checked_block: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-12', [
+        { to_address: 'to2', amount: 300, last_checked_block: 1 },
+        { to_address: 'to3', amount: 250, last_checked_block: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-13', [
+        { to_address: 'to1', amount: 100, last_checked_block: 1 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          '/transfers/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { day: '2024-01-11', amount: '150' },
+        { day: '2024-01-12', amount: '550' }
+      ])
+    })
+  })
 })
 
-const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
-  await pgPool.query(`
+const givenDailyStationMetrics = async (pgPoolEvaluateDb, day, stationStats) => {
+  await pgPoolEvaluateDb.query(`
     INSERT INTO daily_stations (day, station_id, accepted_measurement_count)
     SELECT $1 AS day, UNNEST($2::text[]) AS station_id, UNNEST($3::int[]) AS accepted_measurement_count
     ON CONFLICT DO NOTHING
@@ -164,5 +203,18 @@ const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
     day,
     stationStats.map(s => s.station_id),
     stationStats.map(s => s.accepted_measurement_count)
+  ])
+}
+
+const givenDailyRewardTransferMetrics = async (pgPoolStatsDb, day, transferStats) => {
+  await pgPoolStatsDb.query(`
+    INSERT INTO daily_reward_transfers (day, to_address, amount, last_checked_block)
+    SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount, UNNEST($4::int[]) AS last_checked_block
+    ON CONFLICT DO NOTHING
+    `, [
+    day,
+    transferStats.map(s => s.to_address),
+    transferStats.map(s => s.amount),
+    transferStats.map(s => s.last_checked_block)
   ])
 }
