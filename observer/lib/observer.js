@@ -1,8 +1,6 @@
 import { updateDailyTransferStats } from './platform-stats.js'
-import { updateDailyScheduledRewardsStats } from './scheduled-rewards.js'
 
 /**
- * Observe all events
  * @param {import('pg').Pool} pgPool
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
@@ -10,7 +8,7 @@ import { updateDailyScheduledRewardsStats } from './scheduled-rewards.js'
 export const observe = async (pgPool, ieContract, provider) => {
   await Promise.all([
     observeTransferEvents(pgPool, ieContract, provider),
-    observeScheduledRewards(pgPool, ieContract, provider)
+    observeScheduledRewards(pgPool, ieContract)
   ])
 }
 
@@ -56,18 +54,30 @@ const observeTransferEvents = async (pgPool, ieContract, provider) => {
  * Observe scheduled rewards on the Filecoin blockchain
  * @param {import('pg').Pool} pgPool
  * @param {import('ethers').Contract} ieContract
- * @param {import('ethers').Provider} provider
  */
-const observeScheduledRewards = async (pgPool, ieContract, provider) => {
+const observeScheduledRewards = async (pgPool, ieContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
-  const participants = [] // TODO
-  for (const address of participants) {
-    const amount = await ieContract.scheduledRewards(address)
-    console.log('Scheduled rewards for', address, amount)
-    await updateDailyScheduledRewardsStats(
-      pgPool,
-      { address, amount }
-    )
+  for (let i = 0; ; i++) {
+    let address
+    try {
+      address = await ieContract.readyForTransfer(i)
+    } catch (err) {
+      break
+    }
+    let scheduledRewards
+    try {
+      scheduledRewards = await ieContract.rewardsScheduledFor(address)
+    } catch (err) {
+      console.error('Error querying scheduled rewards for', address, { cause: err })
+      continue
+    }
+    console.log('Scheduled rewards for', address, scheduledRewards)
+    await pgPool.query(`
+      INSERT INTO daily_scheduled_rewards (day, address, scheduled_rewards)
+      VALUES (now(), $1, $2)
+      ON CONFLICT (day, address) DO UPDATE SET
+      scheduled_rewards = EXCLUDED.scheduled_rewards
+    `, [address, scheduledRewards])
   }
 }
 
