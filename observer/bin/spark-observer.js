@@ -23,5 +23,5 @@ while (true) {
     console.error(e)
     Sentry.captureException(e)
   }
-  await new Promise(resolve => setTimeout(resolve, OBSERVATION_INTERVAL_MS))
+  await timers.setTimeout(OBSERVATION_INTERVAL_MS)
 }
