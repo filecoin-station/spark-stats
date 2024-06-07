@@ -53,7 +53,7 @@ const handler = async (req, res, pgPoolEvaluateDb, pgPoolStatsDb) => {
     'participants/monthly': fetchMonthlyParticipants,
     'participants/change-rates': fetchParticipantChangeRates,
     'participants/scheduled-rewards': fetchParticipantScheduledRewards,
-    'miners/retrieval-success-rate/summary': fetchMinersRSRSummary,
+    'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
   }
 
   const fetchStatsFn = fetchFunctionMap[segs.join('/')]
