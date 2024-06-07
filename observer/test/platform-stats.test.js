@@ -37,14 +37,15 @@ describe('platform-stats-generator', () => {
   describe('updateDailyTransferStats', () => {
     it('should correctly update daily Transfer stats with new transfer events', async () => {
       await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 100 }, 1)
-      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 200 }, 1)
+      await updateDailyTransferStats(pgPool, { to_address: 'address1', amount: 200 }, 2)
 
       const { rows } = await pgPool.query(`
-        SELECT day::TEXT, to_address, amount FROM daily_reward_transfers
-        WHERE to_address = $1
-      `, ['address1'])
+        SELECT day::TEXT, to_address, amount, last_checked_block FROM daily_reward_transfers
+        `)
       assert.strictEqual(rows.length, 1)
-      assert.deepStrictEqual(rows, [{ day: today, to_address: 'address1', amount: '300' }])
+      assert.deepStrictEqual(rows, [{
+        day: today, to_address: 'address1', amount: '300', last_checked_block: 2
+      }])
     })
 
     it('should handle multiple addresses in daily Transfer stats', async () => {
