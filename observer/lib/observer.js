@@ -7,9 +7,10 @@ import { updateDailyTransferStats } from './platform-stats.js'
  * @param {import('ethers').Provider} provider
  */
 export const observeTransferEvents = async (pgPool, ieContract, provider) => {
-  const lastCheckedBlock = await pgPool.query(
+  const rows = await pgPool.query(
     'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
-  ).then(res => res.rows[0].last_checked_block)
+  )
+  const lastCheckedBlock = res.rows[0].last_checked_block
 
   console.log('Querying impact evaluator Transfer events after block', lastCheckedBlock)
   let events
