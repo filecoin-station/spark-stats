@@ -80,4 +80,3 @@ const observeScheduledRewards = async (pgPool, ieContract) => {
     `, [address, scheduledRewards])
   }
 }
-
