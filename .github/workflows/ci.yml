@@ -57,6 +57,7 @@ jobs:
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
       NPM_CONFIG_WORKSPACE: observer
     steps:
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
