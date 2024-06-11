@@ -66,7 +66,12 @@ const observeScheduledRewards = async (pgPool, ieContract) => {
     try {
       scheduledRewards = await ieContract.rewardsScheduledFor(address)
     } catch (err) {
-      console.error('Error querying scheduled rewards for', address, { cause: err })
+      Sentry.captureException(err)
+      console.error(
+        'Error querying scheduled rewards for',
+        address,
+        { cause: err }
+      )
       continue
     }
     console.log('Scheduled rewards for', address, scheduledRewards)
