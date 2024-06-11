@@ -5,9 +5,7 @@ const {
   RPC_URLS = 'https://api.node.glif.io/rpc/v0',
   GLIF_TOKEN,
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
-  DATABASE_URL = 'postgres://localhost:5432/spark_stats',
-  // Sleep one hour between observations
-  OBSERVATION_INTERVAL_MS = 1000 * 60 * 60
+  DATABASE_URL = 'postgres://localhost:5432/spark_stats'
 } = process.env
 
 const rpcUrls = RPC_URLS.split(',')
@@ -22,6 +20,5 @@ if (RPC_URL.includes('glif')) {
 export {
   RPC_URL,
   DATABASE_URL,
-  rpcHeaders,
-  OBSERVATION_INTERVAL_MS
+  rpcHeaders
 }

@@ -3,9 +3,12 @@ import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
 
-import { RPC_URL, rpcHeaders, OBSERVATION_INTERVAL_MS } from '../lib/config.js'
+import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { getPgPool } from '../lib/db.js'
-import { observe } from '../lib/observer.js'
+import {
+  observeTransferEvents,
+  observeScheduledRewards
+} from '../lib/observer.js'
 
 const pgPool = await getPgPool()
 
@@ -15,15 +18,35 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
-while (true) {
-  const start = new Date()
-  try {
-    await observe(pgPool, ieContract, provider)
-  } catch (e) {
-    console.error(e)
-    Sentry.captureException(e)
-  }
-  const dt = new Date() - start
-  console.log(`Observation took ${dt}ms`)
-  await timers.setTimeout(OBSERVATION_INTERVAL_MS - dt)
-}
+const ONE_HOUR = 60 * 60 * 1000
+
+await Promise.all([
+  (async () => {
+    while (true) {
+      const start = new Date()
+      try {
+        await observeTransferEvents(pgPool, ieContract, provider)
+      } catch (e) {
+        console.error(e)
+        Sentry.captureException(e)
+      }
+      const dt = new Date() - start
+      console.log(`Observing Transfer events took ${dt}ms`)
+      await timers.setTimeout(ONE_HOUR - dt)
+    }
+  })(),
+  (async () => {
+    while (true) {
+      const start = new Date()
+      try {
+        await observeScheduledRewards(pgPool, ieContract, provider)
+      } catch (e) {
+        console.error(e)
+        Sentry.captureException(e)
+      }
+      const dt = new Date() - start
+      console.log(`Observing scheduled rewards took ${dt}ms`)
+      await timers.setTimeout((24 * ONE_HOUR) - dt)
+    }
+  })()
+])
