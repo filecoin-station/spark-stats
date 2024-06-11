@@ -56,13 +56,13 @@ const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
  * @param {import('../../common/typings').pgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  */
-const observeScheduledRewards = async (pgPools, ieContract) => {
+export const observeScheduledRewards = async (pgPools, ieContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
-  const rows = await pgPools.evaluate.query(`
+  const { rows } = await pgPools.evaluate.query(`
     SELECT participant_address
-    FROM participants
-    JOIN daily_participants USING (participant_id)
-    WHERE day >= now() - interval '3 days'
+    FROM participants p
+    JOIN daily_participants d ON p.id = d.participant_id
+    WHERE d.day >= now() - interval '3 days'
   `)
   for (const { participant_address: address } of rows) {
     let scheduledRewards
@@ -82,7 +82,7 @@ const observeScheduledRewards = async (pgPools, ieContract) => {
       INSERT INTO daily_scheduled_rewards
       (day, participant_address, scheduled_rewards)
       VALUES (now(), $1, $2)
-      ON CONFLICT (day, id) DO UPDATE SET
+      ON CONFLICT (day, participant_address) DO UPDATE SET
       scheduled_rewards = EXCLUDED.scheduled_rewards
     `, [address, scheduledRewards])
   }
