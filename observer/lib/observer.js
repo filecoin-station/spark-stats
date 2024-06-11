@@ -1,4 +1,5 @@
 import { updateDailyTransferStats } from './platform-stats.js'
+import * as Sentry from '@sentry/node'
 
 /**
  * @param {import('pg').Pool} pgPool
@@ -57,13 +58,10 @@ const observeTransferEvents = async (pgPool, ieContract, provider) => {
  */
 const observeScheduledRewards = async (pgPool, ieContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
-  for (let i = 0; ; i++) {
-    let address
-    try {
-      address = await ieContract.readyForTransfer(i)
-    } catch (err) {
-      break
-    }
+  const rows = await pgPool.query(`
+    SELECT participant_address FROM participants
+  `)
+  for (const { participant_address: address } of rows) {
     let scheduledRewards
     try {
       scheduledRewards = await ieContract.rewardsScheduledFor(address)
