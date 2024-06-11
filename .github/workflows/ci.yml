@@ -54,6 +54,7 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
+      EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - uses: actions/checkout@v4
