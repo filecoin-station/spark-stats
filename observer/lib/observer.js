@@ -59,7 +59,10 @@ const observeTransferEvents = async (pgPool, ieContract, provider) => {
 const observeScheduledRewards = async (pgPool, ieContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
   const rows = await pgPool.query(`
-    SELECT participant_address FROM participants
+    SELECT participant_address
+    FROM participants
+    JOIN daily_participants USING (participant_address)
+    WHERE day >= now() - interval '3 days'
   `)
   for (const { participant_address: address } of rows) {
     let scheduledRewards
