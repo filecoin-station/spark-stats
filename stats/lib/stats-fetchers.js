@@ -19,6 +19,8 @@ export const fetchRetrievalSuccessRate = async (pgPool, filter) => {
   ])
   const stats = rows.map(r => ({
     day: r.day,
+    total: r.total,
+    successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
   }))
   return stats
@@ -145,6 +147,8 @@ export const fetchMinersRSRSummary = async (pgPool, filter) => {
   ])
   const stats = rows.map(r => ({
     miner_id: r.miner_id,
+    total: r.total,
+    successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
   }))
   return stats
