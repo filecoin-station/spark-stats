@@ -2,25 +2,25 @@ import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
 
 /**
- * @param {import('pg').Pool} pgPool
+ * @param {import('../../common/typings').pgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
-export const observe = async (pgPool, ieContract, provider) => {
+export const observe = async (pgPools, ieContract, provider) => {
   await Promise.all([
-    observeTransferEvents(pgPool, ieContract, provider),
-    observeScheduledRewards(pgPool, ieContract)
+    observeTransferEvents(pgPools.stats, ieContract, provider),
+    observeScheduledRewards(pgPools, ieContract)
   ])
 }
 
 /**
  * Observe the transfer events on the Filecoin blockchain
- * @param {import('pg').Pool} pgPool
+ * @param {import('pg').Pool} pgPoolStats
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
-const observeTransferEvents = async (pgPool, ieContract, provider) => {
-  const { rows } = await pgPool.query(
+const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
+  const { rows } = await pgPoolStats.query(
     'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
   )
   const lastCheckedBlock = rows[0].last_checked_block
@@ -47,21 +47,21 @@ const observeTransferEvents = async (pgPool, ieContract, provider) => {
       amount: event.args.amount
     }
     console.log('Transfer event:', transferEvent)
-    await updateDailyTransferStats(pgPool, transferEvent, currentBlockNumber)
+    await updateDailyTransferStats(pgPoolStats, transferEvent, currentBlockNumber)
   }
 }
 
 /**
  * Observe scheduled rewards on the Filecoin blockchain
- * @param {import('pg').Pool} pgPool
+ * @param {import('../../common/typings').pgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  */
-const observeScheduledRewards = async (pgPool, ieContract) => {
+const observeScheduledRewards = async (pgPools, ieContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
-  const rows = await pgPool.query(`
+  const rows = await pgPools.evaluate.query(`
     SELECT participant_address
     FROM participants
-    JOIN daily_participants USING (participant_address)
+    JOIN daily_participants USING (participant_id)
     WHERE day >= now() - interval '3 days'
   `)
   for (const { participant_address: address } of rows) {
@@ -78,10 +78,11 @@ const observeScheduledRewards = async (pgPool, ieContract) => {
       continue
     }
     console.log('Scheduled rewards for', address, scheduledRewards)
-    await pgPool.query(`
-      INSERT INTO daily_scheduled_rewards (day, address, scheduled_rewards)
+    await pgPools.stats.query(`
+      INSERT INTO daily_scheduled_rewards
+      (day, participant_address, scheduled_rewards)
       VALUES (now(), $1, $2)
-      ON CONFLICT (day, address) DO UPDATE SET
+      ON CONFLICT (day, id) DO UPDATE SET
       scheduled_rewards = EXCLUDED.scheduled_rewards
     `, [address, scheduledRewards])
   }

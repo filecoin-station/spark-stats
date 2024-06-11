@@ -1,6 +1,6 @@
 CREATE TABLE daily_scheduled_rewards (
   day DATE NOT NULL,
-  address TEXT NOT NULL,
+  participant_address TEXT NOT NULL,
   scheduled_rewards NUMERIC NOT NULL,
-  PRIMARY KEY (day, address)
+  PRIMARY KEY (day, participant_address)
 );

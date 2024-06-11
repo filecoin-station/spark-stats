@@ -1,12 +1,13 @@
-import {
-  DATABASE_URL,
-  EVALUATE_DB_URL
-} from '../lib/config.js'
-import { migrateWithPgConfig as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
-import { migrateWithPgConfig as migrateStatsDB } from '@filecoin-station/spark-stats-db-migrations'
+import { getPgPools } from '../../common/db.js'
+import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
+import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db-migrations'
+
+const pgPools = await getPgPools()
 
 console.log('Migrating spark_evaluate database')
-await migrateEvaluateDB({ connectionString: EVALUATE_DB_URL })
+await migrateEvaluateDB(pgPools.evaluate)
 
 console.log('Migrating spark_stats database')
-await migrateStatsDB({ connectionString: DATABASE_URL })
+await migrateStatsDB(pgPools.stats)
+
+await pgPools.end()

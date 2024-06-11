@@ -4,13 +4,13 @@ import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { getPgPool } from '../lib/db.js'
+import { getPgPools } from '../../common/db.js'
 import {
   observeTransferEvents,
   observeScheduledRewards
 } from '../lib/observer.js'
 
-const pgPool = await getPgPool()
+const pgPools = await getPgPools()
 
 const fetchRequest = new ethers.FetchRequest(RPC_URL)
 fetchRequest.setHeader('Authorization', rpcHeaders.Authorization || '')
@@ -25,7 +25,7 @@ await Promise.all([
     while (true) {
       const start = new Date()
       try {
-        await observeTransferEvents(pgPool, ieContract, provider)
+        await observeTransferEvents(pgPools, ieContract, provider)
       } catch (e) {
         console.error(e)
         Sentry.captureException(e)
@@ -39,7 +39,7 @@ await Promise.all([
     while (true) {
       const start = new Date()
       try {
-        await observeScheduledRewards(pgPool, ieContract, provider)
+        await observeScheduledRewards(pgPools, ieContract, provider)
       } catch (e) {
         console.error(e)
         Sentry.captureException(e)

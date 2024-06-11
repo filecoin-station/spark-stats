@@ -1,19 +1,18 @@
 import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
-import pg from 'pg'
 import createDebug from 'debug'
 import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
+import { getEvaluate } from '../../common/db.js'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
-import { EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
 describe('HTTP request handler', () => {
-  /** @type {pg.Pool} */
+  /** @type {import('pg').Pool} */
   let pgPool
   /** @type {http.Server} */
   let server
@@ -22,11 +21,13 @@ describe('HTTP request handler', () => {
 
   before(async () => {
     // handler doesn't use Stats DB
-    pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
+    pgPool = await getEvaluate()
 
     const handler = createHandler({
-      pgPoolEvaluateDb: pgPool,
-      pgPoolStatsDb: undefined,
+      pgPools: {
+        stats: null,
+        evaluate: pgPool
+      },
       logger: {
         info: debug,
         error: console.error,
