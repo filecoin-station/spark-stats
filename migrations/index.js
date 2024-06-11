@@ -1,6 +1,5 @@
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import pg from 'pg'
 import Postgrator from 'postgrator'
 
 const migrationsDirectory = join(
@@ -10,7 +9,7 @@ const migrationsDirectory = join(
 )
 
 /**
- * @param {pg.Client} client
+ * @param {import('pg').Client} client
  */
 export const migrateWithPgClient = async (client) => {
   const postgrator = new Postgrator({
