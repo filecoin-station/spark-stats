@@ -8,7 +8,6 @@
     "stats"
   ],
   "scripts": {
-    "migrate": "npm run migrate --workspaces --if-present",
     "lint": "standard",
     "test:observer": "npm t -w observer",
     "test:stats": "npm t -w stats",

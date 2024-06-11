@@ -75,12 +75,6 @@ Next, you need to create `spark_evaluate` database.
 psql postgres://localhost:5432/ -c "CREATE DATABASE spark_evaluate"
 ```
 
-Finally, run database schema migration scripts.
-
-```bash
-npm run migrate
-```
-
 ### Run the test suite
 
 ```sh

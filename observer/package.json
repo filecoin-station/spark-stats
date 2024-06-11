@@ -3,7 +3,6 @@
   "type": "module",
   "private": true,
   "scripts": {
-    "migrate": "node bin/migrate.js",
     "start": "node bin/spark-observer.js",
     "lint": "standard",
     "test": "mocha"
