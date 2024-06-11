@@ -10,19 +10,6 @@ const migrationsDirectory = join(
 )
 
 /**
- *@param {pg.ClientConfig} pgConfig
- */
-export const migrateWithPgConfig = async (pgConfig) => {
-  const client = new pg.Client(pgConfig)
-  await client.connect()
-  try {
-    await migrateWithPgClient(client)
-  } finally {
-    await client.end()
-  }
-}
-
-/**
  * @param {pg.Client} client
  */
 export const migrateWithPgClient = async (client) => {
