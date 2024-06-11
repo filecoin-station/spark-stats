@@ -8,7 +8,7 @@ import { updateDailyTransferStats } from './platform-stats.js'
  */
 export const observeTransferEvents = async (pgPool, ieContract, provider) => {
   const { rows } = await pgPool.query(
-    'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
+    'SELECT MAX(last_checked_block) AS last_checked_block FROM daily_reward_transfers'
   )
   let queryFromBlock = rows[0].last_checked_block
   const currentBlockNumber = await provider.getBlockNumber()

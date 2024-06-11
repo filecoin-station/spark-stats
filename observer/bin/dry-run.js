@@ -18,4 +18,8 @@ await pgPool.query('DELETE FROM daily_reward_transfers')
 
 await observeTransferEvents(pgPool, ieContract, provider)
 
+// Do it a second time, without clearing the table.
+// This should find 0 events, unless rewards are currently being released.
+await observeTransferEvents(pgPool, ieContract, provider)
+
 await pgPool.end()
