@@ -1,7 +1,7 @@
 /**
  * @param {import('pg').Client} pgClient
  * @param {Object} transferEvent
- * @param {string} transferEvent.to_address
+ * @param {string} transferEvent.toAddress
  * @param {number} transferEvent.amount
  * @param {number} currentBlockNumber
  */
@@ -12,5 +12,5 @@ export const updateDailyTransferStats = async (pgClient, transferEvent, currentB
     ON CONFLICT (day, to_address) DO UPDATE SET
       amount = daily_reward_transfers.amount + EXCLUDED.amount,
       last_checked_block = EXCLUDED.last_checked_block
-  `, [transferEvent.to_address, transferEvent.amount, currentBlockNumber])
+  `, [transferEvent.toAddress, transferEvent.amount, currentBlockNumber])
 }
