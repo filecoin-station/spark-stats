@@ -9,10 +9,10 @@ describe('observer', () => {
     before(async () => {
       pgPools = await getPgPools()
     })
-  
+
     it('observes scheduled rewards', async () => {
-      await pgPools.evaluate.query(`DELETE FROM daily_participants`)
-      await pgPools.evaluate.query(`DELETE FROM participants`)
+      await pgPools.evaluate.query('DELETE FROM daily_participants')
+      await pgPools.evaluate.query('DELETE FROM participants')
       const { rows: insertRows } = await pgPools.evaluate.query(`
         INSERT INTO participants
         (participant_address)
