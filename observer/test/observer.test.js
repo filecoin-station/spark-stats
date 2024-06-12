@@ -42,12 +42,13 @@ describe('observer', () => {
       }
       await observeScheduledRewards(pgPools, ieContract)
       const { rows } = await pgPools.stats.query(`
-        SELECT *
+        SELECT participant_address, scheduled_rewards
         FROM daily_scheduled_rewards
       `)
-      assert.strictEqual(rows.length, 1)
-      assert.strictEqual(rows[0].participant_address, '0xCURRENT')
-      assert.strictEqual(rows[0].scheduled_rewards, '100')
+      assert.deepStrictEqual(rows, [{
+        participant_address: '0xCURRENT',
+        scheduled_rewards: '100'
+      }])
     })
     it('updates scheduled rewards', async () => {
       const ieContract = {
@@ -55,12 +56,13 @@ describe('observer', () => {
       }
       await observeScheduledRewards(pgPools, ieContract)
       const { rows } = await pgPools.stats.query(`
-        SELECT *
+        SELECT participant_address, scheduled_rewards
         FROM daily_scheduled_rewards
       `)
-      assert.strictEqual(rows.length, 1)
-      assert.strictEqual(rows[0].participant_address, '0xCURRENT')
-      assert.strictEqual(rows[0].scheduled_rewards, '200')
+      assert.deepStrictEqual(rows, [{
+        participant_address: '0xCURRENT',
+        scheduled_rewards: '200'
+      }])
     })
   })
 })
