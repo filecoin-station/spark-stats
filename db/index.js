@@ -1,5 +1,4 @@
 import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
-import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db'
 import pg from 'pg'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -76,19 +75,19 @@ export const getPgPools = async () => {
 /**
  * @param {pg.Client} client
  */
-export const migrateWithPgClient = async (client) => {
+export const migrateStatsDB = async (client) => {
   const postgrator = new Postgrator({
     migrationPattern: join(migrationsDirectory, '*'),
     driver: 'pg',
     execQuery: (query) => client.query(query)
   })
   console.log(
-    'Migrating DB schema from version %s to version %s',
+    'Migrating `spark-stats` DB schema from version %s to version %s',
     await postgrator.getDatabaseVersion(),
     await postgrator.getMaxVersion()
   )
 
   await postgrator.migrate()
 
-  console.log('Migrated DB schema to version', await postgrator.getDatabaseVersion())
+  console.log('Migrated `spark-stats` DB schema to version', await postgrator.getDatabaseVersion())
 }
