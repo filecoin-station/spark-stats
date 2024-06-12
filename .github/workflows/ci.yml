@@ -105,6 +105,8 @@ jobs:
       - run: npm ci
       - run: npm run migrate
       - run: npm run dry-run
+        env:
+            GLIF_TOKEN: ${{ secrets.GLIF_TOKEN }}
 
   docker-build:
     runs-on: ubuntu-latest
