@@ -22,7 +22,7 @@ describe('observer', () => {
       )
       await givenDailyParticipants(
         pgPools.evaluate,
-        `2000-01-01`,
+        '2000-01-01',
         ['0xOLD']
       )
     })
