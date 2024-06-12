@@ -3,6 +3,9 @@ import { observeScheduledRewards } from '../lib/observer.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 
+const getDayAsISOString = d => d.toISOString().split('T')[0]
+const today = () => getDayAsISOString(new Date())
+
 describe('observer', () => {
   describe('observeScheduledRewards', () => {
     let pgPools
@@ -14,17 +17,8 @@ describe('observer', () => {
     beforeEach(async () => {
       await pgPools.evaluate.query('DELETE FROM daily_participants')
       await pgPools.evaluate.query('DELETE FROM participants')
-      const today = new Date()
-      await givenDailyParticipants(
-        pgPools.evaluate,
-        `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`,
-        ['0xCURRENT']
-      )
-      await givenDailyParticipants(
-        pgPools.evaluate,
-        '2000-01-01',
-        ['0xOLD']
-      )
+      await givenDailyParticipants(pgPools.evaluate, today(), ['0xCURRENT'])
+      await givenDailyParticipants(pgPools.evaluate, '2000-01-01', ['0xOLD'])
     })
 
     it('observes scheduled rewards', async () => {
