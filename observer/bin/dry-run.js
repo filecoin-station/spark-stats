@@ -22,6 +22,6 @@ await Promise.all([
 
 // Do it a second time, without clearing the table.
 // This should find 0 events, unless rewards are currently being released.
-await observeTransferEvents(pgPool, ieContract, provider)
+await observeTransferEvents(pgPools.stats, ieContract, provider)
 
-await pgPool.end()
+await pgPools.stats.end()

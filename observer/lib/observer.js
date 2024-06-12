@@ -31,6 +31,8 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
     console.log('Transfer event:', transferEvent)
     await updateDailyTransferStats(pgPoolStats, transferEvent, currentBlockNumber)
   }
+
+  return events.length
 }
 
 /**
@@ -68,6 +70,4 @@ export const observeScheduledRewards = async (pgPools, ieContract) => {
       scheduled_rewards = EXCLUDED.scheduled_rewards
     `, [address, scheduledRewards])
   }
-
-  return events.length
 }
