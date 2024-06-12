@@ -10,7 +10,7 @@ export const observeTransferEvents = async (pgPool, ieContract, provider) => {
   const { rows } = await pgPool.query(
     'SELECT MAX(last_checked_block) AS last_checked_block FROM daily_reward_transfers'
   )
-  let queryFromBlock = rows[0].last_checked_block
+  let queryFromBlock = rows[0].last_checked_block + 1
   const currentBlockNumber = await provider.getBlockNumber()
 
   if (!queryFromBlock || queryFromBlock < currentBlockNumber - 1900) {
@@ -30,4 +30,6 @@ export const observeTransferEvents = async (pgPool, ieContract, provider) => {
     console.log('Transfer event:', transferEvent)
     await updateDailyTransferStats(pgPool, transferEvent, currentBlockNumber)
   }
+
+  return events.length
 }
