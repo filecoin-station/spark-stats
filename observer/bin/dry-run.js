@@ -15,6 +15,9 @@ const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpact
 
 await pgPools.stats.query('DELETE FROM daily_reward_transfers')
 
-await observe(pgPools, ieContract, provider)
+await Promise.all([
+  observeTransferEvents(pgPools.stats, ieContract, provider),
+  observeScheduledRewards(pgPools, ieContract)
+])
 
 await pgPools.end()
