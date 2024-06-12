@@ -202,7 +202,19 @@ describe('HTTP request handler', () => {
       /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-20', success_rate: 1 / 10 }
+        { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10' }
+      ])
+    })
+
+    it('preserves additional query string arguments when redirecting', async () => {
+      const day = today()
+      await givenRetrievalStats(pgPool, { day, total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPool, { day, total: 10, successful: 0, minerId: 'f1two' })
+      const res = await fetch(new URL('/retrieval-success-rate?nonzero=true', baseUrl), { redirect: 'follow' })
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day, success_rate: 0.1, successful: '1', total: '10' }
       ])
     })
   })
