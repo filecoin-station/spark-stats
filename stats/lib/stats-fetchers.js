@@ -28,7 +28,7 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
 
 export const fetchDailyParticipants = async (pgPools, filter) => {
   return await getDailyDistinctCount({
-    pkgPool: pgPools.evaluate,
+    pgPool: pgPools.evaluate,
     table: 'daily_participants',
     column: 'participant_id',
     filter,
