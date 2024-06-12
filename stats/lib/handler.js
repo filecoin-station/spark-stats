@@ -15,7 +15,7 @@ import { handlePlatformRoutes } from './platform-routes.js'
 
 /**
  * @param {object} args
- * @param {import('../../common/typings')} args.pgPools
+ * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
  * @param {import('pg').Pool} args.pgPoolStatsDb
  * @param {import('./typings').Logger} args.logger
  * @returns
@@ -38,7 +38,7 @@ export const createHandler = ({
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
- * @param {import('../../common/typings')} args.pgPools
+ * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
  */
 const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!

@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
 import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
-import { getEvaluate } from '../../common/db.js'
+import { getEvaluate } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'

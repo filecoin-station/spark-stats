@@ -2,7 +2,7 @@ import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
 
 /**
- * @param {import('../../common/typings').pgPools} pgPools
+ * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
@@ -47,7 +47,7 @@ const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
 
 /**
  * Observe scheduled rewards on the Filecoin blockchain
- * @param {import('../../common/typings').pgPools} pgPools
+ * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  */
 export const observeScheduledRewards = async (pgPools, ieContract) => {

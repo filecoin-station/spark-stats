@@ -1,6 +1,6 @@
 import assert from 'node:assert'
 import { observeScheduledRewards } from '../lib/observer.js'
-import { getPgPools } from '../../common/db.js'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 describe('observer', () => {
   describe('observeScheduledRewards', () => {

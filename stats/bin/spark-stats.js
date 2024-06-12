@@ -2,7 +2,7 @@ import '../lib/instrument.js'
 import http from 'node:http'
 import { once } from 'node:events'
 import { createHandler } from '../lib/handler.js'
-import { getPgPools } from '../../common/db.js'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 const {
   PORT = 8080,

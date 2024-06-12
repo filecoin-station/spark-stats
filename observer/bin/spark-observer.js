@@ -4,7 +4,7 @@ import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { getPgPools } from '../../common/db.js'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 import {
   observeTransferEvents,
   observeScheduledRewards

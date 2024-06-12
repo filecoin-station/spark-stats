@@ -1,3 +1,3 @@
-import { migrate } from '../../common/db.js'
+import { migrate } from '@filecoin-station/spark-stats-db'
 
 await migrate()

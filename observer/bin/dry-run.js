@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { observe } from '../lib/observer.js'
-import { getPgPools } from '../../common/db.js'
+import { getPgPools } from '../../db/index.js'
 
 const pgPools = await getPgPools()
 

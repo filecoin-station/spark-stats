@@ -2,7 +2,7 @@ import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
-import { getPgPools } from '../../common/db.js'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -10,7 +10,7 @@ import { createHandler } from '../lib/handler.js'
 const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
-  /** @type {import('../../common/typings').pgPools} */
+  /** @type {import('@filecoin-station/spark-stats-db').pgPools} */
   let pgPools
   let server
   /** @type {string} */
