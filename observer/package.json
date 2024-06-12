@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@filecoin-station/spark-impact-evaluator": "^1.1.1",
+    "@filecoin-station/spark-stats-db": "^1.0.0",
     "@filecoin-station/spark-stats-db-migrations": "^1.0.0",
     "@sentry/node": "^8.9.1",
     "debug": "^4.3.5",
