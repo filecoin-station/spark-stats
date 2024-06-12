@@ -2,7 +2,7 @@ import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
-import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
+import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 import { getEvaluatePgPool } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus } from './test-helpers.js'
@@ -356,16 +356,4 @@ const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) 
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
-}
-
-const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
-  const ids = await mapParticipantsToIds(pgPool, new Set(participantAddresses))
-  await pgPool.query(`
-    INSERT INTO daily_participants (day, participant_id)
-    SELECT $1 as day, UNNEST($2::INT[]) AS participant_id
-    ON CONFLICT DO NOTHING
-  `, [
-    day,
-    ids
-  ])
 }
