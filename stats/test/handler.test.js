@@ -1,19 +1,18 @@
 import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
-import pg from 'pg'
 import createDebug from 'debug'
-import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
+import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
+import { getEvaluatePgPool } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
-import { EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
 describe('HTTP request handler', () => {
-  /** @type {pg.Pool} */
+  /** @type {import('pg').Pool} */
   let pgPool
   /** @type {http.Server} */
   let server
@@ -22,11 +21,13 @@ describe('HTTP request handler', () => {
 
   before(async () => {
     // handler doesn't use Stats DB
-    pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
+    pgPool = await getEvaluatePgPool()
 
     const handler = createHandler({
-      pgPoolEvaluateDb: pgPool,
-      pgPoolStatsDb: undefined,
+      pgPools: {
+        stats: null,
+        evaluate: pgPool
+      },
       logger: {
         info: debug,
         error: console.error,
@@ -387,16 +388,4 @@ const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) 
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
-}
-
-const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
-  const ids = await mapParticipantsToIds(pgPool, new Set(participantAddresses))
-  await pgPool.query(`
-    INSERT INTO daily_participants (day, participant_id)
-    SELECT $1 as day, UNNEST($2::INT[]) AS participant_id
-    ON CONFLICT DO NOTHING
-  `, [
-    day,
-    ids
-  ])
 }

@@ -32,6 +32,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/change-rates
 
+- `GET /participants/scheduled-rewards?address=<address>&from=<day>&to=<day>`
+
+  http://stats.filspark.com/participants/scheduled-rewards
+
 - `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary

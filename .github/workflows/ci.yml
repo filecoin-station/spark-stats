@@ -54,13 +54,16 @@ jobs:
           --health-retries 5
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
+      EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
       NPM_CONFIG_WORKSPACE: observer
     steps:
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
       - run: npm ci
+      - run: npm run migrate
       - run: npm test
 
   lint-all:
@@ -72,6 +75,38 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run lint
+  
+  dry-run:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_DB: spark_stats
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
+      EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
+      NPM_CONFIG_WORKSPACE: observer
+    steps:
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run migrate
+      - run: npm run dry-run
+        env:
+            GLIF_TOKEN: ${{ secrets.GLIF_TOKEN }}
 
   docker-build:
     runs-on: ubuntu-latest

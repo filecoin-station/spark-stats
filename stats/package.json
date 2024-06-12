@@ -9,12 +9,13 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "@filecoin-station/spark-stats-db-migrations": "^1.0.0",
+    "@filecoin-station/spark-stats-db": "^1.0.0",
     "mocha": "^10.4.0",
     "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
   "dependencies": {
+    "@filecoin-station/spark-stats-db": "^1.0.0",
     "@sentry/node": "^8.9.1",
     "debug": "^4.3.5",
     "http-assert": "^1.5.0",

@@ -118,6 +118,23 @@ export const fetchParticipantChangeRates = async (pgPool, filter) => {
  * @param {import('pg').Pool} pgPool
  * @param {import('./typings').DateRangeFilter} filter
  */
+export const fetchParticipantScheduledRewards = async (pgPool, filter) => {
+  const { rows } = await pgPool.query(`
+    SELECT scheduled_rewards
+    FROM daily_scheduled_rewards
+    WHERE address = $1 AND day >= $2 AND day <= $3
+   `, [
+    filter.address,
+    filter.from,
+    filter.to
+  ])
+  return rows
+}
+
+/**
+ * @param {import('pg').Pool} pgPool
+ * @param {import('./typings').Filter} filter
+ */
 export const fetchMinersRSRSummary = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT miner_id, SUM(total) as total, SUM(successful) as successful
