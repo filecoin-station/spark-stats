@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dry-run": "node bin/dry-run.js",
     "migrate": "node bin/migrate.js",
     "start": "node bin/spark-observer.js",
     "lint": "standard",
