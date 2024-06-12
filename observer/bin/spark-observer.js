@@ -25,7 +25,7 @@ const loopObserveTransferEvents = async () => {
   while (true) {
     const start = new Date()
     try {
-      await observeTransferEvents(pgPools, ieContract, provider)
+      await observeTransferEvents(pgPools.stats, ieContract, provider)
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
