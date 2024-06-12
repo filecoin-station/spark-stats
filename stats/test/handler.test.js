@@ -192,7 +192,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/retrieval-success-rate?from=2024-01-01&to=2024-01-31&nonzero=true',
+          '/retrieval-success-rate?from=2024-01-01&to=2024-01-31&nonZero=true',
           baseUrl
         ), {
           redirect: 'manual'
@@ -210,7 +210,7 @@ describe('HTTP request handler', () => {
       const day = today()
       await givenRetrievalStats(pgPool, { day, total: 10, successful: 1, minerId: 'f1one' })
       await givenRetrievalStats(pgPool, { day, total: 10, successful: 0, minerId: 'f1two' })
-      const res = await fetch(new URL('/retrieval-success-rate?nonzero=true', baseUrl), { redirect: 'follow' })
+      const res = await fetch(new URL('/retrieval-success-rate?nonZero=true', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
