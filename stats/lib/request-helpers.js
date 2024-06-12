@@ -8,61 +8,60 @@ const getDayAsISOString = (d) => d.toISOString().split('T')[0]
 export const today = () => getDayAsISOString(new Date())
 
 /**
+ * @template {import('./typings.d.ts').DateRangeFilter} FilterType
  * @param {string} pathname
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
- * @param {import('pg').Pool} pgPool
- * @param {(import('pg').Pool, import('./typings.d.ts').DateRangeFilter) => Promise<object[]>} fetchStatsFn
+ * @param {pg.Pool} pgPool
+ * @param {(pg.Pool, FilterType) => Promise<object[]>} fetchStatsFn
  */
 export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPool, fetchStatsFn) => {
-  let from = searchParams.get('from')
-  let to = searchParams.get('to')
+  const filter = Object.fromEntries(searchParams)
   let shouldRedirect = false
 
   // Provide default values for "from" and "to" when not specified
 
-  if (!to) {
-    to = today()
+  if (!filter.to) {
+    filter.to = today()
     shouldRedirect = true
   }
-  if (!from) {
-    from = to
+  if (!filter.from) {
+    filter.from = filter.to
     shouldRedirect = true
   }
   if (shouldRedirect) {
     res.setHeader('cache-control', `public, max-age=${600 /* 10min */}`)
-    res.setHeader('location', `${pathname}?${new URLSearchParams({ from, to })}`)
+    res.setHeader('location', `${pathname}?${new URLSearchParams(Object.entries(filter))}`)
     res.writeHead(302) // Found
     res.end()
-    return { from, to }
+    return
   }
 
   // Trim time from date-time values that are typically provided by Grafana
 
-  const matchFrom = from.match(/^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}\.\d{3}Z)?$/)
+  const matchFrom = filter.from.match(/^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}\.\d{3}Z)?$/)
   assert(matchFrom, 400, '"from" must have format YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sssZ')
   if (matchFrom[2]) {
-    from = matchFrom[1]
+    filter.from = matchFrom[1]
     shouldRedirect = true
   }
 
-  const matchTo = to.match(/^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}\.\d{3}Z)?$/)
+  const matchTo = filter.to.match(/^(\d{4}-\d{2}-\d{2})(T\d{2}:\d{2}:\d{2}\.\d{3}Z)?$/)
   assert(matchTo, 400, '"to" must have format YYYY-MM-DD or YYYY-MM-DDThh:mm:ss.sssZ')
   if (matchTo[2]) {
-    to = matchTo[1]
+    filter.to = matchTo[1]
     shouldRedirect = true
   }
 
   if (shouldRedirect) {
     res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
-    res.setHeader('location', `${pathname}?${new URLSearchParams({ from, to })}`)
+    res.setHeader('location', `${pathname}?${new URLSearchParams(Object.entries(filter))}`)
     res.writeHead(301) // Found
     res.end()
-    return { from, to }
+    return
   }
 
   // We have well-formed from & to dates now, let's fetch the requested stats from the DB
-  const filter = { from, to }
   const stats = await fetchStatsFn(pgPool, filter)
   setCacheControlForStatsResponse(res, filter)
   json(res, stats)

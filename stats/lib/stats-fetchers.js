@@ -2,7 +2,7 @@ import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helper
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('./typings').DateRangeFilter & {nonZero?: 'true'}} filter
  */
 export const fetchRetrievalSuccessRate = async (pgPool, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres for converting it into
@@ -10,7 +10,7 @@ export const fetchRetrievalSuccessRate = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::text, SUM(total) as total, SUM(successful) as successful
     FROM retrieval_stats
-    WHERE day >= $1 AND day <= $2
+    WHERE day >= $1 AND day <= $2 ${filter.nonZero === 'true' ? 'AND successful > 0' : ''}
     GROUP BY day
     ORDER BY day
     `, [

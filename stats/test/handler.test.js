@@ -185,6 +185,38 @@ describe('HTTP request handler', () => {
         { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1' }
       ])
     })
+
+    it('filters out miners with zero RSR when asked', async () => {
+      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 0, minerId: 'f1two' })
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-success-rate?from=2024-01-01&to=2024-01-31&nonZero=true',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      /** @type {{ day: string, success_rate: number }[]} */
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10' }
+      ])
+    })
+
+    it('preserves additional query string arguments when redirecting', async () => {
+      const day = today()
+      await givenRetrievalStats(pgPool, { day, total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPool, { day, total: 10, successful: 0, minerId: 'f1two' })
+      const res = await fetch(new URL('/retrieval-success-rate?nonZero=true', baseUrl), { redirect: 'follow' })
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day, success_rate: 0.1, successful: '1', total: '10' }
+      ])
+    })
   })
 
   describe('GET /participants/daily', () => {
