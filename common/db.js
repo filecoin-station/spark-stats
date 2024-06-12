@@ -38,7 +38,7 @@ export const getStats = async () => {
     connectionString: DATABASE_URL
   })
   stats.on('error', onError)
-  await migrateStatsDB(stats)
+  await stats.query('SELECT 1')
   return stats
 }
 
@@ -48,8 +48,6 @@ export const getEvaluate = async () => {
     connectionString: EVALUATE_DB_URL
   })
   evaluate.on('error', onError)
-
-  // Check that we can talk to the database
   await evaluate.query('SELECT 1')
   return evaluate
 }
