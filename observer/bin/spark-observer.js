@@ -1,3 +1,4 @@
+import '../lib/instrument.js'
 import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
