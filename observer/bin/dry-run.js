@@ -20,8 +20,5 @@ await Promise.all([
   observeScheduledRewards(pgPools, ieContract)
 ])
 
-// Do it a second time, without clearing the table.
-// This should find 0 events, unless rewards are currently being released.
-await observeTransferEvents(pgPools.stats, ieContract, provider)
 
 await pgPools.stats.end()
