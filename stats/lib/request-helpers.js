@@ -12,10 +12,10 @@ export const today = () => getDayAsISOString(new Date())
  * @param {string} pathname
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
- * @param {pg.Pool} pgPool
- * @param {(pg.Pool, FilterType) => Promise<object[]>} fetchStatsFn
+ * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
+ * @param {(import('@filecoin-station/spark-stats-db').pgPools, FilterType) => Promise<object[]>} fetchStatsFn
  */
-export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPool, fetchStatsFn) => {
+export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPools, fetchStatsFn) => {
   const filter = Object.fromEntries(searchParams)
   let shouldRedirect = false
 
@@ -62,7 +62,7 @@ export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, 
   }
 
   // We have well-formed from & to dates now, let's fetch the requested stats from the DB
-  const stats = await fetchStatsFn(pgPool, filter)
+  const stats = await fetchStatsFn(pgPools, filter)
   setCacheControlForStatsResponse(res, filter)
   json(res, stats)
 }
