@@ -50,7 +50,7 @@ const handler = async (req, res, pgPools) => {
     'participants/daily': fetchDailyParticipants,
     'participants/monthly': fetchMonthlyParticipants,
     'participants/change-rates': fetchParticipantChangeRates,
-    'participants/scheduled-rewards': fetchParticipantScheduledRewards,
+    'participants/scheduled-rewards/daily': fetchParticipantScheduledRewards,
     'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
   }
 
