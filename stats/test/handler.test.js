@@ -4,6 +4,7 @@ import assert from 'node:assert'
 import pg from 'pg'
 import createDebug from 'debug'
 import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
+import { migrateWithPgConfig as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -23,6 +24,7 @@ describe('HTTP request handler', () => {
   before(async () => {
     // handler doesn't use Stats DB
     pgPool = new pg.Pool({ connectionString: EVALUATE_DB_URL })
+    await migrateEvaluateDB({ connectionString: EVALUATE_DB_URL })
 
     const handler = createHandler({
       pgPoolEvaluateDb: pgPool,
