@@ -7,5 +7,4 @@ export interface Logger {
 export interface DateRangeFilter {
   from: string;
   to: string;
-  address?: string;
 }
