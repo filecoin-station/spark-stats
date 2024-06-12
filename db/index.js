@@ -1,9 +1,11 @@
-import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
-import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db'
+export { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
+export { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db'
 import pg from 'pg'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Postgrator from 'postgrator'
+
+export { migrateEvaluateDB, migrateStatsDB }
 
 const {
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
@@ -69,17 +71,6 @@ export const getPgPools = async () => {
   const end = () => Promise.all([stats.end(), evaluate.end()])
 
   return { stats, evaluate, end }
-}
-
-export const migrate = async () => {
-  const pgPools = await getPgPools()
-
-  console.log('Migrating spark_evaluate database')
-  await migrateEvaluateDB(pgPools.evaluate)
-  console.log('Migrating spark_stats database')
-  await migrateStatsDB(pgPools.stats)
-
-  await pgPools.end()
 }
 
 /**

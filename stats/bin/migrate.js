@@ -1,3 +1,5 @@
-import { migrate } from '@filecoin-station/spark-stats-db'
+import { migrateStatsDB, migrateEvaluateDB, getPgPools } from '@filecoin-station/spark-stats-db'
 
-await migrate()
+const pgPools = await getPgPools()
+await migrateStatsDB(pgPools.stats)
+await migrateEvaluateDB(pgPools.evaluate)
