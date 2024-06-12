@@ -8,7 +8,8 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "standard": "^17.1.0",
+    "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
   "dependencies": {
     "pg": "^8.12.0"
