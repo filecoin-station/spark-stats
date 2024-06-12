@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.js'
-import { getPgPools } from '../../db-clients/index.js'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 const pgPools = await getPgPools()
 
