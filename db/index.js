@@ -32,7 +32,7 @@ const onError = err => {
   console.error('An idle client has experienced an error', err.stack)
 }
 
-export const getStats = async () => {
+export const getStatsPgPool = async () => {
   const stats = new pg.Pool({
     ...poolConfig,
     connectionString: DATABASE_URL
@@ -42,7 +42,7 @@ export const getStats = async () => {
   return stats
 }
 
-export const getEvaluate = async () => {
+export const getEvaluatePgPool = async () => {
   const evaluate = new pg.Pool({
     ...poolConfig,
     connectionString: EVALUATE_DB_URL
@@ -56,8 +56,8 @@ export const getEvaluate = async () => {
  * @returns {Promise<import('./typings').pgPools>}
  */
 export const getPgPools = async () => {
-  const stats = await getStats()
-  const evaluate = await getEvaluate()
+  const stats = await getStatsPgPool()
+  const evaluate = await getEvaluatePgPool()
   const end = () => Promise.all([stats.end(), evaluate.end()])
 
   return { stats, evaluate, end }

@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { beforeEach, describe, it } from 'mocha'
 
-import { getStats } from '@filecoin-station/spark-stats-db'
+import { getStatsPgPool } from '@filecoin-station/spark-stats-db'
 import { updateDailyTransferStats } from '../lib/platform-stats.js'
 import { migrateWithPgClient } from '@filecoin-station/spark-stats-db-migrations'
 
@@ -10,7 +10,7 @@ describe('platform-stats-generator', () => {
   let pgClient
 
   before(async () => {
-    const pgPool = await getStats()
+    const pgPool = await getStatsPgPool()
     pgClient = await pgPool.connect()
     await migrateWithPgClient(pgClient)
   })
