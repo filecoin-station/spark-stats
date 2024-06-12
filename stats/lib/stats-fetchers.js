@@ -120,7 +120,7 @@ export const fetchParticipantChangeRates = async (pgPools, filter) => {
  */
 export const fetchParticipantScheduledRewards = async (pgPools, filter) => {
   const { rows } = await pgPools.stats.query(`
-    SELECT scheduled_rewards
+    SELECT day::text, scheduled_rewards
     FROM daily_scheduled_rewards
     WHERE participant_address = $1 AND day >= $2 AND day <= $3
    `, [
