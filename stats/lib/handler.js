@@ -60,7 +60,7 @@ const handler = async (req, res, pgPools) => {
       pathname,
       searchParams,
       res,
-      pgPools.evaluate,
+      pgPools,
       fetchStatsFn
     )
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
