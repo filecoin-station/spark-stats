@@ -11,7 +11,7 @@
   },
   "devDependencies": {
     "mocha": "^10.4.0",
-    "spark-evaluate": "github:filecoin-station/spark-evaluate#534454c9b2323b67d50b159a3504de8a06eedcb2",
+    "spark-evaluate": "github:filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
   "dependencies": {
