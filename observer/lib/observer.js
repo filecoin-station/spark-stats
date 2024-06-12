@@ -2,24 +2,12 @@ import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
 
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {import('ethers').Contract} ieContract
- * @param {import('ethers').Provider} provider
- */
-export const observe = async (pgPools, ieContract, provider) => {
-  await Promise.all([
-    observeTransferEvents(pgPools.stats, ieContract, provider),
-    observeScheduledRewards(pgPools, ieContract)
-  ])
-}
-
-/**
  * Observe the transfer events on the Filecoin blockchain
  * @param {import('pg').Pool} pgPoolStats
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
-const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
+export const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
   const { rows } = await pgPoolStats.query(
     'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
   )
