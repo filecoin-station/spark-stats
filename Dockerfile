@@ -29,7 +29,7 @@ COPY --link package-lock.json package.json ./
 
 # We cannot use a wildcard until `COPY --parents` is stabilised
 # See https://docs.docker.com/reference/dockerfile/#copy---parents
-COPY --link migrations/package.json ./migrations/
+COPY --link db/package.json ./db/
 COPY --link stats/package.json ./stats/
 COPY --link observer/package.json ./observer/
 

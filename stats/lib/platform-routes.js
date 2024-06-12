@@ -6,7 +6,7 @@ import {
   fetchDailyStationAcceptedMeasurementCount
 } from './platform-stats-fetchers.js'
 
-export const handlePlatformRoutes = async (req, res, pgPoolEvaluateDb, pgPoolStatsDb) => {
+export const handlePlatformRoutes = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
@@ -14,19 +14,19 @@ export const handlePlatformRoutes = async (req, res, pgPoolEvaluateDb, pgPoolSta
   const routeHandlerInfoMap = {
     'stations/daily': {
       fetchFunction: fetchDailyStationCount,
-      pgPool: pgPoolEvaluateDb
+      pgPool: pgPools.evaluate
     },
     'stations/monthly': {
       fetchFunction: fetchMonthlyStationCount,
-      pgPool: pgPoolEvaluateDb
+      pgPool: pgPools.evaluate
     },
     'measurements/daily': {
       fetchFunction: fetchDailyStationAcceptedMeasurementCount,
-      pgPool: pgPoolEvaluateDb
+      pgPool: pgPools.evaluate
     },
     'transfers/daily': {
       fetchFunction: fetchDailyRewardTransfers,
-      pgPool: pgPoolStatsDb
+      pgPool: pgPools.stats
     }
   }
 

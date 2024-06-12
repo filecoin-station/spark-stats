@@ -3,6 +3,7 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dry-run": "node bin/dry-run.js",
     "migrate": "node bin/migrate.js",
     "start": "node bin/spark-observer.js",
     "lint": "standard",
@@ -10,12 +11,13 @@
   },
   "devDependencies": {
     "mocha": "^10.4.0",
+    "spark-evaluate": "github:filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
   "dependencies": {
     "@filecoin-station/spark-impact-evaluator": "^1.1.1",
-    "@filecoin-station/spark-stats-db-migrations": "^1.0.0",
-    "@sentry/node": "^8.8.0",
+    "@filecoin-station/spark-stats-db": "^1.0.0",
+    "@sentry/node": "^8.9.1",
     "debug": "^4.3.5",
     "ethers": "^6.13.0",
     "pg": "^8.12.0"
