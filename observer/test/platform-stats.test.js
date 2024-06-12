@@ -11,7 +11,7 @@ describe('platform-stats-generator', () => {
   before(async () => {
     const pgPool = await getStatsPgPool()
     pgClient = await pgPool.connect()
-    await migrateWithPgClient(pgClient)
+    await migrateStatsDB(pgClient)
   })
 
   let today
