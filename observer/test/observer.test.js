@@ -10,7 +10,7 @@ describe('observer', () => {
       pgPools = await getPgPools()
     })
 
-    it('observes scheduled rewards', async () => {
+    beforeEach(async () => {
       await pgPools.evaluate.query('DELETE FROM daily_participants')
       await pgPools.evaluate.query('DELETE FROM participants')
       const { rows: insertRows } = await pgPools.evaluate.query(`
@@ -28,7 +28,9 @@ describe('observer', () => {
           ($1, now()),
           ($2, now() - interval '4 days')
       `, [insertRows[0].id, insertRows[1].id])
+    })
 
+    it('observes scheduled rewards', async () => {
       const ieContract = {
         rewardsScheduledFor: async (address) => {
           if (address === '0xCURRENT') {
