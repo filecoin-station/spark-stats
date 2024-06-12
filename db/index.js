@@ -1,6 +1,9 @@
 import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
-import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db-migrations'
+import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-stats-db'
 import pg from 'pg'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import Postgrator from 'postgrator'
 
 const {
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
@@ -11,6 +14,11 @@ const {
   // and then we won't need two connection strings.
   EVALUATE_DB_URL = 'postgres://localhost:5432/spark_evaluate'
 } = process.env
+
+const migrationsDirectory = join(
+  dirname(fileURLToPath(import.meta.url)),
+  'migrations'
+)
 
 const poolConfig = {
   // allow the pool to close all connections and become empty
@@ -72,4 +80,24 @@ export const migrate = async () => {
   await migrateStatsDB(pgPools.stats)
 
   await pgPools.end()
+}
+
+/**
+ * @param {pg.Client} client
+ */
+export const migrateWithPgClient = async (client) => {
+  const postgrator = new Postgrator({
+    migrationPattern: join(migrationsDirectory, '*'),
+    driver: 'pg',
+    execQuery: (query) => client.query(query)
+  })
+  console.log(
+    'Migrating DB schema from version %s to version %s',
+    await postgrator.getDatabaseVersion(),
+    await postgrator.getMaxVersion()
+  )
+
+  await postgrator.migrate()
+
+  console.log('Migrated DB schema to version', await postgrator.getDatabaseVersion())
 }

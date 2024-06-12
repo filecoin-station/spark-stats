@@ -2,8 +2,8 @@ import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { observe } from '../lib/observer.js'
-import { getPgPools } from '../../db/index.js'
+import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.js'
+import { getPgPools } from '../../db-clients/index.js'
 
 const pgPools = await getPgPools()
 
