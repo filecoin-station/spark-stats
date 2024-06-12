@@ -22,7 +22,7 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/change-rates
 
-- `GET /participants/scheduled-rewards/?address=<address>&from=<day>&to=<day>`
+- `GET /participants/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
   http://stats.filspark.com/participants/scheduled-rewards
 
