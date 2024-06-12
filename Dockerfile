@@ -33,7 +33,7 @@ COPY --link migrations/package.json ./migrations/
 COPY --link stats/package.json ./stats/
 COPY --link observer/package.json ./observer/
 
-RUN npm ci
+RUN npm install
 RUN npm ci --workspaces
 
 # Copy application code
