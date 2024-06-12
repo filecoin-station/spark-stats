@@ -38,7 +38,7 @@ export const getStats = async () => {
     connectionString: DATABASE_URL
   })
   stats.on('error', onError)
-  await stats.query('SELECT 1')
+  await migrateStatsDB(stats)
   return stats
 }
 
