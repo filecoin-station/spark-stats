@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Postgrator from 'postgrator'
 
-export { migrateEvaluateDB, migrateStatsDB }
+export { migrateEvaluateDB }
 
 const {
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
