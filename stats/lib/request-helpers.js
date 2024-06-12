@@ -12,7 +12,7 @@ export const today = () => getDayAsISOString(new Date())
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
  * @param {import('pg').Pool} pgPool
- * @param {(import('pg').Pool, import('./typings').Filter) => Promise<object[]>} fetchStatsFn
+ * @param {(import('pg').Pool, import('./typings.d.ts').DateRangeFilter) => Promise<object[]>} fetchStatsFn
  */
 export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPool, fetchStatsFn) => {
   let from = searchParams.get('from')
@@ -70,7 +70,7 @@ export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, 
 
 /**
  * @param {import('node:http').ServerResponse} res
- * @param {import('./typings').Filter} filter
+ * @param {import('./typings').DateRangeFilter} filter
  */
 const setCacheControlForStatsResponse = (res, filter) => {
   // We cannot simply compare filter.to vs today() because there may be a delay in finalizing
@@ -91,7 +91,7 @@ const setCacheControlForStatsResponse = (res, filter) => {
  * @param {pg.Pool} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
- * @param {import('./typings').Filter} args.filter
+ * @param {import('./typings').DateRangeFilter} args.filter
  * @param {string} [args.asColumn]
  */
 export const getDailyDistinctCount = async ({
@@ -123,7 +123,7 @@ export const getDailyDistinctCount = async ({
  * @param {pg.Pool} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
- * @param {import('./typings').Filter} args.filter
+ * @param {import('./typings').DateRangeFilter} args.filter
  * @param {string} [args.asColumn]
  */
 export const getMonthlyDistinctCount = async ({
