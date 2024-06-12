@@ -16,7 +16,7 @@ export const today = () => getDayAsISOString(new Date())
  * @param {(pg.Pool, FilterType) => Promise<object[]>} fetchStatsFn
  */
 export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPool, fetchStatsFn) => {
-  const filter = Object.fromEntries(searchParams.entries())
+  const filter = Object.fromEntries(searchParams)
   let shouldRedirect = false
 
   // Provide default values for "from" and "to" when not specified
