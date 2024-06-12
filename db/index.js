@@ -3,7 +3,7 @@ import { migrateWithPgClient as migrateStatsDB } from '@filecoin-station/spark-s
 import pg from 'pg'
 
 const {
-// DATABASE_URL points to `spark_stats` database managed by this monorepo
+  // DATABASE_URL points to `spark_stats` database managed by this monorepo
   DATABASE_URL = 'postgres://localhost:5432/spark_stats',
 
   // EVALUATE_DB_URL points to `spark_evaluate` database managed by spark-evaluate repo.
