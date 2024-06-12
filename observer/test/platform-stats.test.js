@@ -1,7 +1,7 @@
 import assert from 'node:assert'
 import { beforeEach, describe, it } from 'mocha'
 
-import { getStatsPgPool, migrateWithPgClient } from '@filecoin-station/spark-stats-db'
+import { getStatsPgPool, migrateStatsDB } from '@filecoin-station/spark-stats-db'
 import { updateDailyTransferStats } from '../lib/platform-stats.js'
 
 describe('platform-stats-generator', () => {
