@@ -8,12 +8,12 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "standard": "^17.1.0",
-    "spark-evaluate": "filecoin-station/spark-evaluate#main"
+    "standard": "^17.1.0"
   },
   "dependencies": {
     "pg": "^8.12.0",
-    "postgrator": "^7.2.0"
+    "postgrator": "^7.2.0",
+    "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
   "standard": {
     "env": [
