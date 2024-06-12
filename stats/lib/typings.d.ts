@@ -4,7 +4,7 @@ export interface Logger {
   request: typeof console.info;
 }
 
-export interface Filter {
+export interface DateRangeFilter {
   from: string;
   to: string;
 }

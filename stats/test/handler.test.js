@@ -78,7 +78,7 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day, success_rate: 0.1 }
+        { day, success_rate: 0.1, successful: '1', total: '10' }
       ])
     })
 
@@ -99,8 +99,8 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-11', success_rate: 0.05 },
-        { day: '2024-01-12', success_rate: 0.1 }
+        { day: '2024-01-11', success_rate: 0.05, successful: '1', total: '20' },
+        { day: '2024-01-12', success_rate: 0.1, successful: '3', total: '30' }
       ])
     })
 
@@ -160,8 +160,8 @@ describe('HTTP request handler', () => {
       /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', success_rate: 51 / 110 },
-        { day: '2024-01-11', success_rate: 61 / 220 }
+        { day: '2024-01-10', success_rate: 51 / 110, total: '110', successful: '51' },
+        { day: '2024-01-11', success_rate: 61 / 220, total: '220', successful: '61' }
       ])
     })
 
@@ -181,8 +181,8 @@ describe('HTTP request handler', () => {
       /** @type {{ day: string, success_rate: number }[]} */
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', success_rate: 5 / 10 },
-        { day: '2024-01-20', success_rate: 1 / 10 }
+        { day: '2024-01-10', success_rate: 5 / 10, total: '10', successful: '5' },
+        { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1' }
       ])
     })
 
@@ -363,8 +363,8 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { miner_id: 'f1one', success_rate: 0.05 },
-        { miner_id: 'f1two', success_rate: 0.75 }
+        { miner_id: 'f1one', success_rate: 0.05, total: '20', successful: '1' },
+        { miner_id: 'f1two', success_rate: 0.75, total: '200', successful: '150' }
       ])
     })
   })

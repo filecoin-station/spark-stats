@@ -2,7 +2,7 @@ import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helper
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').Filter} filter
+ * @param {import('./typings').DateRangeFilter} filter
  */
 export const fetchRetrievalSuccessRate = async (pgPool, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres for converting it into
@@ -19,6 +19,8 @@ export const fetchRetrievalSuccessRate = async (pgPool, filter) => {
   ])
   const stats = rows.map(r => ({
     day: r.day,
+    total: r.total,
+    successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
   }))
   return stats
@@ -46,7 +48,7 @@ export const fetchMonthlyParticipants = async (pgPool, filter) => {
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').Filter} filter
+ * @param {import('./typings').DateRangeFilter} filter
  */
 export const fetchParticipantChangeRates = async (pgPool, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
@@ -114,7 +116,7 @@ export const fetchParticipantChangeRates = async (pgPool, filter) => {
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').Filter} filter
+ * @param {import('./typings').DateRangeFilter} filter
  */
 export const fetchMinersRSRSummary = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
@@ -128,6 +130,8 @@ export const fetchMinersRSRSummary = async (pgPool, filter) => {
   ])
   const stats = rows.map(r => ({
     miner_id: r.miner_id,
+    total: r.total,
+    successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
   }))
   return stats
