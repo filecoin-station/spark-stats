@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
-import { getEvaluatePgPool } from '@filecoin-station/spark-stats-db'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -12,22 +12,18 @@ import { today } from '../lib/request-helpers.js'
 const debug = createDebug('test')
 
 describe('HTTP request handler', () => {
-  /** @type {import('pg').Pool} */
-  let pgPool
+  /** @type {import('@filecoin-station/spark-stats-db').pgPools} */
+  let pgPools
   /** @type {http.Server} */
   let server
   /** @type {string} */
   let baseUrl
 
   before(async () => {
-    // handler doesn't use Stats DB
-    pgPool = await getEvaluatePgPool()
+    pgPools = await getPgPools()
 
     const handler = createHandler({
-      pgPools: {
-        stats: null,
-        evaluate: pgPool
-      },
+      pgPools,
       logger: {
         info: debug,
         error: console.error,
@@ -44,12 +40,13 @@ describe('HTTP request handler', () => {
   after(async () => {
     server.closeAllConnections()
     server.close()
-    await pgPool.end()
+    await pgPools.end()
   })
 
   beforeEach(async () => {
-    await pgPool.query('DELETE FROM retrieval_stats')
-    await pgPool.query('DELETE FROM daily_participants')
+    await pgPools.evaluate.query('DELETE FROM retrieval_stats')
+    await pgPools.evaluate.query('DELETE FROM daily_participants')
+    await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
   })
 
   it('returns 200 for GET /', async () => {
@@ -69,12 +66,12 @@ describe('HTTP request handler', () => {
 
   describe('GET /retrieval-success-rate', () => {
     beforeEach(async () => {
-      await pgPool.query('DELETE FROM retrieval_stats')
+      await pgPools.evaluate.query('DELETE FROM retrieval_stats')
     })
 
     it('returns today stats for no query string', async () => {
       const day = today()
-      await givenRetrievalStats(pgPool, { day, total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools, { day, total: 10, successful: 1 })
       const res = await fetch(new URL('/retrieval-success-rate', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
@@ -84,10 +81,10 @@ describe('HTTP request handler', () => {
     })
 
     it('applies from & to in YYYY-MM-DD format', async () => {
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-11', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-12', total: 30, successful: 3 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-13', total: 40, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-11', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-12', total: 30, successful: 3 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-13', total: 40, successful: 1 })
 
       const res = await fetch(
         new URL(
@@ -144,10 +141,10 @@ describe('HTTP request handler', () => {
     })
 
     it('sums daily retrievals from all miners', async () => {
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 60 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 60 })
 
       const res = await fetch(
         new URL(
@@ -167,8 +164,8 @@ describe('HTTP request handler', () => {
     })
 
     it('sorts items by date ascending', async () => {
-      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', total: 10, successful: 5 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', total: 10, successful: 5 })
 
       const res = await fetch(
         new URL(
@@ -188,8 +185,8 @@ describe('HTTP request handler', () => {
     })
 
     it('filters out miners with zero RSR when asked', async () => {
-      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 1, minerId: 'f1one' })
-      await givenRetrievalStats(pgPool, { day: '2024-01-20', total: 10, successful: 0, minerId: 'f1two' })
+      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 0, minerId: 'f1two' })
 
       const res = await fetch(
         new URL(
@@ -209,8 +206,8 @@ describe('HTTP request handler', () => {
 
     it('preserves additional query string arguments when redirecting', async () => {
       const day = today()
-      await givenRetrievalStats(pgPool, { day, total: 10, successful: 1, minerId: 'f1one' })
-      await givenRetrievalStats(pgPool, { day, total: 10, successful: 0, minerId: 'f1two' })
+      await givenRetrievalStats(pgPools, { day, total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPools, { day, total: 10, successful: 0, minerId: 'f1two' })
       const res = await fetch(new URL('/retrieval-success-rate?nonZero=true', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
@@ -222,10 +219,10 @@ describe('HTTP request handler', () => {
 
   describe('GET /participants/daily', () => {
     it('returns daily active participants for the given date range', async () => {
-      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
-      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
-      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
-      await givenDailyParticipants(pgPool, '2024-01-13', ['0x10'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-13', ['0x10'])
 
       const res = await fetch(
         new URL(
@@ -247,14 +244,14 @@ describe('HTTP request handler', () => {
   describe('GET /participants/monthly', () => {
     it('returns monthly active participants for the given date range ignoring the day number', async () => {
       // before the range
-      await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
+      await givenDailyParticipants(pgPools.evaluate, '2023-12-31', ['0x01', '0x02'])
       // in the range
-      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
-      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
-      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
-      await givenDailyParticipants(pgPool, '2024-02-13', ['0x10', '0x60'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-02-13', ['0x10', '0x60'])
       // after the range
-      await givenDailyParticipants(pgPool, '2024-03-01', ['0x99'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-03-01', ['0x99'])
 
       const res = await fetch(
         new URL(
@@ -276,19 +273,19 @@ describe('HTTP request handler', () => {
   describe('GET /participants/change-rates', () => {
     it('returns monthly change rates for the given date range ignoring the day number', async () => {
       // before the range
-      await givenDailyParticipants(pgPool, '2023-12-31', ['0x01', '0x02'])
+      await givenDailyParticipants(pgPools.evaluate, '2023-12-31', ['0x01', '0x02'])
       // the last month before the range
-      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
-      await givenDailyParticipants(pgPool, '2024-01-11', ['0x10', '0x20', '0x30'])
-      await givenDailyParticipants(pgPool, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-11', ['0x10', '0x20', '0x30'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
       // the first month in the range - 0x50 is gone
-      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10', '0x20'])
-      await givenDailyParticipants(pgPool, '2024-02-13', ['0x20', '0x30', '0x40'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-02-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-02-13', ['0x20', '0x30', '0x40'])
       // the second month in the range - 0x30 and 0x40 is gone, new participant 0x60
-      await givenDailyParticipants(pgPool, '2024-03-11', ['0x10', '0x20'])
-      await givenDailyParticipants(pgPool, '2024-03-13', ['0x10', '0x60'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-03-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-03-13', ['0x10', '0x60'])
       // after the range
-      await givenDailyParticipants(pgPool, '2024-04-01', ['0x99'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-04-01', ['0x99'])
 
       const res = await fetch(
         new URL(
@@ -328,11 +325,11 @@ describe('HTTP request handler', () => {
 
     it('handles a single-month range', async () => {
       // the last month before the range
-      await givenDailyParticipants(pgPool, '2024-01-10', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
       // the only month in the range - 0x20 is gone
-      await givenDailyParticipants(pgPool, '2024-02-11', ['0x10'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-02-11', ['0x10'])
       // after the range
-      await givenDailyParticipants(pgPool, '2024-03-01', ['0x99'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-03-01', ['0x99'])
 
       const res = await fetch(
         new URL(
@@ -353,17 +350,40 @@ describe('HTTP request handler', () => {
     })
   })
 
+  describe('GET /participants/scheduled-rewards/daily', () => {
+    it('returns daily scheduled rewards for the given date range', async () => {
+      await pgPools.stats.query(
+        'INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards) VALUES ($1, $2, $3)',
+        ['2024-01-11', '0x20', '1']
+      )
+
+      const res = await fetch(
+        new URL(
+          '/participants/scheduled-rewards/daily?address=0x20&from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', scheduled_rewards: '1' }
+      ])
+    })
+  })
+
   describe('GET /miners/retrieval-success-rate/summary', () => {
     it('returns a summary of miners RSR for the given date range', async () => {
       // before the range
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
       // in the range
-      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 150 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 150 })
       // after the range
-      await givenRetrievalStats(pgPool, { day: '2024-01-12', minerId: 'f1one', total: 30, successful: 1 })
-      await givenRetrievalStats(pgPool, { day: '2024-01-12', minerId: 'f1two', total: 300, successful: 60 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-12', minerId: 'f1one', total: 30, successful: 1 })
+      await givenRetrievalStats(pgPools, { day: '2024-01-12', minerId: 'f1two', total: 300, successful: 60 })
 
       const res = await fetch(
         new URL(
@@ -383,8 +403,8 @@ describe('HTTP request handler', () => {
   })
 })
 
-const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
-  await pgPool.query(
+const givenRetrievalStats = async (pgPools, { day, minerId, total, successful }) => {
+  await pgPools.evaluate.query(
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
