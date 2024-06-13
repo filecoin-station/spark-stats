@@ -9,9 +9,9 @@ import * as Sentry from '@sentry/node'
  */
 export const observeTransferEvents = async (pgPoolStats, ieContract, provider) => {
   const { rows } = await pgPoolStats.query(
-    'SELECT MAX(last_checked_block) FROM daily_reward_transfers'
+    'SELECT MAX(last_checked_block) AS last_checked_block FROM daily_reward_transfers'
   )
-  let queryFromBlock = rows[0].last_checked_block
+  let queryFromBlock = rows[0].last_checked_block + 1
   const currentBlockNumber = await provider.getBlockNumber()
 
   if (!queryFromBlock || queryFromBlock < currentBlockNumber - 1900) {
@@ -31,6 +31,8 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
     console.log('Transfer event:', transferEvent)
     await updateDailyTransferStats(pgPoolStats, transferEvent, currentBlockNumber)
   }
+
+  return events.length
 }
 
 /**

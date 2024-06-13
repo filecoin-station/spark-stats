@@ -52,6 +52,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/measurements/daily
 
+- `GET /deals/daily?from=2024-01-01&to=2024-01-31`
+
+  http://stats.filspark.com/deals/daily
+
 ## Development
 
 ### Database
