@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node'
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 
 import {
+  fetchDailyDealStats,
   fetchDailyParticipants,
   fetchMinersRSRSummary,
   fetchMonthlyParticipants,
@@ -46,6 +47,7 @@ const handler = async (req, res, pgPools) => {
   const segs = pathname.split('/').filter(Boolean)
 
   const fetchFunctionMap = {
+    'deals/daily': fetchDailyDealStats,
     'retrieval-success-rate': fetchRetrievalSuccessRate,
     'participants/daily': fetchDailyParticipants,
     'participants/monthly': fetchMonthlyParticipants,

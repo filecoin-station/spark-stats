@@ -26,6 +26,25 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
   return stats
 }
 
+/**
+ * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
+ * @param {import('./typings').DateRangeFilter} filter
+ */
+export const fetchDailyDealStats = async (pgPools, filter) => {
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::text, total, indexed, retrievable
+    FROM daily_deals
+    WHERE day >= $1 AND day <= $2
+    ORDER BY day
+    `, [
+    filter.from,
+    filter.to
+  ])
+  return rows
+}
+
 export const fetchDailyParticipants = async (pgPools, filter) => {
   return await getDailyDistinctCount({
     pgPool: pgPools.evaluate,
