@@ -5,13 +5,13 @@ import { getStatsPgPool, migrateStatsDB } from '@filecoin-station/spark-stats-db
 import { updateDailyTransferStats } from '../lib/platform-stats.js'
 
 describe('platform-stats-generator', () => {
-  /** @type {pg.Client} */
+  /** @type {import('pg').PoolClient} */
   let pgClient
 
   before(async () => {
     const pgPool = await getStatsPgPool()
     pgClient = await pgPool.connect()
-    await migrateStatsDB(pgClient)
+    await migrateStatsDB(pgPool)
   })
 
   let today

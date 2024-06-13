@@ -5,7 +5,7 @@ import createDebug from 'debug'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 import { getEvaluatePgPool } from '@filecoin-station/spark-stats-db'
 
-import { assertResponseStatus } from './test-helpers.js'
+import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
 
@@ -38,7 +38,7 @@ describe('HTTP request handler', () => {
     server = http.createServer(handler)
     server.listen()
     await once(server, 'listening')
-    baseUrl = `http://127.0.0.1:${server.address().port}`
+    baseUrl = `http://127.0.0.1:${getPort(server)}`
   })
 
   after(async () => {
@@ -159,8 +159,10 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 51 / 110, total: '110', successful: '51' },
         { day: '2024-01-11', success_rate: 61 / 220, total: '220', successful: '61' }
@@ -180,8 +182,9 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+      const stats = (/** @type {{ day: string, success_rate: number }[]} */
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 5 / 10, total: '10', successful: '5' },
         { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1' }
@@ -201,8 +204,9 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10' }
       ])
@@ -408,6 +412,15 @@ describe('HTTP request handler', () => {
   })
 })
 
+/**
+ *
+ * @param {import('../lib/platform-stats-fetchers.js').Queryable} pgPool
+ * @param {object} data
+ * @param {string} data.day
+ * @param {string} [data.minerId]
+ * @param {number | bigint} data.total
+ * @param {number | bigint } data.successful
+ */
 const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
   await pgPool.query(
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',

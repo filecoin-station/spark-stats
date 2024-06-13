@@ -16,9 +16,8 @@ import { handlePlatformRoutes } from './platform-routes.js'
 
 /**
  * @param {object} args
- * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
- * @param {import('pg').Pool} args.pgPoolStatsDb
- * @param {import('./typings').Logger} args.logger
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} args.pgPools
+ * @param {import('./typings.d.ts').Logger} args.logger
  * @returns
  */
 export const createHandler = ({
@@ -26,12 +25,12 @@ export const createHandler = ({
   logger
 }) => {
   return (req, res) => {
-    const start = new Date()
+    const start = Date.now()
     logger.request(`${req.method} ${req.url} ...`)
     handler(req, res, pgPools)
       .catch(err => errorHandler(res, err, logger))
       .then(() => {
-        logger.request(`${req.method} ${req.url} ${res.statusCode} (${new Date() - start}ms)`)
+        logger.request(`${req.method} ${req.url} ${res.statusCode} (${Date.now() - start}ms)`)
       })
   }
 }
@@ -39,7 +38,7 @@ export const createHandler = ({
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
- * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  */
 const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
