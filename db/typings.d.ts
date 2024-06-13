@@ -6,7 +6,7 @@ export interface PgPools {
 }
 
 export interface EndablePgPools extends PgPools {
-  end(): Promise<unknown>
+  end(): Promise<void>
 }
 
 // Copied from import('@types/pg').

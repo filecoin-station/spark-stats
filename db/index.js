@@ -72,7 +72,7 @@ export const getEvaluatePgPool = async () => {
 export const getPgPools = async () => {
   const stats = await getStatsPgPool()
   const evaluate = await getEvaluatePgPool()
-  const end = () => Promise.all([stats.end(), evaluate.end()])
+  const end = async () => { await Promise.all([stats.end(), evaluate.end()]) }
 
   return { stats, evaluate, end }
 }
