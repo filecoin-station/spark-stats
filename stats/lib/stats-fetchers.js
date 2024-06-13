@@ -31,7 +31,7 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
  * @param {import('./typings').DateRangeFilter} filter
  */
 export const fetchDailyDealStats = async (pgPools, filter) => {
-  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres for converting it into
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
   // a JavaScript Date with a timezone, as that could change the date one day forward or back.
   const { rows } = await pgPools.evaluate.query(`
     SELECT day::text, total, indexed, retrievable
