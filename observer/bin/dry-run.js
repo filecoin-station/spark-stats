@@ -20,4 +20,4 @@ await Promise.all([
   observeScheduledRewards(pgPools, ieContract)
 ])
 
-await pgPools.end()
+await pgPools.stats.end()
