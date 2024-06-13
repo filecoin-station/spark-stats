@@ -28,8 +28,8 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
 }
 
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyDealStats = async (pgPools, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
