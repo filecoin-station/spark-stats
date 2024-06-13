@@ -50,6 +50,7 @@ describe('HTTP request handler', () => {
   beforeEach(async () => {
     await pgPool.query('DELETE FROM retrieval_stats')
     await pgPool.query('DELETE FROM daily_participants')
+    await pgPool.query('DELETE FROM daily_deals')
   })
 
   it('returns 200 for GET /', async () => {
@@ -381,6 +382,30 @@ describe('HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /deals/daily', () => {
+    it('returns daily deal stats for the given date range', async () => {
+      await givenDailyDealStats(pgPool, { day: '2024-01-10', total: 10, indexed: 5, retrievable: 1 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-13', total: 40, indexed: 8, retrievable: 4 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 },
+        { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 }
+      ])
+    })
+  })
 })
 
 const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
@@ -388,4 +413,11 @@ const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) 
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
+}
+
+const givenDailyDealStats = async (pgPool, { day, total, indexed, retrievable }) => {
+  await pgPool.query(`
+    INSERT INTO daily_deals (day, total, indexed, retrievable)
+    VALUES ($1, $2, $3, $4)
+  `, [day, total, indexed, retrievable])
 }
