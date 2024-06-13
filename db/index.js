@@ -4,8 +4,10 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Postgrator from 'postgrator'
 
+// re-export types
 /** @typedef {import('./typings.js').PgPools} PgPools */
 /** @typedef {import('./typings.js').EndablePgPools} EndablePgPools */
+/** @typedef {import('./typings.js').Queryable} Queryable */
 
 export { migrateEvaluateDB }
 
@@ -76,7 +78,7 @@ export const getPgPools = async () => {
 }
 
 /**
- * @param {pg.Client | pg.Pool} client
+ * @param {Queryable} client
  */
 export const migrateStatsDB = async (client) => {
   const postgrator = new Postgrator({

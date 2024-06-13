@@ -3,6 +3,8 @@ import { json } from 'http-responders'
 import { URLSearchParams } from 'node:url'
 import pg from 'pg'
 
+/** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
+
 const getDayAsISOString = (d) => d.toISOString().split('T')[0]
 
 export const today = () => getDayAsISOString(new Date())
@@ -95,7 +97,7 @@ const setCacheControlForStatsResponse = (res, filter) => {
 
 /**
  * @param {object} args
- * @param {pg.Pool} args.pgPool
+ * @param {import('@filecoin-station/spark-stats-db').Queryable} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
  * @param {import('./typings.js').DateRangeFilter} args.filter
@@ -127,7 +129,7 @@ export const getDailyDistinctCount = async ({
 
 /**
  * @param {object} args
- * @param {pg.Pool} args.pgPool
+ * @param {Queryable} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
  * @param {import('./typings.js').DateRangeFilter} args.filter

@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/node'
 
 /**
  * Observe the transfer events on the Filecoin blockchain
- * @param {import('pg').Pool} pgPoolStats
+ * @param {import('@filecoin-station/spark-stats-db').Queryable} pgPoolStats
  * @param {import('ethers').Contract} ieContract
  * @param {import('ethers').Provider} provider
  */
@@ -29,12 +29,7 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
       amount: event.args.amount
     }
     console.log('Transfer event:', transferEvent)
-    const client = await pgPoolStats.connect()
-    try {
-      await updateDailyTransferStats(client, transferEvent, currentBlockNumber)
-    } finally {
-      client.release()
-    }
+    await updateDailyTransferStats(pgPoolStats, transferEvent, currentBlockNumber)
   }
 }
 

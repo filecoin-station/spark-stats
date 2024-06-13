@@ -1,7 +1,9 @@
 import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
 
+/** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
+
 /**
- * @param {import('pg').Pool} pgPool
+ * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyStationCount = async (pgPool, filter) => {
@@ -14,7 +16,7 @@ export const fetchDailyStationCount = async (pgPool, filter) => {
 }
 
 /**
- * @param {import('pg').Pool} pgPool
+ * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchMonthlyStationCount = async (pgPool, filter) => {
@@ -27,7 +29,7 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
 }
 
 /**
- * @param {import('pg').Pool} pgPool
+ * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) => {
