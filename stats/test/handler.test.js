@@ -410,6 +410,25 @@ describe('HTTP request handler', () => {
       ])
     })
   })
+
+  describe('CORS', () => {
+    it('sets CORS headers for requests from Station Desktop in production', async () => {
+      const res = await fetch(new URL('/', baseUrl), {
+        headers: {
+          origin: 'app://-'
+        }
+      })
+      assert.strictEqual(res.headers.get('access-control-allow-origin'), 'app://-')
+    })
+    it('sets CORS headers for requests from Station Desktop in development', async () => {
+      const res = await fetch(new URL('/', baseUrl), {
+        headers: {
+          origin: 'http://localhost:3000'
+        }
+      })
+      assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3000')
+    })
+  })
 })
 
 /**
