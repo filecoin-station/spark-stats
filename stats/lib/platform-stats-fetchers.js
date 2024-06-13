@@ -2,7 +2,7 @@ import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helper
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyStationCount = async (pgPool, filter) => {
   return await getDailyDistinctCount({
@@ -15,7 +15,7 @@ export const fetchDailyStationCount = async (pgPool, filter) => {
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchMonthlyStationCount = async (pgPool, filter) => {
   return await getMonthlyDistinctCount({
@@ -28,7 +28,7 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
 
 /**
  * @param {import('pg').Pool} pgPool
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`

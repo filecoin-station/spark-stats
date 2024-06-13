@@ -7,13 +7,14 @@ const getDayAsISOString = (d) => d.toISOString().split('T')[0]
 
 export const today = () => getDayAsISOString(new Date())
 
+/** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
  * @template {import('./typings.d.ts').DateRangeFilter} FilterType
  * @param {string} pathname
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {(import('@filecoin-station/spark-stats-db').pgPools, FilterType) => Promise<object[]>} fetchStatsFn
+ * @param {PgPools} pgPools
+ * @param {(pgPools: PgPools, filter: FilterType) => Promise<object[]>} fetchStatsFn
  */
 export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPools, fetchStatsFn) => {
   const filter = Object.fromEntries(searchParams)
@@ -62,14 +63,21 @@ export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, 
   }
 
   // We have well-formed from & to dates now, let's fetch the requested stats from the DB
-  const stats = await fetchStatsFn(pgPools, filter)
-  setCacheControlForStatsResponse(res, filter)
+
+  // Workaround for the following TypeScript error:
+  // Argument of type '{ [k: string]: string; }' is not assignable to parameter
+  //   of type 'FilterType'.
+  // 'FilterType' could be instantiated with an arbitrary type which could be
+  //   unrelated to '{ [k: string]: string; }'
+  const typedFilter = /** @type {FilterType} */(/** @type {unknown} */(filter))
+  const stats = await fetchStatsFn(pgPools, typedFilter)
+  setCacheControlForStatsResponse(res, typedFilter)
   json(res, stats)
 }
 
 /**
  * @param {import('node:http').ServerResponse} res
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 const setCacheControlForStatsResponse = (res, filter) => {
   // We cannot simply compare filter.to vs today() because there may be a delay in finalizing
@@ -90,7 +98,7 @@ const setCacheControlForStatsResponse = (res, filter) => {
  * @param {pg.Pool} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
- * @param {import('./typings').DateRangeFilter} args.filter
+ * @param {import('./typings.js').DateRangeFilter} args.filter
  * @param {string} [args.asColumn]
  */
 export const getDailyDistinctCount = async ({
@@ -122,7 +130,7 @@ export const getDailyDistinctCount = async ({
  * @param {pg.Pool} args.pgPool
  * @param {string} args.table
  * @param {string} args.column
- * @param {import('./typings').DateRangeFilter} args.filter
+ * @param {import('./typings.js').DateRangeFilter} args.filter
  * @param {string} [args.asColumn]
  */
 export const getMonthlyDistinctCount = async ({

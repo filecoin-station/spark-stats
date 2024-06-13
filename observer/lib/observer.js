@@ -23,19 +23,24 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
   const events = await ieContract.queryFilter(ieContract.filters.Transfer(), queryFromBlock)
 
   console.log(`Found ${events.length} Transfer events`)
-  for (const event of events) {
+  for (const event of events.filter(isEventLog)) {
     const transferEvent = {
       toAddress: event.args.to,
       amount: event.args.amount
     }
     console.log('Transfer event:', transferEvent)
-    await updateDailyTransferStats(pgPoolStats, transferEvent, currentBlockNumber)
+    const client = await pgPoolStats.connect()
+    try {
+      await updateDailyTransferStats(client, transferEvent, currentBlockNumber)
+    } finally {
+      client.release()
+    }
   }
 }
 
 /**
  * Observe scheduled rewards on the Filecoin blockchain
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  */
 export const observeScheduledRewards = async (pgPools, ieContract) => {
@@ -68,4 +73,12 @@ export const observeScheduledRewards = async (pgPools, ieContract) => {
       scheduled_rewards = EXCLUDED.scheduled_rewards
     `, [address, scheduledRewards])
   }
+}
+
+/**
+ * @param {import('ethers').Log | import('ethers').EventLog} logOrEventLog
+ * @returns {logOrEventLog is import('ethers').EventLog}
+ */
+function isEventLog (logOrEventLog) {
+  return 'args' in logOrEventLog
 }

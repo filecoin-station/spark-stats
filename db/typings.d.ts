@@ -1,6 +1,11 @@
 import type { Pool } from 'pg'
 
-export interface pgPools {
+export interface PgPools {
   stats: Pool;
   evaluate: Pool;
 }
+
+export interface EndablePgPools extends PgPools {
+  end(): Promise<unknown>
+}
+

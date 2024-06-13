@@ -23,14 +23,14 @@ const ONE_HOUR = 60 * 60 * 1000
 
 const loopObserveTransferEvents = async () => {
   while (true) {
-    const start = new Date()
+    const start = Date.now()
     try {
       await observeTransferEvents(pgPools.stats, ieContract, provider)
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
     }
-    const dt = new Date() - start
+    const dt = Date.now() - start
     console.log(`Observing Transfer events took ${dt}ms`)
     await timers.setTimeout(ONE_HOUR - dt)
   }
@@ -38,14 +38,14 @@ const loopObserveTransferEvents = async () => {
 
 const loopObserveScheduledRewards = async () => {
   while (true) {
-    const start = new Date()
+    const start = Date.now()
     try {
-      await observeScheduledRewards(pgPools, ieContract, provider)
+      await observeScheduledRewards(pgPools, ieContract)
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
     }
-    const dt = new Date() - start
+    const dt = Date.now() - start
     console.log(`Observing scheduled rewards took ${dt}ms`)
     await timers.setTimeout((24 * ONE_HOUR) - dt)
   }

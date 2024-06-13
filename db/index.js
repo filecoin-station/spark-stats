@@ -4,6 +4,9 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import Postgrator from 'postgrator'
 
+/** @typedef {import('./typings.js').PgPools} PgPools */
+/** @typedef {import('./typings.js').EndablePgPools} EndablePgPools */
+
 export { migrateEvaluateDB }
 
 const {
@@ -62,18 +65,18 @@ export const getEvaluatePgPool = async () => {
 }
 
 /**
- * @returns {Promise<import('./typings').pgPools>}
+ * @returns {Promise<EndablePgPools>}
  */
 export const getPgPools = async () => {
   const stats = await getStatsPgPool()
   const evaluate = await getEvaluatePgPool()
-  const end = () => Promise.all([stats.end(), evaluate.end()])
+  const end = async () => Promise.all([stats.end(), evaluate.end()])
 
   return { stats, evaluate, end }
 }
 
 /**
- * @param {pg.Client} client
+ * @param {pg.Client | pg.Pool} client
  */
 export const migrateStatsDB = async (client) => {
   const postgrator = new Postgrator({
