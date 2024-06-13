@@ -42,13 +42,7 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
     filter.from,
     filter.to
   ])
-  const stats = rows.map(r => ({
-    day: r.day,
-    total: r.total,
-    indexed: r.indexed,
-    retrievable: r.retrievable
-  }))
-  return stats
+  return rows
 }
 
 export const fetchDailyParticipants = async (pgPools, filter) => {
