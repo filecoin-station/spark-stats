@@ -35,6 +35,14 @@ export const createHandler = ({
   }
 }
 
+const enableCors = (req, res) => {
+  if (req.headers.origin === 'http://localhost:3000') {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'app://-')
+  }
+}
+
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
@@ -44,6 +52,8 @@ const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
+
+  enableCors(req, res)
 
   const fetchFunctionMap = {
     'deals/daily': fetchDailyDealStats,
