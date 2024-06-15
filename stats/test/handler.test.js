@@ -71,7 +71,7 @@ describe('HTTP request handler', () => {
 
     it('returns today stats for no query string', async () => {
       const day = today()
-      await givenRetrievalStats(pgPools, { day, total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1 })
       const res = await fetch(new URL('/retrieval-success-rate', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
@@ -81,10 +81,10 @@ describe('HTTP request handler', () => {
     })
 
     it('applies from & to in YYYY-MM-DD format', async () => {
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-11', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-12', total: 30, successful: 3 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-13', total: 40, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-11', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-12', total: 30, successful: 3 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-13', total: 40, successful: 1 })
 
       const res = await fetch(
         new URL(
@@ -141,10 +141,10 @@ describe('HTTP request handler', () => {
     })
 
     it('sums daily retrievals from all miners', async () => {
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 60 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 60 })
 
       const res = await fetch(
         new URL(
@@ -164,8 +164,8 @@ describe('HTTP request handler', () => {
     })
 
     it('sorts items by date ascending', async () => {
-      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', total: 10, successful: 5 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', total: 10, successful: 5 })
 
       const res = await fetch(
         new URL(
@@ -185,8 +185,8 @@ describe('HTTP request handler', () => {
     })
 
     it('filters out miners with zero RSR when asked', async () => {
-      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 1, minerId: 'f1one' })
-      await givenRetrievalStats(pgPools, { day: '2024-01-20', total: 10, successful: 0, minerId: 'f1two' })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', total: 10, successful: 0, minerId: 'f1two' })
 
       const res = await fetch(
         new URL(
@@ -206,8 +206,8 @@ describe('HTTP request handler', () => {
 
     it('preserves additional query string arguments when redirecting', async () => {
       const day = today()
-      await givenRetrievalStats(pgPools, { day, total: 10, successful: 1, minerId: 'f1one' })
-      await givenRetrievalStats(pgPools, { day, total: 10, successful: 0, minerId: 'f1two' })
+      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1, minerId: 'f1one' })
+      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 0, minerId: 'f1two' })
       const res = await fetch(new URL('/retrieval-success-rate?nonZero=true', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
@@ -376,14 +376,14 @@ describe('HTTP request handler', () => {
   describe('GET /miners/retrieval-success-rate/summary', () => {
     it('returns a summary of miners RSR for the given date range', async () => {
       // before the range
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 20 })
       // in the range
-      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 150 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1two', total: 200, successful: 150 })
       // after the range
-      await givenRetrievalStats(pgPools, { day: '2024-01-12', minerId: 'f1one', total: 30, successful: 1 })
-      await givenRetrievalStats(pgPools, { day: '2024-01-12', minerId: 'f1two', total: 300, successful: 60 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1one', total: 30, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1two', total: 300, successful: 60 })
 
       const res = await fetch(
         new URL(
@@ -403,8 +403,8 @@ describe('HTTP request handler', () => {
   })
 })
 
-const givenRetrievalStats = async (pgPools, { day, minerId, total, successful }) => {
-  await pgPools.evaluate.query(
+const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
+  await pgPool.query(
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
