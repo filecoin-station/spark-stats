@@ -21,7 +21,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
-  const url = `/${segs}.join('/')`
+  const url = `/${segs.join('/')}`
   const respond = createRespondWithFetchFn(pathname, searchParams, res)
 
   if (req.method === 'GET' && url === '/stations/daily') {
