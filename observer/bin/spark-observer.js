@@ -9,7 +9,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 import {
   observeTransferEvents,
   observeScheduledRewards
-} from '../lib/observer.js'
+} from '../index.js'
 
 const pgPools = await getPgPools()
 
