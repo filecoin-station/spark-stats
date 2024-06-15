@@ -12,7 +12,7 @@ import { today } from '../lib/request-helpers.js'
 const debug = createDebug('test')
 
 describe('HTTP request handler', () => {
-  /** @type {import('@filecoin-station/spark-stats-db').pgPools} */
+  /** @type {import('@filecoin-station/spark-stats-db').PgPools} */
   let pgPools
   /** @type {http.Server} */
   let server
