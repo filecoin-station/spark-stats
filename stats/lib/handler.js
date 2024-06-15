@@ -44,6 +44,18 @@ const enableCors = (req, res) => {
   }
 }
 
+const createRespondWithFetchFn = (pathname, searchParams, res, pgPools) => fetchFn => {
+  return getStatsWithFilterAndCaching(
+    pathname,
+    searchParams,
+    res,
+    pgPools,
+    fetchFn
+  )
+}
+
+export const sanitizePathname = pathname => `/${pathname.split('/').filter(Boolean).join('/')}`
+
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
@@ -51,33 +63,33 @@ const enableCors = (req, res) => {
  */
 const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
-  const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
-  const segs = pathname.split('/').filter(Boolean)
+  let { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
+  pathname = sanitizePathname(pathname)
 
   enableCors(req, res)
+  const respond = createRespondWithFetchFn(pathname, searchParams, res, pgPools)
 
-  const fetchFunctionMap = {
-    'deals/daily': fetchDailyDealStats,
-    'retrieval-success-rate': fetchRetrievalSuccessRate,
-    'participants/daily': fetchDailyParticipants,
-    'participants/monthly': fetchMonthlyParticipants,
-    'participants/change-rates': fetchParticipantChangeRates,
-    'participants/scheduled-rewards/daily': fetchParticipantScheduledRewards,
-    'participants/transfers/daily': fetchParticipantRewardTransfers,
-    'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
-  }
-
-  const fetchStatsFn = fetchFunctionMap[segs.join('/')]
-  if (req.method === 'GET' && fetchStatsFn) {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPools,
-      fetchStatsFn
-    )
+  if (req.method === 'GET' && pathname === '/deals/daily') {
+    await respond(fetchDailyDealStats)
+  } else if (req.method === 'GET' && pathname === '/retrieval-success-rate') {
+    await respond(fetchRetrievalSuccessRate)
+  } else if (req.method === 'GET' && pathname === '/participants/daily') {
+    await respond(fetchDailyParticipants)
+  } else if (req.method === 'GET' && pathname === '/participants/monthly') {
+    await respond(fetchMonthlyParticipants)
+  } else if (req.method === 'GET' && pathname === '/participants/change-rates') {
+    await respond(fetchParticipantChangeRates)
+  } else if (req.method === 'GET' && pathname === '/participants/scheduled-rewards/daily') {
+    await respond(fetchParticipantScheduledRewards)
+  } else if (req.method === 'GET' && pathname === '/participants/reward-transfers/daily') {
+    await respond(fetchParticipantRewardTransfers)
+  } else if (req.method === 'GET' && pathname === '/miners/retrieval-success-rate/summary') {
+    await respond(fetchMinersRSRSummary)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
+  } else if (req.method === 'GET' && pathname === '/') {
+    // health check - required by Grafana datasources
+    res.end('OK')
   } else {
     notFound(res)
   }
