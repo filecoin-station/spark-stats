@@ -9,6 +9,7 @@ import {
 const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
   return getStatsWithFilterAndCaching(
     pathname,
+    {},
     searchParams,
     res,
     pgPool,
