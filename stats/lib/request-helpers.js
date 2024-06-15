@@ -11,14 +11,15 @@ export const today = () => getDayAsISOString(new Date())
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
- * @template {import('./typings.d.ts').DateRangeFilter} FilterType
+ * @template {import('./typings.js').DateRangeFilter} FilterType
  * @param {string} pathname
+ * @param {object} pathParams
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
  * @param {PgPools} pgPools
- * @param {(pgPools: PgPools, filter: FilterType) => Promise<object[]>} fetchStatsFn
+ * @param {(pgPools: PgPools, filter: FilterType, pathParams: object) => Promise<object[]>} fetchStatsFn
  */
-export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, pgPools, fetchStatsFn) => {
+export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchParams, res, pgPools, fetchStatsFn) => {
   const filter = Object.fromEntries(searchParams)
   let shouldRedirect = false
 
@@ -72,7 +73,7 @@ export const getStatsWithFilterAndCaching = async (pathname, searchParams, res, 
   // 'FilterType' could be instantiated with an arbitrary type which could be
   //   unrelated to '{ [k: string]: string; }'
   const typedFilter = /** @type {FilterType} */(/** @type {unknown} */(filter))
-  const stats = await fetchStatsFn(pgPools, typedFilter)
+  const stats = await fetchStatsFn(pgPools, typedFilter, pathParams)
   setCacheControlForStatsResponse(res, typedFilter)
   json(res, stats)
 }
