@@ -43,7 +43,7 @@ const enableCors = (req, res) => {
   }
 }
 
-const respondWithFetchFn = (pathname, searchParams, res, pgPools) => fetchFn => {
+const createRespondWithFetchFn = (pathname, searchParams, res, pgPools) => fetchFn => {
   return getStatsWithFilterAndCaching(
     pathname,
     searchParams,
@@ -63,7 +63,7 @@ const handler = async (req, res, pgPools) => {
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
 
   enableCors(req, res)
-  const respond = respondWithFetchFn(pathname, searchParams, res, pgPools)
+  const respond = createRespondWithFetchFn(pathname, searchParams, res, pgPools)
 
   if (req.method === 'GET' && pathname === '/deals/daily') {
     await respond(fetchDailyDealStats)
