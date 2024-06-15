@@ -84,6 +84,9 @@ const handler = async (req, res, pgPools) => {
     await respond(fetchMinersRSRSummary)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
+  } else if (req.method === 'GET' && pathname === '/') {
+    // health check - required by Grafana datasources
+    res.end('OK')
   } else {
     notFound(res)
   }
