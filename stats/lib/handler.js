@@ -51,7 +51,7 @@ const enableCors = (req, res) => {
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
  * @param {PgPools} pgPools
- * @returns {(fetchFn: (pgPools: PgPools, filter: DateRangeFilter, pathVariables: object, ) => Promise<any>, pathParams?: object) => Promise<void>}
+ * @returns {(fetchFn: (pgPools: PgPools, filter: DateRangeFilter, pathVariables: object) => Promise<any>, pathParams?: object) => Promise<void>}
  */
 const createRespondWithFetchFn =
 (pathname, searchParams, res, pgPools) =>
