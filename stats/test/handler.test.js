@@ -409,10 +409,10 @@ describe('HTTP request handler', () => {
 
   describe('GET /deals/daily', () => {
     it('returns daily deal stats for the given date range', async () => {
-      await givenDailyDealStats(pgPool, { day: '2024-01-10', total: 10, indexed: 5, retrievable: 1 })
-      await givenDailyDealStats(pgPool, { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 })
-      await givenDailyDealStats(pgPool, { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 })
-      await givenDailyDealStats(pgPool, { day: '2024-01-13', total: 40, indexed: 8, retrievable: 4 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-10', total: 10, indexed: 5, retrievable: 1 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-13', total: 40, indexed: 8, retrievable: 4 })
 
       const res = await fetch(
         new URL(
