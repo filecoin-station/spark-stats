@@ -34,7 +34,7 @@ Base URL: http://stats.filspark.com/
 
 - `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
-  http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaDscheduled-rewards
+  http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaD/scheduled-rewards
 
 - `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
 
