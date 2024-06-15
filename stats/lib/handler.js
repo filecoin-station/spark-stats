@@ -53,7 +53,7 @@ const createRespondWithFetchFn = (pathname, searchParams, res, pgPools) => fetch
   )
 }
 
-const sanitizePathname = pathname => `/${pathname.split('/').filter(Boolean).join('/')}`
+export const sanitizePathname = pathname => `/${pathname.split('/').filter(Boolean).join('/')}`
 
 /**
  * @param {import('node:http').IncomingMessage} req
