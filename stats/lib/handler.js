@@ -9,6 +9,7 @@ import {
   fetchMonthlyParticipants,
   fetchParticipantChangeRates,
   fetchParticipantScheduledRewards,
+  fetchParticipantRewardTransfers,
   fetchRetrievalSuccessRate
 } from './stats-fetchers.js'
 
@@ -62,6 +63,7 @@ const handler = async (req, res, pgPools) => {
     'participants/monthly': fetchMonthlyParticipants,
     'participants/change-rates': fetchParticipantChangeRates,
     'participants/scheduled-rewards/daily': fetchParticipantScheduledRewards,
+    'participants/transfers/daily': fetchParticipantRewardTransfers,
     'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
   }
 
