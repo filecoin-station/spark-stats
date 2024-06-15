@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/node'
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 
 import {
+  fetchDailyDealStats,
   fetchDailyParticipants,
   fetchMinersRSRSummary,
   fetchMonthlyParticipants,
@@ -15,9 +16,8 @@ import { handlePlatformRoutes } from './platform-routes.js'
 
 /**
  * @param {object} args
- * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
- * @param {import('pg').Pool} args.pgPoolStatsDb
- * @param {import('./typings').Logger} args.logger
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} args.pgPools
+ * @param {import('./typings.d.ts').Logger} args.logger
  * @returns
  */
 export const createHandler = ({
@@ -25,46 +25,68 @@ export const createHandler = ({
   logger
 }) => {
   return (req, res) => {
-    const start = new Date()
+    const start = Date.now()
     logger.request(`${req.method} ${req.url} ...`)
     handler(req, res, pgPools)
       .catch(err => errorHandler(res, err, logger))
       .then(() => {
-        logger.request(`${req.method} ${req.url} ${res.statusCode} (${new Date() - start}ms)`)
+        logger.request(`${req.method} ${req.url} ${res.statusCode} (${Date.now() - start}ms)`)
       })
   }
 }
 
+const enableCors = (req, res) => {
+  if (req.headers.origin === 'http://localhost:3000') {
+    res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
+  } else {
+    res.setHeader('Access-Control-Allow-Origin', 'app://-')
+  }
+}
+
+const createRespondWithFetchFn = (pathname, searchParams, res, pgPools) => fetchFn => {
+  return getStatsWithFilterAndCaching(
+    pathname,
+    searchParams,
+    res,
+    pgPools,
+    fetchFn
+  )
+}
+
+export const sanitizePathname = pathname => `/${pathname.split('/').filter(Boolean).join('/')}`
+
 /**
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
- * @param {import('@filecoin-station/spark-stats-db')} args.pgPools
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  */
 const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
-  const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
-  const segs = pathname.split('/').filter(Boolean)
+  let { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
+  pathname = sanitizePathname(pathname)
 
-  const fetchFunctionMap = {
-    'retrieval-success-rate': fetchRetrievalSuccessRate,
-    'participants/daily': fetchDailyParticipants,
-    'participants/monthly': fetchMonthlyParticipants,
-    'participants/change-rates': fetchParticipantChangeRates,
-    'participants/scheduled-rewards/daily': fetchParticipantScheduledRewards,
-    'miners/retrieval-success-rate/summary': fetchMinersRSRSummary
-  }
+  enableCors(req, res)
+  const respond = createRespondWithFetchFn(pathname, searchParams, res, pgPools)
 
-  const fetchStatsFn = fetchFunctionMap[segs.join('/')]
-  if (req.method === 'GET' && fetchStatsFn) {
-    await getStatsWithFilterAndCaching(
-      pathname,
-      searchParams,
-      res,
-      pgPools,
-      fetchStatsFn
-    )
+  if (req.method === 'GET' && pathname === '/deals/daily') {
+    await respond(fetchDailyDealStats)
+  } else if (req.method === 'GET' && pathname === '/retrieval-success-rate') {
+    await respond(fetchRetrievalSuccessRate)
+  } else if (req.method === 'GET' && pathname === '/participants/daily') {
+    await respond(fetchDailyParticipants)
+  } else if (req.method === 'GET' && pathname === '/participants/monthly') {
+    await respond(fetchMonthlyParticipants)
+  } else if (req.method === 'GET' && pathname === '/participants/change-rates') {
+    await respond(fetchParticipantChangeRates)
+  } else if (req.method === 'GET' && pathname === '/participants/scheduled-rewards/daily') {
+    await respond(fetchParticipantScheduledRewards)
+  } else if (req.method === 'GET' && pathname === '/miners/retrieval-success-rate/summary') {
+    await respond(fetchMinersRSRSummary)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
+  } else if (req.method === 'GET' && pathname === '/') {
+    // health check - required by Grafana datasources
+    res.end('OK')
   } else {
     notFound(res)
   }

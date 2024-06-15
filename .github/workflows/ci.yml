@@ -75,7 +75,8 @@ jobs:
           node-version: 20
       - run: npm ci
       - run: npm run lint
-  
+      - run: npm run test:types
+
   dry-run:
     runs-on: ubuntu-latest
     services:

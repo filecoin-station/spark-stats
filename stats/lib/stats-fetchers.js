@@ -1,8 +1,9 @@
 import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
 
+/** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {import('./typings').DateRangeFilter & {nonZero?: 'true'}} filter
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter & {nonZero?: 'true'}} filter
  */
 export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres for converting it into
@@ -26,6 +27,25 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
   return stats
 }
 
+/**
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchDailyDealStats = async (pgPools, filter) => {
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::text, total, indexed, retrievable
+    FROM daily_deals
+    WHERE day >= $1 AND day <= $2
+    ORDER BY day
+    `, [
+    filter.from,
+    filter.to
+  ])
+  return rows
+}
+
 export const fetchDailyParticipants = async (pgPools, filter) => {
   return await getDailyDistinctCount({
     pgPool: pgPools.evaluate,
@@ -47,8 +67,8 @@ export const fetchMonthlyParticipants = async (pgPools, filter) => {
 }
 
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchParticipantChangeRates = async (pgPools, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
@@ -82,7 +102,7 @@ export const fetchParticipantChangeRates = async (pgPools, filter) => {
     monthlyParticipants[monthlyParticipants.length - 1].add(participant)
   }
 
-  /** @type {{month: string, churnRate: number}[]} */
+  /** @type {{month: string, growthRate: number, churnRate: number, retentionRate: number}[]} */
   const stats = []
 
   // IMPORTANT: The iteration starts at index one.
@@ -115,8 +135,8 @@ export const fetchParticipantChangeRates = async (pgPools, filter) => {
 }
 
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPools
- * @param {import('./typings').DateRangeFilter} filter
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter & {address: string}} filter
  */
 export const fetchParticipantScheduledRewards = async (pgPools, filter) => {
   const { rows } = await pgPools.stats.query(`
@@ -132,8 +152,8 @@ export const fetchParticipantScheduledRewards = async (pgPools, filter) => {
 }
 
 /**
- * @param {import('@filecoin-station/spark-stats-db').pgPools} pgPool
- * @param {import('./typings').Filter} filter
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchMinersRSRSummary = async (pgPools, filter) => {
   const { rows } = await pgPools.evaluate.query(`

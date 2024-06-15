@@ -5,7 +5,7 @@ import createDebug from 'debug'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 
-import { assertResponseStatus } from './test-helpers.js'
+import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
 
@@ -34,7 +34,7 @@ describe('HTTP request handler', () => {
     server = http.createServer(handler)
     server.listen()
     await once(server, 'listening')
-    baseUrl = `http://127.0.0.1:${server.address().port}`
+    baseUrl = `http://127.0.0.1:${getPort(server)}`
   })
 
   after(async () => {
@@ -46,6 +46,7 @@ describe('HTTP request handler', () => {
   beforeEach(async () => {
     await pgPools.evaluate.query('DELETE FROM retrieval_stats')
     await pgPools.evaluate.query('DELETE FROM daily_participants')
+    await pgPools.evaluate.query('DELETE FROM daily_deals')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
   })
 
@@ -155,8 +156,10 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 51 / 110, total: '110', successful: '51' },
         { day: '2024-01-11', success_rate: 61 / 220, total: '220', successful: '61' }
@@ -176,8 +179,9 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+      const stats = (/** @type {{ day: string, success_rate: number }[]} */
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-10', success_rate: 5 / 10, total: '10', successful: '5' },
         { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1' }
@@ -197,8 +201,9 @@ describe('HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 200)
-      /** @type {{ day: string, success_rate: number }[]} */
-      const stats = await res.json()
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
       assert.deepStrictEqual(stats, [
         { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10' }
       ])
@@ -401,11 +406,70 @@ describe('HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /deals/daily', () => {
+    it('returns daily deal stats for the given date range', async () => {
+      await givenDailyDealStats(pgPool, { day: '2024-01-10', total: 10, indexed: 5, retrievable: 1 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 })
+      await givenDailyDealStats(pgPool, { day: '2024-01-13', total: 40, indexed: 8, retrievable: 4 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 },
+        { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 }
+      ])
+    })
+  })
+
+  describe('CORS', () => {
+    it('sets CORS headers for requests from Station Desktop in production', async () => {
+      const res = await fetch(new URL('/', baseUrl), {
+        headers: {
+          origin: 'app://-'
+        }
+      })
+      assert.strictEqual(res.headers.get('access-control-allow-origin'), 'app://-')
+    })
+    it('sets CORS headers for requests from Station Desktop in development', async () => {
+      const res = await fetch(new URL('/', baseUrl), {
+        headers: {
+          origin: 'http://localhost:3000'
+        }
+      })
+      assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3000')
+    })
+  })
 })
 
+/**
+ *
+ * @param {import('../lib/platform-stats-fetchers.js').Queryable} pgPool
+ * @param {object} data
+ * @param {string} data.day
+ * @param {string} [data.minerId]
+ * @param {number | bigint} data.total
+ * @param {number | bigint } data.successful
+ */
 const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) => {
   await pgPool.query(
     'INSERT INTO retrieval_stats (day, miner_id, total, successful) VALUES ($1, $2, $3, $4)',
     [day, minerId ?? 'f1test', total, successful]
   )
+}
+
+const givenDailyDealStats = async (pgPool, { day, total, indexed, retrievable }) => {
+  await pgPool.query(`
+    INSERT INTO daily_deals (day, total, indexed, retrievable)
+    VALUES ($1, $2, $3, $4)
+  `, [day, total, indexed, retrievable])
 }

@@ -135,6 +135,7 @@ describe('observer', () => {
     })
 
     it('observes scheduled rewards', async () => {
+      /** @type {any} */
       const ieContract = {
         rewardsScheduledFor: async (address) => {
           if (address === '0xCURRENT') {
@@ -155,6 +156,7 @@ describe('observer', () => {
       }])
     })
     it('updates scheduled rewards', async () => {
+      /** @type {any} */
       const ieContract = {
         rewardsScheduledFor: async () => 200n
       }
