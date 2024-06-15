@@ -46,7 +46,6 @@ const enableCors = (req, res) => {
 }
 
 /**
- * @template {import('./typings.d.ts').DateRangeFilter} FilterType
  * @param {string} pathname
  * @param {URLSearchParams} searchParams
  * @param {import('node:http').ServerResponse} res
