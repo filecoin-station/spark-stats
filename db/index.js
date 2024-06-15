@@ -6,7 +6,6 @@ import Postgrator from 'postgrator'
 
 // re-export types
 /** @typedef {import('./typings.js').PgPools} PgPools */
-/** @typedef {import('./typings.js').EndablePgPools} EndablePgPools */
 /** @typedef {import('./typings.js').Queryable} Queryable */
 
 export { migrateEvaluateDB }
@@ -67,7 +66,7 @@ export const getEvaluatePgPool = async () => {
 }
 
 /**
- * @returns {Promise<EndablePgPools>}
+ * @returns {Promise<PgPools>}
  */
 export const getPgPools = async () => {
   const stats = await getStatsPgPool()

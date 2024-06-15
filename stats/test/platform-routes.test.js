@@ -10,7 +10,7 @@ import { createHandler } from '../lib/handler.js'
 const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
-  /** @type {import('@filecoin-station/spark-stats-db').EndablePgPools} */
+  /** @type {import('@filecoin-station/spark-stats-db').PgPools} */
   let pgPools
   let server
   /** @type {string} */

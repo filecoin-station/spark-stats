@@ -26,7 +26,8 @@ describe('HTTP request handler', () => {
     const handler = createHandler({
       pgPools: {
         stats: null,
-        evaluate: pgPool
+        evaluate: pgPool,
+        end: async () => {}
       },
       logger: {
         info: debug,
