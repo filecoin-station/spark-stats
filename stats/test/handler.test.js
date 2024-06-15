@@ -355,7 +355,7 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('GET /participants/scheduled-rewards/daily', () => {
+  describe('GET /participant/:address/scheduled-rewards', () => {
     it('returns daily scheduled rewards for the given date range', async () => {
       await pgPools.stats.query(
         'INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards) VALUES ($1, $2, $3)',
@@ -364,7 +364,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/participants/scheduled-rewards/daily?address=0x20&from=2024-01-11&to=2024-01-12',
+          '/participant/0x20/scheduled-rewards?from=2024-01-11&to=2024-01-12',
           baseUrl
         ), {
           redirect: 'manual'

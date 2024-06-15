@@ -137,17 +137,14 @@ export const fetchParticipantChangeRates = async (pgPools, filter) => {
 /**
  * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter & {address: string}} filter
+ * @param {object} pathParams
  */
-export const fetchParticipantScheduledRewards = async (pgPools, filter) => {
+export const fetchParticipantScheduledRewards = async (pgPools, { from, to }, { address }) => {
   const { rows } = await pgPools.stats.query(`
     SELECT day::text, scheduled_rewards
     FROM daily_scheduled_rewards
     WHERE participant_address = $1 AND day >= $2 AND day <= $3
-   `, [
-    filter.address,
-    filter.from,
-    filter.to
-  ])
+  `, [address, from, to])
   return rows
 }
 

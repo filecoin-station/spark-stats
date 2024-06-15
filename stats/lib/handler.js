@@ -14,6 +14,8 @@ import {
 
 import { handlePlatformRoutes } from './platform-routes.js'
 
+/** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
+
 /**
  * @param {object} args
  * @param {import('@filecoin-station/spark-stats-db').PgPools} args.pgPools
@@ -43,15 +45,26 @@ const enableCors = (req, res) => {
   }
 }
 
-const createRespondWithFetchFn = (pathname, searchParams, res, pgPools) => fetchFn => {
-  return getStatsWithFilterAndCaching(
-    pathname,
-    searchParams,
-    res,
-    pgPools,
-    fetchFn
-  )
-}
+/**
+ * @template {import('./typings.d.ts').DateRangeFilter} FilterType
+ * @param {string} pathname
+ * @param {URLSearchParams} searchParams
+ * @param {import('node:http').ServerResponse} res
+ * @param {PgPools} pgPools
+ * @returns {(fetchFn: (pgPools: PgPools, pathVariables: object, searchParams: URLSearchParams) => Promise<any>, pathParams?: object) => Promise<void>}
+ */
+const createRespondWithFetchFn =
+(pathname, searchParams, res, pgPools) =>
+  (fetchFn, pathParams) => {
+    return getStatsWithFilterAndCaching(
+      pathname,
+      pathParams,
+      searchParams,
+      res,
+      pgPools,
+      fetchFn
+    )
+  }
 
 /**
  * @param {import('node:http').IncomingMessage} req
@@ -62,7 +75,7 @@ const handler = async (req, res, pgPools) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
-  const url = `/${segs}.join('/')`
+  const url = `/${segs.join('/')}`
 
   enableCors(req, res)
   const respond = createRespondWithFetchFn(pathname, searchParams, res, pgPools)
@@ -77,8 +90,8 @@ const handler = async (req, res, pgPools) => {
     await respond(fetchMonthlyParticipants)
   } else if (req.method === 'GET' && url === '/participants/change-rates') {
     await respond(fetchParticipantChangeRates)
-  } else if (req.method === 'GET' && url === '/participants/scheduled-rewards/daily') {
-    await respond(fetchParticipantScheduledRewards)
+  } else if (req.method === 'GET' && segs[0] === 'participant' && segs[1] && segs[2] === 'scheduled-rewards') {
+    await respond(fetchParticipantScheduledRewards, segs[1])
   } else if (req.method === 'GET' && url === '/miners/retrieval-success-rate/summary') {
     await respond(fetchMinersRSRSummary)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
