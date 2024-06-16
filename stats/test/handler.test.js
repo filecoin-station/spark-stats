@@ -48,6 +48,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM daily_participants')
     await pgPools.evaluate.query('DELETE FROM daily_deals')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
+    await pgPools.stats.query('DELETE FROM daily_reward_transfers')
   })
 
   it('returns 200 for GET /', async () => {
@@ -374,6 +375,29 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
         { day: '2024-01-11', scheduled_rewards: '1' }
+      ])
+    })
+  })
+
+  describe('GET /participant/:address/reward-transfers', () => {
+    it('returns daily reward trainsfers for the given date range', async () => {
+      await pgPools.stats.query(
+        'INSERT INTO daily_reward-transfers (day, participant_address, amount) VALUES ($1, $2, $3)',
+        ['2024-01-11', '0x00', '1']
+      )
+
+      const res = await fetch(
+        new URL(
+          '/participant/0x00/reward-transfers?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', amount: '1' }
       ])
     })
   })
