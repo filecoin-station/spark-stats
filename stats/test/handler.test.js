@@ -381,10 +381,12 @@ describe('HTTP request handler', () => {
 
   describe('GET /participant/:address/reward-transfers', () => {
     it('returns daily reward trainsfers for the given date range', async () => {
-      await pgPools.stats.query(
-        'INSERT INTO daily_reward_transfers (day, to_address, amount) VALUES ($1, $2, $3)',
-        ['2024-01-11', '0x00', '1']
-      )
+      await pgPools.stats.query(`
+        INSERT INTO daily_reward_transfers
+        (day, to_address, amount, last_checked_block)
+        VALUES
+        ($1, $2, $3, $4)
+      `, ['2024-01-11', '0x00', '1', 0])
 
       const res = await fetch(
         new URL(
