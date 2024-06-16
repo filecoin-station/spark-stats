@@ -157,8 +157,6 @@ export const fetchParticipantRewardTransfers = async (pgPools, filter) => {
     SELECT day::TEXT, SUM(amount) as amount
     FROM daily_reward_transfers
     WHERE to_address = $1 AND day >= $2 AND day <= $3
-    GROUP BY day
-    ORDER BY day
   `, [filter.address, filter.from, filter.to])
   return rows
 }
