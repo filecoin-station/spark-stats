@@ -94,7 +94,7 @@ const handler = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && segs[0] === 'participant' && segs[1] && segs[2] === 'scheduled-rewards') {
     await respond(fetchParticipantScheduledRewards, segs[1])
   } else if (req.method === 'GET' && segs[0] === 'participant' && segs[1] && segs[2] === 'reward-transfers') {
-    await respond(fetchParticipantScheduledRewards, segs[1])
+    await respond(fetchParticipantRewardTransfers, segs[1])
   } else if (req.method === 'GET' && url === '/miners/retrieval-success-rate/summary') {
     await respond(fetchMinersRSRSummary)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
