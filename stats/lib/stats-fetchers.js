@@ -154,7 +154,7 @@ export const fetchParticipantScheduledRewards = async (pgPools, { from, to }, ad
  */
 export const fetchParticipantRewardTransfers = async (pgPools, filter) => {
   const { rows } = await pgPools.stats.query(`
-    SELECT day::TEXT, SUM(amount) as amount
+    SELECT day::TEXT, amount
     FROM daily_reward_transfers
     WHERE to_address = $1 AND day >= $2 AND day <= $3
   `, [filter.address, filter.from, filter.to])
