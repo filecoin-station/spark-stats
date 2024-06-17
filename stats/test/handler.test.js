@@ -3,7 +3,7 @@ import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
-import { getPgPools, migrateEvaluateDB } from '@filecoin-station/spark-stats-db'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -21,7 +21,6 @@ describe('HTTP request handler', () => {
 
   before(async () => {
     pgPools = await getPgPools()
-    await migrateEvaluateDB(pgPools.evaluate)
 
     const handler = createHandler({
       pgPools,
