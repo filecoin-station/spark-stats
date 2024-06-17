@@ -1,5 +1,5 @@
 /**
- * @param {import('pg').Client} pgClient
+ * @param {import('@filecoin-station/spark-stats-db').Queryable} pgClient
  * @param {Object} transferEvent
  * @param {string} transferEvent.toAddress
  * @param {number} transferEvent.amount

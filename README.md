@@ -6,6 +6,16 @@ API exposing public statistics about Spark
 
 Base URL: http://stats.filspark.com/
 
+- `GET /retrieval-success-rate?from=2024-01-01&to=2024-01-31`
+
+  http://stats.filspark.com/retrieval-success-rate
+
+- `GET /retrieval-success-rate?from=2024-01-01&to=2024-01-31&nonZero=true`
+
+  _Miners with no successful retrievals are excluded from the RSR calculation._
+
+  http://stats.filspark.com/retrieval-success-rate?nonZero=true
+
 - `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
@@ -22,6 +32,14 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/change-rates
 
+- `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
+
+  http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaD/scheduled-rewards
+
+- `GET /participant/:address/reward-transfers?from=<day>&to=<day>`
+
+  http://stats.filspark.com/participant//0x000000000000000000000000000000000000dEaD/reward-transfers
+
 - `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
@@ -37,6 +55,10 @@ Base URL: http://stats.filspark.com/
 - `GET /measurements/daily?from=<day>&to=<day>`
 
   http://stats.filspark.com/measurements/daily
+
+- `GET /deals/daily?from=2024-01-01&to=2024-01-31`
+
+  http://stats.filspark.com/deals/daily
 
 ## Development
 

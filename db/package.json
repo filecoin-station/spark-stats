@@ -1,19 +1,19 @@
 {
-  "name": "@filecoin-station/spark-stats-db-migrations",
+  "name": "@filecoin-station/spark-stats-db",
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
   "private": true,
   "scripts": {
-    "lint": "standard",
-    "test": "mocha"
+    "lint": "standard"
   },
   "devDependencies": {
     "standard": "^17.1.0"
   },
   "dependencies": {
     "pg": "^8.12.0",
-    "postgrator": "^7.2.0"
+    "postgrator": "^7.2.0",
+    "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
   "standard": {
     "env": [

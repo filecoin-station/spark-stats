@@ -1,32 +1,26 @@
 import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
-import pg from 'pg'
 import createDebug from 'debug'
+import { getPgPools } from '@filecoin-station/spark-stats-db'
 
-import { assertResponseStatus } from './test-helpers.js'
+import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { DATABASE_URL, EVALUATE_DB_URL } from '../lib/config.js'
 
 const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
-  /** @type {pg.Pool} */
-  let pgPoolEvaluateDb
-  /** @type {pg.Pool} */
-  let pgPoolStatsDb
-  /** @type {http.Server} */
+  /** @type {import('@filecoin-station/spark-stats-db').PgPools} */
+  let pgPools
   let server
   /** @type {string} */
   let baseUrl
 
   before(async () => {
-    pgPoolEvaluateDb = new pg.Pool({ connectionString: EVALUATE_DB_URL })
-    pgPoolStatsDb = new pg.Pool({ connectionString: DATABASE_URL })
+    pgPools = await getPgPools()
 
     const handler = createHandler({
-      pgPoolEvaluateDb,
-      pgPoolStatsDb,
+      pgPools,
       logger: {
         info: debug,
         error: console.error,
@@ -37,34 +31,33 @@ describe('Platform Routes HTTP request handler', () => {
     server = http.createServer(handler)
     server.listen()
     await once(server, 'listening')
-    baseUrl = `http://127.0.0.1:${server.address().port}`
+    baseUrl = `http://127.0.0.1:${getPort(server)}`
   })
 
   after(async () => {
     server.closeAllConnections()
     server.close()
-    await pgPoolEvaluateDb.end()
-    await pgPoolStatsDb.end()
+    await pgPools.end()
   })
 
   beforeEach(async () => {
-    await pgPoolEvaluateDb.query('DELETE FROM daily_stations')
-    await pgPoolStatsDb.query('DELETE FROM daily_reward_transfers')
+    await pgPools.evaluate.query('DELETE FROM daily_stations')
+    await pgPools.stats.query('DELETE FROM daily_reward_transfers')
   })
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
         { stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
         { stationId: 'station2', acceptedMeasurementCount: 2 },
         { stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-13', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
 
@@ -88,25 +81,25 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /stations/monthly', () => {
     it('returns monthly station metrics for the given date range ignoring the day number', async () => {
       // before the date range
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2023-12-31', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2023-12-31', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
       // in the date range
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
         { stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
         { stationId: 'station2', acceptedMeasurementCount: 2 },
         { stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-02-13', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-02-13', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
       // after the date range
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-03-01', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-03-01', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
 
@@ -129,17 +122,17 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /measurements/daily', () => {
     it('returns daily total accepted measurement count for the given date range', async () => {
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-10', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-11', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
         { stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-12', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
         { stationId: 'station2', acceptedMeasurementCount: 2 },
         { stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
-      await givenDailyStationMetrics(pgPoolEvaluateDb, '2024-01-13', [
+      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
         { stationId: 'station1', acceptedMeasurementCount: 1 }
       ])
 
@@ -162,17 +155,17 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /transfers/daily', () => {
     it('returns daily total Rewards sent for the given date range', async () => {
-      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-10', [
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-10', [
         { toAddress: 'to1', amount: 100, lastCheckedBlock: 1 }
       ])
-      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-11', [
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-11', [
         { toAddress: 'to2', amount: 150, lastCheckedBlock: 1 }
       ])
-      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-12', [
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-12', [
         { toAddress: 'to2', amount: 300, lastCheckedBlock: 1 },
         { toAddress: 'to3', amount: 250, lastCheckedBlock: 1 }
       ])
-      await givenDailyRewardTransferMetrics(pgPoolStatsDb, '2024-01-13', [
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-13', [
         { toAddress: 'to1', amount: 100, lastCheckedBlock: 1 }
       ])
 
@@ -194,8 +187,8 @@ describe('Platform Routes HTTP request handler', () => {
   })
 })
 
-const givenDailyStationMetrics = async (pgPoolEvaluateDb, day, stationStats) => {
-  await pgPoolEvaluateDb.query(`
+const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {
+  await pgPoolEvaluate.query(`
     INSERT INTO daily_stations (day, station_id, accepted_measurement_count)
     SELECT $1 AS day, UNNEST($2::text[]) AS station_id, UNNEST($3::int[]) AS accepted_measurement_count
     ON CONFLICT DO NOTHING
@@ -206,8 +199,8 @@ const givenDailyStationMetrics = async (pgPoolEvaluateDb, day, stationStats) => 
   ])
 }
 
-const givenDailyRewardTransferMetrics = async (pgPoolStatsDb, day, transferStats) => {
-  await pgPoolStatsDb.query(`
+const givenDailyRewardTransferMetrics = async (pgPoolStats, day, transferStats) => {
+  await pgPoolStats.query(`
     INSERT INTO daily_reward_transfers (day, to_address, amount, last_checked_block)
     SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount, UNNEST($4::int[]) AS last_checked_block
     ON CONFLICT DO NOTHING

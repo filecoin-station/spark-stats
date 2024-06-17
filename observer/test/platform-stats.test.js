@@ -1,24 +1,17 @@
 import assert from 'node:assert'
-import pg from 'pg'
 import { beforeEach, describe, it } from 'mocha'
 
-import { DATABASE_URL } from '../lib/config.js'
+import { getStatsPgPool, migrateStatsDB } from '@filecoin-station/spark-stats-db'
 import { updateDailyTransferStats } from '../lib/platform-stats.js'
-import { migrateWithPgClient } from '@filecoin-station/spark-stats-db-migrations'
-
-const createPgClient = async () => {
-  const pgClient = new pg.Client({ connectionString: DATABASE_URL })
-  await pgClient.connect()
-  return pgClient
-}
 
 describe('platform-stats-generator', () => {
-  /** @type {pg.Client} */
+  /** @type {import('pg').PoolClient} */
   let pgClient
 
   before(async () => {
-    pgClient = await createPgClient()
-    await migrateWithPgClient(pgClient)
+    const pgPool = await getStatsPgPool()
+    pgClient = await pgPool.connect()
+    await migrateStatsDB(pgPool)
   })
 
   let today
@@ -37,7 +30,7 @@ describe('platform-stats-generator', () => {
   })
 
   after(async () => {
-    await pgClient.end()
+    await pgClient.release()
   })
 
   describe('updateDailyTransferStats', () => {
