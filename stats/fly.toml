@@ -36,6 +36,3 @@ processes = []
   [[services.ports]]
     handlers = ["tls", "http"]
     port = 443
-
-[deploy]
-  release_command = "npm run migrate"
