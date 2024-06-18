@@ -19,7 +19,7 @@
     "@filecoin-station/spark-stats-db": "^1.0.0",
     "@sentry/node": "^8.9.2",
     "debug": "^4.3.5",
-    "ethers": "^6.13.0",
+    "ethers": "^6.13.1",
     "pg": "^8.12.0"
   },
   "standard": {
