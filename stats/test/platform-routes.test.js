@@ -211,9 +211,9 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-10', wallet_count: '1' },
-        { day: '2024-01-11', wallet_count: '1' },
-        { day: '2024-01-12', wallet_count: '2' }
+        { day: '2024-01-10', wallet_count: 1 },
+        { day: '2024-01-11', wallet_count: 1 },
+        { day: '2024-01-12', wallet_count: 2 }
       ])
     })
   })

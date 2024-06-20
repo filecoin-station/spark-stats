@@ -63,12 +63,11 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyWalletCount = async (pgPool, filter) => {
-  const { rows } = await pgPool.query(`
-    SELECT day::TEXT, COUNT(DISTINCT to_address) as wallet_count
-    FROM daily_reward_transfers
-    WHERE day >= $1 AND day <= $2
-    GROUP BY day
-    ORDER BY day
-  `, [filter.from, filter.to])
-  return rows
+  return await getDailyDistinctCount({
+    pgPool,
+    table: 'daily_reward_transfers',
+    column: 'to_address',
+    filter,
+    asColumn: 'wallet_count'
+  })
 }
