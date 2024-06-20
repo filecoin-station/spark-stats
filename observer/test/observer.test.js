@@ -1,5 +1,4 @@
 import assert from 'node:assert'
-import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 

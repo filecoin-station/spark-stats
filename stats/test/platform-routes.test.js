@@ -185,6 +185,38 @@ describe('Platform Routes HTTP request handler', () => {
       ])
     })
   })
+
+  describe('GET /wallets/daily', () => {
+    it('returns daily count of unique wallets for the given date range', async () => {
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-10', [
+        { toAddress: 'to1', amount: 100, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-11', [
+        { toAddress: 'to2', amount: 150, lastCheckedBlock: 1 },
+        { toAddress: 'to2', amount: 250, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-12', [
+        { toAddress: 'to2', amount: 300, lastCheckedBlock: 1 },
+        { toAddress: 'to3', amount: 250, lastCheckedBlock: 1 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          '/wallets/daily?from=2024-01-10&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [
+        { day: '2024-01-10', wallet_count: '1' },
+        { day: '2024-01-11', wallet_count: '1' },
+        { day: '2024-01-12', wallet_count: '2' }
+      ])
+    })
+  })
 })
 
 const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {

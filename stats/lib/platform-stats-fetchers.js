@@ -43,9 +43,28 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
   return rows
 }
 
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, SUM(amount) as amount
+    FROM daily_reward_transfers
+    WHERE day >= $1 AND day <= $2
+    GROUP BY day
+    ORDER BY day
+  `, [filter.from, filter.to])
+  return rows
+}
+
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchDailyWalletCount = async (pgPool, filter) => {
+  const { rows } = await pgPool.query(`
+    SELECT day::TEXT, COUNT(DISTINCT to_address) as wallet_count
     FROM daily_reward_transfers
     WHERE day >= $1 AND day <= $2
     GROUP BY day

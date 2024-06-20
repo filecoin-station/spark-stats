@@ -3,7 +3,8 @@ import {
   fetchDailyStationCount,
   fetchMonthlyStationCount,
   fetchDailyRewardTransfers,
-  fetchDailyStationAcceptedMeasurementCount
+  fetchDailyStationAcceptedMeasurementCount,
+  fetchDailyWalletCount
 } from './platform-stats-fetchers.js'
 
 const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
@@ -32,6 +33,8 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
     await respond(pgPools.evaluate, fetchDailyStationAcceptedMeasurementCount)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
+  } else if (req.method === 'GET' && url === '/wallets/daily') {
+    await respond(pgPools.stats, fetchDailyWalletCount)
   } else {
     return false
   }
