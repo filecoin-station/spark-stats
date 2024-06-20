@@ -1,4 +1,4 @@
-import { updateDailyTransferStats } from './lib/platform-stats.js'
+import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
 
 /**
