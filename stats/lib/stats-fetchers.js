@@ -46,6 +46,58 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
   return rows
 }
 
+/**
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchDealSummary = async (pgPools, filter) => {
+  const { rows: lastDayRows } = await pgPools.evaluate.query(`
+    SELECT
+      SUM(total) as total,
+      SUM(indexed) as indexed,
+      SUM(retrievable) as retrievable
+    FROM daily_deals
+    WHERE day = date_trunc('day', $1::DATE)
+  `, [filter.to])
+
+  const { rows: lastSevenDaysRows } = await pgPools.evaluate.query(`
+    SELECT
+      SUM(total) as total,
+      SUM(indexed) as indexed,
+      SUM(retrievable) as retrievable
+    FROM daily_deals
+    WHERE day > date_trunc('day', $1::DATE) - INTERVAL '7 day'
+      AND day <= date_trunc('day', $1)
+  `, [filter.to])
+
+  const { rows: lastThirtyDaysRows } = await pgPools.evaluate.query(`
+    SELECT
+      SUM(total) as total,
+      SUM(indexed) as indexed,
+      SUM(retrievable) as retrievable
+    FROM daily_deals
+    WHERE day > date_trunc('day', $1::DATE) - INTERVAL '30 day'
+      AND day <= date_trunc('day', $1)
+  `, [filter.to])
+
+  const { rows: requestedIntervalRows } = await pgPools.evaluate.query(`
+    SELECT
+      SUM(total) as total,
+      SUM(indexed) as indexed,
+      SUM(retrievable) as retrievable
+    FROM daily_deals
+    WHERE day >= date_trunc('day', $1::DATE)
+      AND day <= date_trunc('day', $2::DATE)
+  `, [filter.from, filter.to])
+
+  return {
+    requestedInterval: requestedIntervalRows[0],
+    lastDay: lastDayRows[0],
+    lastSevenDays: lastSevenDaysRows[0],
+    lastThirtyDays: lastThirtyDaysRows[0]
+  }
+}
+
 export const fetchDailyParticipants = async (pgPools, filter) => {
   return await getDailyDistinctCount({
     pgPool: pgPools.evaluate,

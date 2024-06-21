@@ -10,7 +10,8 @@ import {
   fetchParticipantChangeRates,
   fetchParticipantScheduledRewards,
   fetchParticipantRewardTransfers,
-  fetchRetrievalSuccessRate
+  fetchRetrievalSuccessRate,
+  fetchDealSummary
 } from './stats-fetchers.js'
 
 import { handlePlatformRoutes } from './platform-routes.js'
@@ -83,6 +84,8 @@ const handler = async (req, res, pgPools) => {
 
   if (req.method === 'GET' && url === '/deals/daily') {
     await respond(fetchDailyDealStats)
+  } else if (req.method === 'GET' && url === '/deals/summary') {
+    await respond(fetchDealSummary)
   } else if (req.method === 'GET' && url === '/retrieval-success-rate') {
     await respond(fetchRetrievalSuccessRate)
   } else if (req.method === 'GET' && url === '/participants/daily') {
