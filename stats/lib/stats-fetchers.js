@@ -1,5 +1,4 @@
 import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
-import assert from 'http-assert'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
