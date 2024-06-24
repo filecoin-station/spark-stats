@@ -459,12 +459,6 @@ describe('HTTP request handler', () => {
 
   describe('GET /deals/summary', () => {
     it('returns deal summary for the given date range (including the end day)', async () => {
-      // last year - requested via the filter
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-01', total: 3, indexed: 2, retrievable: 1 })
-      // filter.to - 30 days -> should be excluded
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-02-29', total: 3, indexed: 2, retrievable: 1 })
-      // last 30 days
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-01', total: 100, indexed: 51, retrievable: 1 })
       await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-12', total: 200, indexed: 52, retrievable: 2 })
       // filter.to - 7 days -> should be excluded
       await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-23', total: 300, indexed: 53, retrievable: 3 })
@@ -478,7 +472,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/deals/summary?from=2024-01-01&to=2024-03-30',
+          '/deals/summary?from=2024-03-24&to=2024-03-30',
           baseUrl
         ), {
           redirect: 'manual'
@@ -488,26 +482,28 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
 
       assert.deepStrictEqual(stats, {
-        lastDay: {
-          total: '6000',
-          indexed: '600',
-          retrievable: '60'
-        },
-        lastSevenDays: {
-          total: '6900',
-          indexed: '709',
-          retrievable: '69'
-        },
-        lastThirtyDays: {
-          total: '7500',
-          indexed: '865',
-          retrievable: '75'
-        },
-        requestedInterval: {
-          total: '7506',
-          indexed: '869',
-          retrievable: '77'
+        total: '6900',
+        indexed: '709',
+        retrievable: '69'
+      })
+    })
+
+    it('handles query for future date with no recorded stats', async () => {
+      const res = await fetch(
+        new URL(
+          '/deals/summary?from=3024-04-24&to=3024-03-30',
+          baseUrl
+        ), {
+          redirect: 'manual'
         }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+
+      assert.deepStrictEqual(stats, {
+        total: null,
+        indexed: null,
+        retrievable: null
       })
     })
   })
