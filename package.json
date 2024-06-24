@@ -16,7 +16,7 @@
     "test": "npm run lint && npm test --workspaces --if-present"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.7",
     "@types/pg": "^8.11.6",
     "standard": "^17.1.0",
     "typescript": "^5.5.2"
