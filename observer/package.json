@@ -10,7 +10,7 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "mocha": "^10.4.0",
+    "mocha": "^10.5.1",
     "spark-evaluate": "github:filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
