@@ -48,13 +48,21 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchTopMeasurementStations = async (pgPool, filter) => {
+  // Block expensive multi-day queries
+  if (filter.to !== filter.from) {
+    throw new Error('Multi-day queries are not supported for this endpoint')
+  }
+
   const { rows } = await pgPool.query(`
-    SELECT station_id, SUM(accepted_measurement_count) as total_accepted_measurement_count
-    FROM daily_stations
-    WHERE day >= $1 AND day <= $2
-    GROUP BY station_id
-    ORDER BY total_accepted_measurement_count DESC
-    LIMIT 100
+  SELECT
+    participant_address,
+    COUNT(DISTINCT inet_group) AS inet_group_count,
+    COUNT(DISTINCT station_id) AS station_count,
+    SUM(accepted_measurement_count) AS accepted_measurement_count
+  FROM daily_stations
+  WHERE day >= $1 AND day <= $2
+  GROUP BY participant_address
+  ORDER BY accepted_measurement_count DESC;
   `, [filter.from, filter.to])
   return rows
 }
