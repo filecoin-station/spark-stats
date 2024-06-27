@@ -1,3 +1,4 @@
+import assert from 'http-assert'
 import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
@@ -49,9 +50,7 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  */
 export const fetchTopMeasurementStations = async (pgPool, filter) => {
   // Block expensive multi-day queries
-  if (filter.to !== filter.from) {
-    throw new Error('Multi-day queries are not supported for this endpoint')
-  }
+  assert(filter.to === filter.from, 400, 'Multi-day queries are not supported for this endpoint')
 
   const { rows } = await pgPool.query(`
   SELECT

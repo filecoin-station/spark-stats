@@ -200,7 +200,7 @@ describe('Platform Routes HTTP request handler', () => {
           redirect: 'manual'
         }
       )
-      await assertResponseStatus(res, 500)
+      await assertResponseStatus(res, 400)
     })
   })
 
@@ -238,8 +238,8 @@ describe('Platform Routes HTTP request handler', () => {
   })
 })
 
-const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
-  await pgPool.query(`
+const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {
+  await pgPoolEvaluate.query(`
     INSERT INTO daily_stations (
       day,
       station_id,
@@ -263,8 +263,8 @@ const givenDailyStationMetrics = async (pgPool, day, stationStats) => {
   ])
 }
 
-const givenDailyRewardTransferMetrics = async (pgPool, day, transferStats) => {
-  await pgPool.query(`
+const givenDailyRewardTransferMetrics = async (pgPoolStats, day, transferStats) => {
+  await pgPoolStats.query(`
     INSERT INTO daily_reward_transfers (day, to_address, amount, last_checked_block)
     SELECT $1 AS day, UNNEST($2::text[]) AS to_address, UNNEST($3::int[]) AS amount, UNNEST($4::int[]) AS last_checked_block
     ON CONFLICT DO NOTHING
