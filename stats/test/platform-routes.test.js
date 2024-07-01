@@ -6,7 +6,6 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { updateTopMeasurementStations } from '../lib/platform-stats-fetchers.js'
 
 const STATION_STATS = { stationId: 'station1', participantAddress: 'f1abcdef', inetGroup: 'group1' }
 
@@ -174,7 +173,7 @@ describe('Platform Routes HTTP request handler', () => {
         { ...STATION_STATS, acceptedMeasurementCount: 10 }
       ])
 
-      await updateTopMeasurementStations(pgPools.evaluate)
+      await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
 
       // We don't care about the date range for this query
       const res = await fetch(

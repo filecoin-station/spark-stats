@@ -55,13 +55,6 @@ export const fetchTopMeasurementStations = async (pgPool, filter) => {
 
 /**
  * @param {Queryable} pgPool
- */
-export const updateTopMeasurementStations = async (pgPool) => {
-  await pgPool.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
-}
-
-/**
- * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {
