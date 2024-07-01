@@ -53,10 +53,17 @@ export const fetchTopMeasurementStations = async (pgPool, filter) => {
   return (await pgPool.query('SELECT * FROM top_measurement_stations_mv')).rows
 }
 
+/**
+ * @param {Queryable} pgPool
+ */
 export const updateTopMeasurementStations = async (pgPool) => {
   await pgPool.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
 }
 
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, SUM(amount) as amount
