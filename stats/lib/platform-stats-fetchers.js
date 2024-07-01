@@ -1,4 +1,3 @@
-import assert from 'http-assert'
 import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
@@ -49,21 +48,13 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchTopMeasurementStations = async (pgPool, filter) => {
-  // Block expensive multi-day queries
-  assert(filter.to === filter.from, 400, 'Multi-day queries are not supported for this endpoint')
+  // Ignore the filter for this query
+  // Get the top measurement stations from the Materialized View
+  return (await pgPool.query('SELECT * FROM top_measurement_stations_mv')).rows
+}
 
-  const { rows } = await pgPool.query(`
-  SELECT
-    participant_address,
-    COUNT(DISTINCT inet_group) AS inet_group_count,
-    COUNT(DISTINCT station_id) AS station_count,
-    SUM(accepted_measurement_count) AS accepted_measurement_count
-  FROM daily_stations
-  WHERE day >= $1 AND day <= $2
-  GROUP BY participant_address
-  ORDER BY accepted_measurement_count DESC;
-  `, [filter.from, filter.to])
-  return rows
+export const updateTopMeasurementStations = async (pgPool) => {
+  await pgPool.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
 }
 
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {

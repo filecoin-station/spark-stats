@@ -6,6 +6,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
+import { updateTopMeasurementStations } from '../lib/platform-stats-fetchers.js'
 
 const STATION_STATS = { stationId: 'station1', participantAddress: 'f1abcdef', inetGroup: 'group1' }
 
@@ -44,6 +45,8 @@ describe('Platform Routes HTTP request handler', () => {
 
   beforeEach(async () => {
     await pgPools.evaluate.query('DELETE FROM daily_stations')
+    await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
+
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
   })
 
@@ -157,16 +160,23 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /participants/top-measurements', () => {
     it('returns top measurement stations for the given date', async () => {
-      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { ...STATION_STATS, acceptedMeasurementCount: 10 }
-      ])
-      await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
+      const today = new Date()
+      const yesterday = new Date()
+      yesterday.setDate(today.getDate() - 1)
+
+      await givenDailyStationMetrics(pgPools.evaluate, yesterday.toISOString().split('T')[0], [
         { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50 },
         { ...STATION_STATS, acceptedMeasurementCount: 20 },
         { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30 },
         { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40 }
       ])
+      await givenDailyStationMetrics(pgPools.evaluate, today.toISOString().split('T')[0], [
+        { ...STATION_STATS, acceptedMeasurementCount: 10 }
+      ])
 
+      await updateTopMeasurementStations(pgPools.evaluate)
+
+      // We don't care about the date range for this query
       const res = await fetch(
         new URL(
           '/participants/top-measurements?from=2024-01-11&to=2024-01-11',
@@ -189,18 +199,6 @@ describe('Platform Routes HTTP request handler', () => {
         station_count: '1',
         accepted_measurement_count: '50'
       }])
-    })
-
-    it('returns 400 if the date range is more than one day', async () => {
-      const res = await fetch(
-        new URL(
-          '/participants/top-measurements?from=2024-01-11&to=2024-01-12',
-          baseUrl
-        ), {
-          redirect: 'manual'
-        }
-      )
-      await assertResponseStatus(res, 400)
     })
   })
 
