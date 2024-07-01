@@ -11,7 +11,6 @@ const {
 } = process.env
 
 const pgPools = await getPgPools()
-
 const logger = {
   error: console.error,
   info: console.info,
