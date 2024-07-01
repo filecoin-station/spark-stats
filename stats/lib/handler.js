@@ -41,6 +41,9 @@ export const createHandler = ({
 }
 
 const enableCors = (req, res) => {
+  // FIXME
+  console.log('enableCors', req.url, req.headers.origin)
+
   if (req.headers.origin === 'http://localhost:3000') {
     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000')
   } else {
