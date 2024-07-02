@@ -130,6 +130,7 @@ describe('observer', () => {
     beforeEach(async () => {
       await pgPools.evaluate.query('DELETE FROM daily_participants')
       await pgPools.evaluate.query('DELETE FROM participants')
+      await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
       await givenDailyParticipants(pgPools.evaluate, today(), ['0xCURRENT'])
       await givenDailyParticipants(pgPools.evaluate, '2000-01-01', ['0xOLD'])
     })

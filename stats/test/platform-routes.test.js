@@ -43,6 +43,7 @@ describe('Platform Routes HTTP request handler', () => {
   beforeEach(async () => {
     await pgPools.evaluate.query('DELETE FROM daily_stations')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
+    await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
   })
 
   describe('GET /stations/daily', () => {
@@ -182,6 +183,83 @@ describe('Platform Routes HTTP request handler', () => {
       assert.deepStrictEqual(metrics, [
         { day: '2024-01-11', amount: '150' },
         { day: '2024-01-12', amount: '550' }
+      ])
+    })
+  })
+
+  describe('GET /participants/top-earnings', () => {
+    const setupScheduledRewardsData = async () => {
+      await pgPools.stats.query(`
+        INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards)
+        VALUES 
+          ('2024-01-11', 'address1', 10),
+          ('2024-01-11', 'address2', 20),
+          ('2024-01-11', 'address3', 30),
+          ('2024-01-12', 'address1', 15),
+          ('2024-01-12', 'address2', 25),
+          ('2024-01-12', 'address3', 35)
+      `)
+    }
+    it('returns top earning participants for the given date range', async () => {
+      // Set up test data
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-09', [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 },
+        { toAddress: 'address2', amount: 100, lastCheckedBlock: 1 },
+        { toAddress: 'address3', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-10', [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-11', [
+        { toAddress: 'address2', amount: 150, lastCheckedBlock: 1 },
+        { toAddress: 'address1', amount: 50, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-12', [
+        { toAddress: 'address3', amount: 200, lastCheckedBlock: 1 },
+        { toAddress: 'address2', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      // Set up scheduled rewards data
+      await setupScheduledRewardsData()
+
+      const res = await fetch(
+        new URL(
+          '/participants/top-earnings?from=2024-01-10&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const topEarners = await res.json()
+      assert.deepStrictEqual(topEarners, [
+        { participant_address: 'address2', total_rewards: '275' },
+        { participant_address: 'address3', total_rewards: '235' },
+        { participant_address: 'address1', total_rewards: '165' }
+      ])
+    })
+    it('returns top earning participants for the given date range with no existing reward transfers', async () => {
+      await setupScheduledRewardsData()
+
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-10', [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          '/participants/top-earnings?from=2024-01-10&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const topEarners = await res.json()
+      assert.deepStrictEqual(topEarners, [
+        { participant_address: 'address1', total_rewards: '115' },
+        { participant_address: 'address3', total_rewards: '35' },
+        { participant_address: 'address2', total_rewards: '25' }
       ])
     })
   })
