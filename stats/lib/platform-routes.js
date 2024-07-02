@@ -3,7 +3,7 @@ import {
   fetchDailyStationCount,
   fetchMonthlyStationCount,
   fetchDailyRewardTransfers,
-  fetchTopMeasurementStations,
+  fetchTopMeasurementParticipants,
   fetchDailyStationAcceptedMeasurementCount
 } from './platform-stats-fetchers.js'
 
@@ -32,7 +32,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/measurements/daily') {
     await respond(pgPools.evaluate, fetchDailyStationAcceptedMeasurementCount)
   } else if (req.method === 'GET' && url === '/participants/top-measurements') {
-    await respond(pgPools.evaluate, fetchTopMeasurementStations)
+    await respond(pgPools.evaluate, fetchTopMeasurementParticipants)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {

@@ -44,7 +44,7 @@ describe('Platform Routes HTTP request handler', () => {
 
   beforeEach(async () => {
     await pgPools.evaluate.query('DELETE FROM daily_stations')
-    await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
+    await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
   })
@@ -173,7 +173,7 @@ describe('Platform Routes HTTP request handler', () => {
         { ...STATION_STATS, acceptedMeasurementCount: 10 }
       ])
 
-      await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_stations_mv')
+      await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
       // We don't care about the date range for this query
       const res = await fetch(

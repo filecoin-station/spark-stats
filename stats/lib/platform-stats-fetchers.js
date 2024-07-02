@@ -47,10 +47,10 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchTopMeasurementStations = async (pgPool, filter) => {
+export const fetchTopMeasurementParticipants = async (pgPool, filter) => {
   // Ignore the filter for this query
   // Get the top measurement stations from the Materialized View
-  return (await pgPool.query('SELECT * FROM top_measurement_stations_mv')).rows
+  return (await pgPool.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows
 }
 
 /**
