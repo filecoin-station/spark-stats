@@ -16,6 +16,7 @@ jobs:
           - pg
           - debug
           - ethers
+          - typescript
     steps:
       - name: Dependabot metadata
         id: metadata
