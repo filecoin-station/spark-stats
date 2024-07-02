@@ -43,6 +43,20 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
   return rows
 }
 
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchTopMeasurementParticipants = async (pgPool, filter) => {
+  // Ignore the filter for this query
+  // Get the top measurement stations from the Materialized View
+  return (await pgPool.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows
+}
+
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, SUM(amount) as amount
