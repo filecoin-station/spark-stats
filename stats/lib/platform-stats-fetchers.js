@@ -1,4 +1,5 @@
-import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
+import assert from 'http-assert'
+import { getDailyDistinctCount, getMonthlyDistinctCount, today } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
@@ -59,6 +60,7 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchTopEarningParticipants = async (pgPool, filter) => {
+  assert(filter.to === today(), 400, 'filter.to must be today, other values are not supported')
   const { rows } = await pgPool.query(`
     WITH latest_scheduled_rewards AS (
       SELECT DISTINCT ON (participant_address) participant_address, scheduled_rewards
@@ -71,7 +73,7 @@ export const fetchTopEarningParticipants = async (pgPool, filter) => {
     FROM daily_reward_transfers drt
     FULL OUTER JOIN latest_scheduled_rewards lsr
       ON drt.to_address = lsr.participant_address
-    WHERE drt.day >= $1 AND drt.day <= $2 OR drt.day IS NULL
+    WHERE (drt.day >= $1 AND drt.day <= $2) OR drt.day IS NULL
     GROUP BY COALESCE(drt.to_address, lsr.participant_address), lsr.scheduled_rewards
     ORDER BY total_rewards DESC
   `, [filter.from, filter.to])

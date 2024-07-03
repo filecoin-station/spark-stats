@@ -33,7 +33,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
     await respond(pgPools.evaluate, fetchDailyStationAcceptedMeasurementCount)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
-  } else if (req.method === 'GET' && url === '/participants/top-earnings') {
+  } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
   } else {
     return false

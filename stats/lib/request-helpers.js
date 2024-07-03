@@ -5,7 +5,7 @@ import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
-const getDayAsISOString = (d) => d.toISOString().split('T')[0]
+export const getDayAsISOString = (d) => d.toISOString().split('T')[0]
 
 export const today = () => getDayAsISOString(new Date())
 
