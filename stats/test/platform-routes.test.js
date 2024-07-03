@@ -163,22 +163,24 @@ describe('Platform Routes HTTP request handler', () => {
       const yesterday = new Date()
       yesterday.setDate(today.getDate() - 1)
 
-      await givenDailyStationMetrics(pgPools.evaluate, yesterday.toISOString().split('T')[0], [
+      const todayUTC = today.toISOString().split('T')[0]
+      const yesterdayUTC = yesterday.toISOString().split('T')[0]
+
+      await givenDailyStationMetrics(pgPools.evaluate, yesterdayUTC, [
         { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50 },
         { ...STATION_STATS, acceptedMeasurementCount: 20 },
         { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30 },
         { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40 }
       ])
-      await givenDailyStationMetrics(pgPools.evaluate, today.toISOString().split('T')[0], [
+      await givenDailyStationMetrics(pgPools.evaluate, todayUTC, [
         { ...STATION_STATS, acceptedMeasurementCount: 10 }
       ])
 
       await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
-      // We don't care about the date range for this query
       const res = await fetch(
         new URL(
-          '/participants/top-measurements?from=2024-01-11&to=2024-01-11',
+          `/participants/top-measurements?from=${yesterdayUTC}&to=${yesterdayUTC}`,
           baseUrl
         ), {
           redirect: 'manual'
@@ -198,6 +200,18 @@ describe('Platform Routes HTTP request handler', () => {
         station_count: '1',
         accepted_measurement_count: '50'
       }])
+    })
+
+    it('returns 400 if the date range is more than one day', async () => {
+      const res = await fetch(
+        new URL(
+          '/participants/top-measurements?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 400)
     })
   })
 
