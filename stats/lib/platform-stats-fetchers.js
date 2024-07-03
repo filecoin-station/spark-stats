@@ -48,7 +48,7 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchTopMeasurementParticipants = async (pgPool, filter) => {
+export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
   assert(filter.to === filter.from, 400, 'Multi-day queries are not supported for this endpoint')
   const yesterdayUTC = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   assert(filter.to === yesterdayUTC, 400, 'filter.to must be set to yesterday, other values are not supported yet')
