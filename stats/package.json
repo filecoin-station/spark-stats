@@ -10,7 +10,7 @@
   },
   "devDependencies": {
     "@filecoin-station/spark-stats-db": "^1.0.0",
-    "mocha": "^10.5.2",
+    "mocha": "^10.6.0",
     "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.0"
   },
