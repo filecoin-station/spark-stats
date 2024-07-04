@@ -7,6 +7,8 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 
+const STATION_STATS = { stationId: 'station1', participantAddress: 'f1abcdef', inetGroup: 'group1' }
+
 const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
@@ -42,23 +44,25 @@ describe('Platform Routes HTTP request handler', () => {
 
   beforeEach(async () => {
     await pgPools.evaluate.query('DELETE FROM daily_stations')
+    await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
+
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
   })
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { stationId: 'station2', acceptedMeasurementCount: 2 },
-        { stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
 
       const res = await fetch(
@@ -82,25 +86,25 @@ describe('Platform Routes HTTP request handler', () => {
     it('returns monthly station metrics for the given date range ignoring the day number', async () => {
       // before the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2023-12-31', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
       // in the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { stationId: 'station2', acceptedMeasurementCount: 2 },
-        { stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-02-13', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
       // after the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2024-03-01', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
 
       const res = await fetch(
@@ -123,17 +127,17 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /measurements/daily', () => {
     it('returns daily total accepted measurement count for the given date range', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { stationId: 'station2', acceptedMeasurementCount: 2 },
-        { stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
-        { stationId: 'station1', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1 }
       ])
 
       const res = await fetch(
@@ -150,6 +154,64 @@ describe('Platform Routes HTTP request handler', () => {
         { day: '2024-01-11', accepted_measurement_count: '1' },
         { day: '2024-01-12', accepted_measurement_count: '3' }
       ])
+    })
+  })
+
+  describe('GET /participants/top-measurements', () => {
+    it('returns top measurement stations for the given date', async () => {
+      const today = new Date()
+      const yesterday = new Date()
+      yesterday.setDate(today.getDate() - 1)
+
+      const todayUTC = today.toISOString().split('T')[0]
+      const yesterdayUTC = yesterday.toISOString().split('T')[0]
+
+      await givenDailyStationMetrics(pgPools.evaluate, yesterdayUTC, [
+        { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50 },
+        { ...STATION_STATS, acceptedMeasurementCount: 20 },
+        { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30 },
+        { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40 }
+      ])
+      await givenDailyStationMetrics(pgPools.evaluate, todayUTC, [
+        { ...STATION_STATS, acceptedMeasurementCount: 10 }
+      ])
+
+      await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
+
+      const res = await fetch(
+        new URL(
+          `/participants/top-measurements?from=${yesterdayUTC}&to=${yesterdayUTC}`,
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const metrics = await res.json()
+      assert.deepStrictEqual(metrics, [{
+        participant_address: STATION_STATS.participantAddress,
+        inet_group_count: '2',
+        station_count: '2',
+        accepted_measurement_count: '90'
+      },
+      {
+        participant_address: 'f1ghijkl',
+        inet_group_count: '1',
+        station_count: '1',
+        accepted_measurement_count: '50'
+      }])
+    })
+
+    it('returns 400 if the date range is more than one day', async () => {
+      const res = await fetch(
+        new URL(
+          '/participants/top-measurements?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 400)
     })
   })
 
@@ -189,12 +251,25 @@ describe('Platform Routes HTTP request handler', () => {
 
 const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {
   await pgPoolEvaluate.query(`
-    INSERT INTO daily_stations (day, station_id, accepted_measurement_count)
-    SELECT $1 AS day, UNNEST($2::text[]) AS station_id, UNNEST($3::int[]) AS accepted_measurement_count
+    INSERT INTO daily_stations (
+      day,
+      station_id,
+      participant_address,
+      inet_group,
+      accepted_measurement_count
+    )
+    SELECT 
+      $1 AS day,
+      UNNEST($2::text[]) AS station_id,
+      UNNEST($3::text[]) AS participant_address,
+      UNNEST($4::text[]) AS inet_group,
+      UNNEST($5::int[]) AS accepted_measurement_count
     ON CONFLICT DO NOTHING
     `, [
     day,
     stationStats.map(s => s.stationId),
+    stationStats.map(s => s.participantAddress),
+    stationStats.map(s => s.inetGroup),
     stationStats.map(s => s.acceptedMeasurementCount)
   ])
 }
