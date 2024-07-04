@@ -6,6 +6,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
+import { getDayAsISOString, today } from '../lib/request-helpers.js'
 
 const STATION_STATS = { stationId: 'station1', participantAddress: 'f1abcdef', inetGroup: 'group1' }
 
@@ -47,6 +48,7 @@ describe('Platform Routes HTTP request handler', () => {
     await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
+    await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
   })
 
   describe('GET /stations/daily', () => {
@@ -245,6 +247,105 @@ describe('Platform Routes HTTP request handler', () => {
         { day: '2024-01-11', amount: '150' },
         { day: '2024-01-12', amount: '550' }
       ])
+    })
+  })
+
+  describe('GET /participants/top-earning', () => {
+    const yesterdayDate = new Date()
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1)
+    const yesterday = getDayAsISOString(yesterdayDate)
+    console.log('yesterday', yesterday)
+
+    const oneWeekAgoDate = new Date()
+    oneWeekAgoDate.setDate(oneWeekAgoDate.getDate() - 7)
+    const oneWeekAgo = getDayAsISOString(oneWeekAgoDate)
+    console.log('oneWeekAgo', oneWeekAgo)
+
+    const setupScheduledRewardsData = async () => {
+      await pgPools.stats.query(`
+        INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards)
+        VALUES 
+          ('${yesterday}', 'address1', 10),
+          ('${yesterday}', 'address2', 20),
+          ('${yesterday}', 'address3', 30),
+          ('${today()}', 'address1', 15),
+          ('${today()}', 'address2', 25),
+          ('${today()}', 'address3', 35)
+      `)
+    }
+    it('returns top earning participants for the given date range', async () => {
+      // First two dates should be ignored
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-09', [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 },
+        { toAddress: 'address2', amount: 100, lastCheckedBlock: 1 },
+        { toAddress: 'address3', amount: 100, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, '2024-01-10', [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      // These should be included in the results
+      await givenDailyRewardTransferMetrics(pgPools.stats, oneWeekAgo, [
+        { toAddress: 'address2', amount: 150, lastCheckedBlock: 1 },
+        { toAddress: 'address1', amount: 50, lastCheckedBlock: 1 }
+      ])
+      await givenDailyRewardTransferMetrics(pgPools.stats, today(), [
+        { toAddress: 'address3', amount: 200, lastCheckedBlock: 1 },
+        { toAddress: 'address2', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      // Set up scheduled rewards data
+      await setupScheduledRewardsData()
+
+      const res = await fetch(
+        new URL(
+          `/participants/top-earning?from=${oneWeekAgo}&to=${today()}`,
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const topEarners = await res.json()
+      assert.deepStrictEqual(topEarners, [
+        { participant_address: 'address2', total_rewards: '275' },
+        { participant_address: 'address3', total_rewards: '235' },
+        { participant_address: 'address1', total_rewards: '65' }
+      ])
+    })
+    it('returns top earning participants for the given date range with no existing reward transfers', async () => {
+      await setupScheduledRewardsData()
+
+      await givenDailyRewardTransferMetrics(pgPools.stats, today(), [
+        { toAddress: 'address1', amount: 100, lastCheckedBlock: 1 }
+      ])
+
+      const res = await fetch(
+        new URL(
+          `/participants/top-earning?from=${oneWeekAgo}&to=${today()}`,
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const topEarners = await res.json()
+      assert.deepStrictEqual(topEarners, [
+        { participant_address: 'address1', total_rewards: '115' },
+        { participant_address: 'address3', total_rewards: '35' },
+        { participant_address: 'address2', total_rewards: '25' }
+      ])
+    })
+    it('returns 400 if the date range end is not today', async () => {
+      const res = await fetch(
+        new URL(
+          `/participants/top-earning?from=${oneWeekAgo}&to=${yesterday}`,
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 400)
     })
   })
 })
