@@ -77,6 +77,9 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchTopEarningParticipants = async (pgPool, filter) => {
+  // The query combines "transfers until filter.to" with "latest scheduled rewards as of today".
+  // As a result, it produces incorrect result if `to` is different from `now()`.
+  // See https://github.com/filecoin-station/spark-stats/pull/170#discussion_r1664080395
   assert(filter.to === today(), 400, 'filter.to must be today, other values are not supported')
   const { rows } = await pgPool.query(`
     WITH latest_scheduled_rewards AS (
