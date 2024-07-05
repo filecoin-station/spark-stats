@@ -36,6 +36,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/top-earning
 
+- `GET /participants/top-measurements`
+
+  http://stats.filspark.com/participants/top-measurements
+
 - `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
   http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaD/scheduled-rewards
