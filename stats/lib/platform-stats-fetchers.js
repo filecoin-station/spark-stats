@@ -1,5 +1,10 @@
 import assert from 'http-assert'
-import { getDailyDistinctCount, getMonthlyDistinctCount, today } from './request-helpers.js'
+import {
+  getDailyDistinctCount,
+  getMonthlyDistinctCount,
+  today,
+  yesterday
+} from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
@@ -50,8 +55,7 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
  */
 export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
   assert(filter.to === filter.from, 400, 'Multi-day queries are not supported for this endpoint')
-  const yesterdayUTC = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  assert(filter.to === yesterdayUTC, 400, 'filter.to must be set to yesterday, other values are not supported yet')
+  assert(filter.to === yesterday(), 400, 'filter.to must be set to yesterday, other values are not supported yet')
   // Ignore the filter for this query
   // Get the top measurement stations from the Materialized View
   return (await pgPool.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows

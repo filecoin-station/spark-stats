@@ -6,7 +6,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { getDayAsISOString, today } from '../lib/request-helpers.js'
+import { getDayAsISOString, today, yesterday } from '../lib/request-helpers.js'
 
 const STATION_STATS = { stationId: 'station1', participantAddress: 'f1abcdef', inetGroup: 'group1' }
 
@@ -161,20 +161,13 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /participants/top-measurements', () => {
     it('returns top measurement stations for the given date', async () => {
-      const today = new Date()
-      const yesterday = new Date()
-      yesterday.setDate(today.getDate() - 1)
-
-      const todayUTC = today.toISOString().split('T')[0]
-      const yesterdayUTC = yesterday.toISOString().split('T')[0]
-
-      await givenDailyStationMetrics(pgPools.evaluate, yesterdayUTC, [
+      await givenDailyStationMetrics(pgPools.evaluate, yesterday(), [
         { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50 },
         { ...STATION_STATS, acceptedMeasurementCount: 20 },
         { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30 },
         { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40 }
       ])
-      await givenDailyStationMetrics(pgPools.evaluate, todayUTC, [
+      await givenDailyStationMetrics(pgPools.evaluate, today(), [
         { ...STATION_STATS, acceptedMeasurementCount: 10 }
       ])
 
@@ -182,7 +175,7 @@ describe('Platform Routes HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          `/participants/top-measurements?from=${yesterdayUTC}&to=${yesterdayUTC}`,
+          '/participants/top-measurements?from=yesterday&to=yesterday',
           baseUrl
         ), {
           redirect: 'manual'
@@ -251,23 +244,17 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   describe('GET /participants/top-earning', () => {
-    const yesterdayDate = new Date()
-    yesterdayDate.setDate(yesterdayDate.getDate() - 1)
-    const yesterday = getDayAsISOString(yesterdayDate)
-    console.log('yesterday', yesterday)
-
     const oneWeekAgoDate = new Date()
     oneWeekAgoDate.setDate(oneWeekAgoDate.getDate() - 7)
     const oneWeekAgo = getDayAsISOString(oneWeekAgoDate)
-    console.log('oneWeekAgo', oneWeekAgo)
 
     const setupScheduledRewardsData = async () => {
       await pgPools.stats.query(`
         INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards)
         VALUES 
-          ('${yesterday}', 'address1', 10),
-          ('${yesterday}', 'address2', 20),
-          ('${yesterday}', 'address3', 30),
+          ('${yesterday()}', 'address1', 10),
+          ('${yesterday()}', 'address2', 20),
+          ('${yesterday()}', 'address3', 30),
           ('${today()}', 'address1', 15),
           ('${today()}', 'address2', 25),
           ('${today()}', 'address3', 35)
@@ -339,7 +326,7 @@ describe('Platform Routes HTTP request handler', () => {
     it('returns 400 if the date range end is not today', async () => {
       const res = await fetch(
         new URL(
-          `/participants/top-earning?from=${oneWeekAgo}&to=${yesterday}`,
+          `/participants/top-earning?from=${oneWeekAgo}&to=yesterday`,
           baseUrl
         ), {
           redirect: 'manual'
