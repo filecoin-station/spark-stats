@@ -530,7 +530,7 @@ describe('HTTP request handler', () => {
 
 /**
  *
- * @param {import('../lib/platform-stats-fetchers.js').Queryable} pgPool
+ * @param {import('../../db/typings.js').Queryable} pgPool
  * @param {object} data
  * @param {string} data.day
  * @param {string} [data.minerId]
