@@ -7,6 +7,7 @@ import {
 } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
+/** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 
 /**
  * @param {Queryable} pgPool
@@ -101,5 +102,19 @@ export const fetchTopEarningParticipants = async (pgPool, filter) => {
     GROUP BY COALESCE(drt.to_address, lsr.participant_address), lsr.scheduled_rewards
     ORDER BY total_rewards DESC
   `, [filter.from, filter.to])
+  return rows
+}
+
+/**
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ * @param {string} address
+ */
+export const fetchParticipantRewardTransfers = async (pgPools, { from, to }, address) => {
+  const { rows } = await pgPools.stats.query(`
+    SELECT day::TEXT, amount
+    FROM daily_reward_transfers
+    WHERE to_address = $1 AND day >= $2 AND day <= $3
+  `, [address, from, to])
   return rows
 }
