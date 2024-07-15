@@ -51,7 +51,7 @@ export const getStatsPgPool = async () => {
     connectionString: DATABASE_URL
   })
   stats.on('error', onError)
-  await migrateStatsDB(stats)
+  await stats.query('SELECT 1')
   return stats
 }
 
