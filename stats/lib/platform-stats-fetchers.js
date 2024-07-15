@@ -6,16 +6,15 @@ import {
   yesterday
 } from './request-helpers.js'
 
-/** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyStationCount = async (pgPool, filter) => {
+export const fetchDailyStationCount = async (pgPools, filter) => {
   return await getDailyDistinctCount({
-    pgPool,
+    pgPool: pgPools.evaluate,
     table: 'daily_stations',
     column: 'station_id',
     filter
@@ -23,12 +22,12 @@ export const fetchDailyStationCount = async (pgPool, filter) => {
 }
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchMonthlyStationCount = async (pgPool, filter) => {
+export const fetchMonthlyStationCount = async (pgPools, filter) => {
   return await getMonthlyDistinctCount({
-    pgPool,
+    pgPool: pgPools.evaluate,
     table: 'daily_stations',
     column: 'station_id',
     filter
@@ -36,11 +35,11 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
 }
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) => {
-  const { rows } = await pgPool.query(`
+export const fetchDailyStationAcceptedMeasurementCount = async (pgPools, filter) => {
+  const { rows } = await pgPools.evaluate.query(`
     SELECT day::TEXT, SUM(accepted_measurement_count) as accepted_measurement_count
     FROM daily_stations
     WHERE day >= $1 AND day <= $2
@@ -51,23 +50,23 @@ export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) 
 }
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
+export const fetchParticipantsWithTopMeasurements = async (pgPools, filter) => {
   assert(filter.to === filter.from, 400, 'Multi-day queries are not supported for this endpoint')
   assert(filter.to === yesterday(), 400, 'filter.to must be set to yesterday, other values are not supported yet')
   // Ignore the filter for this query
   // Get the top measurement stations from the Materialized View
-  return (await pgPool.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows
+  return (await pgPools.evaluate.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows
 }
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyRewardTransfers = async (pgPool, filter) => {
-  const { rows } = await pgPool.query(`
+export const fetchDailyRewardTransfers = async (pgPools, filter) => {
+  const { rows } = await pgPools.stats.query(`
     SELECT day::TEXT, SUM(amount) as amount
     FROM daily_reward_transfers
     WHERE day >= $1 AND day <= $2
@@ -78,15 +77,15 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
 }
 
 /**
- * @param {Queryable} pgPool
+ * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchTopEarningParticipants = async (pgPool, filter) => {
+export const fetchTopEarningParticipants = async (pgPools, filter) => {
   // The query combines "transfers until filter.to" with "latest scheduled rewards as of today".
   // As a result, it produces incorrect result if `to` is different from `now()`.
   // See https://github.com/filecoin-station/spark-stats/pull/170#discussion_r1664080395
   assert(filter.to === today(), 400, 'filter.to must be today, other values are not supported')
-  const { rows } = await pgPool.query(`
+  const { rows } = await pgPools.stats.query(`
     WITH latest_scheduled_rewards AS (
       SELECT DISTINCT ON (participant_address) participant_address, scheduled_rewards
       FROM daily_scheduled_rewards
