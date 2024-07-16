@@ -80,7 +80,7 @@ const handler = async (req, res, pgPools) => {
   const url = `/${segs.join('/')}`
 
   enableCors(req, res)
-  const respond = createRespondWithFetchFn(pathname, searchParams, res, pgPools)
+  const respond = createRespondWithFetchFn(url, searchParams, res, pgPools)
 
   if (req.method === 'GET' && url === '/deals/daily') {
     await respond(fetchDailyDealStats)
