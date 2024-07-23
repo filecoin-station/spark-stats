@@ -1,4 +1,4 @@
-import type { Pool } from 'pg'
+import pg from 'pg'
 
 export interface PgPoolEvaluate extends pg.Pool {
   db: 'evaluate'
