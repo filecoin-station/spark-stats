@@ -6,6 +6,8 @@ import Postgrator from 'postgrator'
 
 // re-export types
 /** @typedef {import('./typings.js').PgPools} PgPools */
+/** @typedef {import('./typings.js').PgPoolStats} PgPoolStats */
+/** @typedef {import('./typings.js').PgPoolEvaluate} PgPoolEvaluate */
 /** @typedef {import('./typings.js').Queryable} Queryable */
 
 export { migrateEvaluateDB }
@@ -45,21 +47,38 @@ const onError = err => {
   console.error('An idle client has experienced an error', err.stack)
 }
 
+/**
+ * @template DB
+ * @param {DB} db
+ * @param {pg.Pool} pgPool
+ * @returns {import('pg').Pool & {db: DB}}
+ */
+function getNamedPool(db, pgPool) {
+  return /** @type {any} */(Object.assign(pgPool, {db}))
+}
+
+/**
+ * @returns {Promise<PgPoolStats>}
+ */
 export const getStatsPgPool = async () => {
-  const stats = new pg.Pool({
+  const stats = getNamedPool('stats', new pg.Pool({
     ...poolConfig,
     connectionString: DATABASE_URL
-  })
+  }))
   stats.on('error', onError)
   await migrateStatsDB(stats)
   return stats
 }
 
+/**
+ * 
+ * @returns {Promise<PgPoolEvaluate>}
+ */
 export const getEvaluatePgPool = async () => {
-  const evaluate = new pg.Pool({
+  const evaluate = getNamedPool('evaluate', new pg.Pool({
     ...poolConfig,
     connectionString: EVALUATE_DB_URL
-  })
+  }))
   evaluate.on('error', onError)
   await evaluate.query('SELECT 1')
   return evaluate
