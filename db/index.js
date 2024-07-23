@@ -48,37 +48,32 @@ const onError = err => {
 }
 
 /**
- * @template DB
- * @param {DB} db
- * @param {pg.Pool} pgPool
- * @returns {import('pg').Pool & {db: DB}}
- */
-function getNamedPool (db, pgPool) {
-  return Object.assign(pgPool, { db })
-}
-
-/**
  * @returns {Promise<PgPoolStats>}
  */
 export const getStatsPgPool = async () => {
-  const stats = getNamedPool(/** @type {const} */('stats'), new pg.Pool({
-    ...poolConfig,
-    connectionString: DATABASE_URL
-  }))
+  const stats = Object.assign(
+    new pg.Pool({
+      ...poolConfig,
+      connectionString: DATABASE_URL
+    }),
+    /** @type {const} */({ db: 'stats' })
+  )
   stats.on('error', onError)
   await migrateStatsDB(stats)
   return stats
 }
 
 /**
- *
  * @returns {Promise<PgPoolEvaluate>}
  */
 export const getEvaluatePgPool = async () => {
-  const evaluate = getNamedPool(/** @type {const} */('evaluate'), new pg.Pool({
-    ...poolConfig,
-    connectionString: EVALUATE_DB_URL
-  }))
+  const evaluate = Object.assign(
+    new pg.Pool({
+      ...poolConfig,
+      connectionString: EVALUATE_DB_URL
+    }),
+    /** @type {const} */({ db: 'evaluate' })
+  )
   evaluate.on('error', onError)
   await evaluate.query('SELECT 1')
   return evaluate
