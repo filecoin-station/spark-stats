@@ -53,8 +53,8 @@ const onError = err => {
  * @param {pg.Pool} pgPool
  * @returns {import('pg').Pool & {db: DB}}
  */
-function getNamedPool(db, pgPool) {
-  return /** @type {any} */(Object.assign(pgPool, {db}))
+function getNamedPool (db, pgPool) {
+  return /** @type {any} */(Object.assign(pgPool, { db }))
 }
 
 /**
@@ -71,7 +71,7 @@ export const getStatsPgPool = async () => {
 }
 
 /**
- * 
+ *
  * @returns {Promise<PgPoolEvaluate>}
  */
 export const getEvaluatePgPool = async () => {
