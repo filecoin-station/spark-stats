@@ -457,6 +457,57 @@ describe('HTTP request handler', () => {
     })
   })
 
+  describe('GET /deals/summary', () => {
+    it('returns deal summary for the given date range (including the end day)', async () => {
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-12', total: 200, indexed: 52, retrievable: 2 })
+      // filter.to - 7 days -> should be excluded
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-23', total: 300, indexed: 53, retrievable: 3 })
+      // last 7 days
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-24', total: 400, indexed: 54, retrievable: 4 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-29', total: 500, indexed: 55, retrievable: 5 })
+      // `filter.to` (e.g. today) - should be included
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-30', total: 6000, indexed: 600, retrievable: 60 })
+      // after the requested range
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-31', total: 70000, indexed: 7000, retrievable: 700 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/summary?from=2024-03-24&to=2024-03-30',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+
+      assert.deepStrictEqual(stats, {
+        total: '6900',
+        indexed: '709',
+        retrievable: '69'
+      })
+    })
+
+    it('handles query for future date with no recorded stats', async () => {
+      const res = await fetch(
+        new URL(
+          '/deals/summary?from=3024-04-24&to=3024-03-30',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+
+      assert.deepStrictEqual(stats, {
+        total: null,
+        indexed: null,
+        retrievable: null
+      })
+    })
+  })
+
   describe('CORS', () => {
     it('sets CORS headers for requests from Station Desktop in production', async () => {
       const res = await fetch(new URL('/', baseUrl), {

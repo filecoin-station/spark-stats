@@ -5,9 +5,10 @@ import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
-const getDayAsISOString = (d) => d.toISOString().split('T')[0]
+export const getDayAsISOString = (d) => d.toISOString().split('T')[0]
 
 export const today = () => getDayAsISOString(new Date())
+export const yesterday = () => getDayAsISOString(new Date(Date.now() - 24 * 60 * 60 * 1000))
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
@@ -22,6 +23,9 @@ export const today = () => getDayAsISOString(new Date())
 export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchParams, res, pgPools, fetchStatsFn) => {
   const filter = Object.fromEntries(searchParams)
   let shouldRedirect = false
+
+  filter.from = handleDateKeyword(filter.from)
+  filter.to = handleDateKeyword(filter.to)
 
   // Provide default values for "from" and "to" when not specified
 
@@ -93,6 +97,21 @@ const setCacheControlForStatsResponse = (res, filter) => {
   } else {
     // historical data should never change, cache it for one year
     res.setHeader('cache-control', `public, max-age=${365 * 24 * 3600}, immutable`)
+  }
+}
+
+/**
+ * @param {string} date
+ * @returns {string}
+ */
+const handleDateKeyword = (date) => {
+  switch (date) {
+    case 'today':
+      return today()
+    case 'yesterday':
+      return yesterday()
+    default:
+      return date
   }
 }
 

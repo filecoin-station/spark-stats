@@ -32,6 +32,14 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/change-rates
 
+- `GET /participants/top-earning`
+
+  http://stats.filspark.com/participants/top-earning
+
+- `GET /participants/top-measurements`
+
+  http://stats.filspark.com/participants/top-measurements
+
 - `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
   http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaD/scheduled-rewards
@@ -56,9 +64,18 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/measurements/daily
 
+- `GET /transfers/daily?from=<day>&to=<day>`
+
+  http://stats.filspark.com/transfers/daily
+
 - `GET /deals/daily?from=2024-01-01&to=2024-01-31`
 
   http://stats.filspark.com/deals/daily
+
+- `GET /deals/summary?from=2024-01-01&to=2024-01-31`
+
+  http://stats.filspark.com/deals/summary
+
 
 ## Development
 

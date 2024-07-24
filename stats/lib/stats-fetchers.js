@@ -46,6 +46,24 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
   return rows
 }
 
+/**
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchDealSummary = async (pgPools, filter) => {
+  const { rows: [summary] } = await pgPools.evaluate.query(`
+    SELECT
+      SUM(total) as total,
+      SUM(indexed) as indexed,
+      SUM(retrievable) as retrievable
+    FROM daily_deals
+    WHERE day >= date_trunc('day', $1::DATE)
+      AND day <= date_trunc('day', $2::DATE)
+  `, [filter.from, filter.to]
+  )
+  return summary
+}
+
 export const fetchDailyParticipants = async (pgPools, filter) => {
   return await getDailyDistinctCount({
     pgPool: pgPools.evaluate,
