@@ -5,6 +5,7 @@
   "main": "index.js",
   "private": true,
   "scripts": {
+    "migrate": "node bin/migrate.js",
     "lint": "standard"
   },
   "devDependencies": {
