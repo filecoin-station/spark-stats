@@ -5,7 +5,7 @@ import {
   fetchDailyRewardTransfers,
   fetchTopEarningParticipants,
   fetchParticipantsWithTopMeasurements,
-  fetchDailyStationAcceptedMeasurementCount
+  fetchDailyStationMeasurementCounts
 } from './platform-stats-fetchers.js'
 
 const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
@@ -31,7 +31,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/stations/monthly') {
     await respond(pgPools.evaluate, fetchMonthlyStationCount)
   } else if (req.method === 'GET' && url === '/measurements/daily') {
-    await respond(pgPools.evaluate, fetchDailyStationAcceptedMeasurementCount)
+    await respond(pgPools.evaluate, fetchDailyStationMeasurementCounts)
   } else if (req.method === 'GET' && url === '/participants/top-measurements') {
     await respond(pgPools.evaluate, fetchParticipantsWithTopMeasurements)
   } else if (req.method === 'GET' && url === '/participants/top-earning') {

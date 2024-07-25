@@ -38,9 +38,11 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
  * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyStationAcceptedMeasurementCount = async (pgPool, filter) => {
+export const fetchDailyStationMeasurementCounts = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
-    SELECT day::TEXT, SUM(accepted_measurement_count) as accepted_measurement_count
+    SELECT day::TEXT,
+      SUM(accepted_measurement_count) as accepted_measurement_count,
+      SUM(total_measurement_count) as total_measurement_count
     FROM daily_stations
     WHERE day >= $1 AND day <= $2
     GROUP BY day
