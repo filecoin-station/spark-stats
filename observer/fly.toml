@@ -8,3 +8,7 @@ primary_region = "cdg"
 [deploy]
   strategy = "rolling"
   release_command = "npm run migrate --workspace db"
+
+[[restart]]
+  policy = "always"
+  retries = 10
