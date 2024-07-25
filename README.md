@@ -38,7 +38,7 @@ Base URL: http://stats.filspark.com/
 
 - `GET /participants/top-measurements`
 
-  http://stats.filspark.com/participants/top-measurements
+  http://stats.filspark.com/participants/top-measurements?from=yesterday&to=yesterday
 
 - `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
