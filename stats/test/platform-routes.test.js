@@ -129,17 +129,17 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /measurements/daily', () => {
     it('returns daily total accepted measurement count for the given date range', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 2 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1, totalMeasurementCount: 2 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
-        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2, totalMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1, totalMeasurementCount: 2 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 2 }
       ])
 
       const res = await fetch(
@@ -153,8 +153,8 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', accepted_measurement_count: '1' },
-        { day: '2024-01-12', accepted_measurement_count: '3' }
+        { day: '2024-01-11', accepted_measurement_count: '1', total_measurement_count: '2' },
+        { day: '2024-01-12', accepted_measurement_count: '3', total_measurement_count: '4' }
       ])
     })
   })
@@ -344,21 +344,24 @@ const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {
       station_id,
       participant_address,
       inet_group,
-      accepted_measurement_count
+      accepted_measurement_count,
+      total_measurement_count
     )
     SELECT 
       $1 AS day,
       UNNEST($2::text[]) AS station_id,
       UNNEST($3::text[]) AS participant_address,
       UNNEST($4::text[]) AS inet_group,
-      UNNEST($5::int[]) AS accepted_measurement_count
+      UNNEST($5::int[]) AS accepted_measurement_count,
+      UNNEST($6::int[]) AS total_measurement_count
     ON CONFLICT DO NOTHING
     `, [
     day,
     stationStats.map(s => s.stationId),
     stationStats.map(s => s.participantAddress),
     stationStats.map(s => s.inetGroup),
-    stationStats.map(s => s.acceptedMeasurementCount)
+    stationStats.map(s => s.acceptedMeasurementCount),
+    stationStats.map(s => s.totalMeasurementCount)
   ])
 }
 
