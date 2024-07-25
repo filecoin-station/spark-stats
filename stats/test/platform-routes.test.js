@@ -54,17 +54,17 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
-        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2, totalMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-13', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
 
       const res = await fetch(
@@ -88,25 +88,25 @@ describe('Platform Routes HTTP request handler', () => {
     it('returns monthly station metrics for the given date range ignoring the day number', async () => {
       // before the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2023-12-31', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       // in the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-10', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-11', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-01-12', [
-        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2 },
-        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, stationId: 'station2', acceptedMeasurementCount: 2, totalMeasurementCount: 2 },
+        { ...STATION_STATS, stationId: 'station3', acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, '2024-02-13', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
       // after the date range
       await givenDailyStationMetrics(pgPools.evaluate, '2024-03-01', [
-        { ...STATION_STATS, acceptedMeasurementCount: 1 }
+        { ...STATION_STATS, acceptedMeasurementCount: 1, totalMeasurementCount: 1 }
       ])
 
       const res = await fetch(
@@ -162,13 +162,13 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /participants/top-measurements', () => {
     it('returns top measurement stations for the given date', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, yesterday(), [
-        { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50 },
-        { ...STATION_STATS, acceptedMeasurementCount: 20 },
-        { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30 },
-        { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40 }
+        { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50, totalMeasurementCount: 50 },
+        { ...STATION_STATS, acceptedMeasurementCount: 20, totalMeasurementCount: 20 },
+        { ...STATION_STATS, stationId: 's2', acceptedMeasurementCount: 30, totalMeasurementCount: 30 },
+        { ...STATION_STATS, stationId: 's2', inetGroup: 'group2', acceptedMeasurementCount: 40, totalMeasurementCount: 40 }
       ])
       await givenDailyStationMetrics(pgPools.evaluate, today(), [
-        { ...STATION_STATS, acceptedMeasurementCount: 10 }
+        { ...STATION_STATS, acceptedMeasurementCount: 10, totalMeasurementCount: 10 }
       ])
 
       await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
