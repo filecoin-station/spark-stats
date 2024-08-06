@@ -1,4 +1,5 @@
 import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
+import { migrate as migrateApiDB } from 'spark-api/migrations/index.js'
 import pg from 'pg'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,13 +9,17 @@ import Postgrator from 'postgrator'
 /** @typedef {import('./typings.js').PgPools} PgPools */
 /** @typedef {import('./typings.js').PgPoolStats} PgPoolStats */
 /** @typedef {import('./typings.js').PgPoolEvaluate} PgPoolEvaluate */
+/** @typedef {import('./typings.js').PgPoolApi} PgPoolApi */
 /** @typedef {import('./typings.js').Queryable} Queryable */
 
-export { migrateEvaluateDB }
+export { migrateEvaluateDB, migrateApiDB }
 
 const {
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
   DATABASE_URL = 'postgres://localhost:5432/spark_stats',
+
+  // API_DB_URL points to `spark` database managed by spark-api repo.
+  API_DB_URL = 'postgres://localhost:5432/spark',
 
   // EVALUATE_DB_URL points to `spark_evaluate` database managed by spark-evaluate repo.
   // Eventually, we should move the code updating stats from spark-evaluate to this repo
@@ -80,14 +85,31 @@ export const getEvaluatePgPool = async () => {
 }
 
 /**
+ * @returns {Promise<PgPoolApi>}
+ */
+export const getApiPgPool = async () => {
+  const stats = Object.assign(
+    new pg.Pool({
+      ...poolConfig,
+      connectionString: API_DB_URL
+    }),
+    /** @type {const} */({ db: 'api' })
+  )
+  stats.on('error', onError)
+  await stats.query('SELECT 1')
+  return stats
+}
+
+/**
  * @returns {Promise<PgPools>}
  */
 export const getPgPools = async () => {
   const stats = await getStatsPgPool()
   const evaluate = await getEvaluatePgPool()
-  const end = async () => { await Promise.all([stats.end(), evaluate.end()]) }
+  const api = await getApiPgPool()
+  const end = async () => { await Promise.all([stats.end(), evaluate.end(), api.end()]) }
 
-  return { stats, evaluate, end }
+  return { stats, evaluate, api, end }
 }
 
 /**
