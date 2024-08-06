@@ -31,5 +31,3 @@ updates:
       interval: "daily"
       time: "15:00"
       timezone: "Europe/Berlin"
-
-r
