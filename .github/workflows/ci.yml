@@ -29,6 +29,7 @@ jobs:
       NPM_CONFIG_WORKSPACE: stats
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -60,6 +61,7 @@ jobs:
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -102,6 +104,7 @@ jobs:
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
+      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
