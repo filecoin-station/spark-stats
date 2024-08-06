@@ -25,6 +25,7 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
+      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: stats
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
@@ -55,6 +56,7 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
+      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
@@ -96,6 +98,7 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
+      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
