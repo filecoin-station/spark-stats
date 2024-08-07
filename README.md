@@ -20,6 +20,14 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
 
+- `GET /miner/:id/deals/eligible/summary`
+
+  http://stats.filspark.com/miner/f0814049/deals/eligible/summary
+
+- `GET /client/:id/deals/eligible/summary`
+
+  http://stats.filspark.com/client/f0215074/deals/eligible/summary
+
 - `GET /participants/daily?from=<day>&to=<day>`
 
   http://stats.filspark.com/participants/daily
@@ -48,9 +56,6 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participant//0x000000000000000000000000000000000000dEaD/reward-transfers
 
-- `GET /miners/retrieval-success-rate/summary?from=<day>&to=<day>`
-
-  http://stats.filspark.com/miners/retrieval-success-rate/summary
 
 - `GET /stations/daily?from=<day>&to=<day>`
 

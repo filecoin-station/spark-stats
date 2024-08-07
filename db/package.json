@@ -14,6 +14,7 @@
   "dependencies": {
     "pg": "^8.12.0",
     "postgrator": "^7.2.0",
+    "spark-api": "https://github.com/filecoin-station/spark-api/archive/3de5c3325ef6cc40df02769b96957d33279d38c1.tar.gz",
     "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
   "standard": {
