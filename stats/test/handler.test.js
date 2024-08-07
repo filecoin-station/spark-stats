@@ -433,7 +433,7 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('tracked-deals summary', () => {
+  describe('summary of eligible deals', () => {
     before(async () => {
       await pgPools.api.query(`
         INSERT INTO retrievable_deals (cid, miner_id, client_id, expires_at)
@@ -450,9 +450,9 @@ describe('HTTP request handler', () => {
       `)
     })
 
-    describe('GET /miner/{id}/tracked-deals/summary', () => {
+    describe('GET /miner/{id}/deals/eligible/summary', () => {
       it('returns deal counts grouped by client id', async () => {
-        const res = await fetch(new URL('/miner/f0230/tracked-deals/summary', baseUrl))
+        const res = await fetch(new URL('/miner/f0230/deals/eligible/summary', baseUrl))
         await assertResponseStatus(res, 200)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
         const body = await res.json()
@@ -468,7 +468,7 @@ describe('HTTP request handler', () => {
       })
 
       it('returns an empty array for miners with no deals in our DB', async () => {
-        const res = await fetch(new URL('/miner/f0000/tracked-deals/summary', baseUrl))
+        const res = await fetch(new URL('/miner/f0000/deals/eligible/summary', baseUrl))
         await assertResponseStatus(res, 200)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
         const body = await res.json()
@@ -480,9 +480,9 @@ describe('HTTP request handler', () => {
       })
     })
 
-    describe('GET /client/{id}/tracked-deals/summary', () => {
+    describe('GET /client/{id}/deals/eligible/summary', () => {
       it('returns deal counts grouped by miner id', async () => {
-        const res = await fetch(new URL('/client/f0800/tracked-deals/summary', baseUrl))
+        const res = await fetch(new URL('/client/f0800/deals/eligible/summary', baseUrl))
         await assertResponseStatus(res, 200)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
         const body = await res.json()
@@ -498,7 +498,7 @@ describe('HTTP request handler', () => {
       })
 
       it('returns an empty array for miners with no deals in our DB', async () => {
-        const res = await fetch(new URL('/client/f0000/tracked-deals/summary', baseUrl))
+        const res = await fetch(new URL('/client/f0000/deals/eligible/summary', baseUrl))
         await assertResponseStatus(res, 200)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
         const body = await res.json()

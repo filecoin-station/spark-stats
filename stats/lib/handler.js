@@ -101,9 +101,9 @@ const handler = async (req, res, pgPools) => {
     await respond(fetchParticipantRewardTransfers, segs[1])
   } else if (req.method === 'GET' && url === '/miners/retrieval-success-rate/summary') {
     await respond(fetchMinersRSRSummary)
-  } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'tracked-deals' && segs[3] === 'summary') {
+  } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
     await getRetrievableDealsForMiner(req, res, pgPools.api, segs[1])
-  } else if (req.method === 'GET' && segs[0] === 'client' && segs[1] && segs[2] === 'tracked-deals' && segs[3] === 'summary') {
+  } else if (req.method === 'GET' && segs[0] === 'client' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
     await getRetrievableDealsForClient(req, res, pgPools.api, segs[1])
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
