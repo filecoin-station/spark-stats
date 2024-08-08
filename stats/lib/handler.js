@@ -105,6 +105,8 @@ const handler = async (req, res, pgPools) => {
     await getRetrievableDealsForMiner(req, res, pgPools.api, segs[1])
   } else if (req.method === 'GET' && segs[0] === 'client' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
     await getRetrievableDealsForClient(req, res, pgPools.api, segs[1])
+  } else if (req.method === 'GET' && segs[0] === 'allocator' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
+    await getRetrievableDealsForAllocator(req, res, pgPools.api, segs[1])
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
   } else if (req.method === 'GET' && url === '/') {
@@ -191,6 +193,33 @@ const getRetrievableDealsForClient = async (_req, res, client, clientId) => {
     providers: rows.map(
       // eslint-disable-next-line camelcase
       ({ miner_id, deal_count }) => ({ minerId: miner_id, dealCount: deal_count })
+    )
+  }
+  json(res, body)
+}
+
+const getRetrievableDealsForAllocator = async (_req, res, client, allocatorId) => {
+  /** @type {{rows: {client_id: string; deal_count: number}[]}} */
+  const { rows } = await client.query(`
+    SELECT ac.client_id, COUNT(cid)::INTEGER as deal_count
+    FROM allocator_clients ac
+    LEFT JOIN retrievable_deals rd ON ac.client_id = rd.client_id
+    WHERE ac.allocator_id = $1 AND expires_at > now()
+    GROUP BY ac.client_id
+    ORDER BY deal_count DESC, ac.client_id ASC
+    `, [
+    allocatorId
+  ])
+
+  // Cache the response for 6 hours
+  res.setHeader('cache-control', `max-age=${6 * 3600}`)
+
+  const body = {
+    allocatorId,
+    dealCount: rows.reduce((sum, row) => sum + row.deal_count, 0),
+    clients: rows.map(
+      // eslint-disable-next-line camelcase
+      ({ client_id, deal_count }) => ({ clientId: client_id, dealCount: deal_count })
     )
   }
   json(res, body)
