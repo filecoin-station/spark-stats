@@ -28,6 +28,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/client/f0215074/deals/eligible/summary
 
+- `GET /allocator/:id/deals/eligible/summary`
+
+  http://stats.filspark.com/allocator/f03015751/deals/eligible/summary
+
 - `GET /participants/daily?from=<day>&to=<day>`
 
   http://stats.filspark.com/participants/daily
