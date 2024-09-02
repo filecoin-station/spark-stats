@@ -105,11 +105,11 @@ const handler = async (req, res, pgPools, SPARK_API_BASE_URL) => {
   } else if (req.method === 'GET' && url === '/miners/retrieval-success-rate/summary') {
     await respond(fetchMinersRSRSummary)
   } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await redirectToSparkApi(req, res, SPARK_API_BASE_URL)
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (req.method === 'GET' && segs[0] === 'client' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await redirectToSparkApi(req, res, SPARK_API_BASE_URL)
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (req.method === 'GET' && segs[0] === 'allocator' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await redirectToSparkApi(req, res, SPARK_API_BASE_URL)
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
   } else if (req.method === 'GET' && url === '/') {
@@ -148,7 +148,7 @@ const notFound = (res) => {
  * @param {import('node:http').ServerResponse} res
  * @param {string} SPARK_API_BASE_URL
  */
-const redirectToSparkApi = async (req, res, SPARK_API_BASE_URL) => {
+const redirectToSparkApi = (req, res, SPARK_API_BASE_URL) => {
   // Cache the response for 6 hours
   res.setHeader('cache-control', `max-age=${6 * 3600}`)
 
