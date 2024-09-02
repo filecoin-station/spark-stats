@@ -148,8 +148,6 @@ const notFound = (res) => {
  * @param {string} SPARK_API_BASE_URL
  */
 const redirectToSparkApi = async (req, res, SPARK_API_BASE_URL) => {
-  console.log('SPARK_API_BASE_URL', SPARK_API_BASE_URL)
-  console.log('req.url', req.url)
   // Cache the response for 6 hours
   res.setHeader('cache-control', `max-age=${6 * 3600}`)
 
