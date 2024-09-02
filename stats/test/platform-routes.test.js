@@ -23,6 +23,7 @@ describe('Platform Routes HTTP request handler', () => {
     pgPools = await getPgPools()
 
     const handler = createHandler({
+      SPARK_API_BASE_URL: 'https://api.filspark.com/',
       pgPools,
       logger: {
         info: debug,
@@ -251,7 +252,7 @@ describe('Platform Routes HTTP request handler', () => {
     const setupScheduledRewardsData = async () => {
       await pgPools.stats.query(`
         INSERT INTO daily_scheduled_rewards (day, participant_address, scheduled_rewards)
-        VALUES 
+        VALUES
           ('${yesterday()}', 'address1', 10),
           ('${yesterday()}', 'address2', 20),
           ('${yesterday()}', 'address3', 30),
@@ -347,7 +348,7 @@ const givenDailyStationMetrics = async (pgPoolEvaluate, day, stationStats) => {
       accepted_measurement_count,
       total_measurement_count
     )
-    SELECT 
+    SELECT
       $1 AS day,
       UNNEST($2::text[]) AS station_id,
       UNNEST($3::text[]) AS participant_address,
