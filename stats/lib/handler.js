@@ -152,7 +152,5 @@ const redirectToSparkApi = async (req, res, SPARK_API_BASE_URL) => {
   res.setHeader('cache-control', `max-age=${6 * 3600}`)
 
   const location = new URL(req.url, SPARK_API_BASE_URL).toString()
-  res.setHeader('location', location)
-  res.statusCode = 302
-  res.end(location)
+  redirect(req, res, location, 302)
 }
