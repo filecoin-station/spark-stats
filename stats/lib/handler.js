@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { json } from 'http-responders'
+import { json, status } from 'http-responders'
 
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 
@@ -113,7 +113,7 @@ const handler = async (req, res, pgPools) => {
     // health check - required by Grafana datasources
     res.end('OK')
   } else {
-    notFound(res)
+    status(res, 404)
   }
 }
 
@@ -126,18 +126,12 @@ const errorHandler = (res, err, logger) => {
     res.end(err.message)
   } else {
     logger.error(err)
-    res.statusCode = 500
-    res.end('Internal Server Error')
+    status(res, 500)
   }
 
   if (res.statusCode >= 500) {
     Sentry.captureException(err)
   }
-}
-
-const notFound = (res) => {
-  res.statusCode = 404
-  res.end('Not Found')
 }
 
 /**
