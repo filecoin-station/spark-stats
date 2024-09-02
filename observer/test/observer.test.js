@@ -128,8 +128,6 @@ describe('observer', () => {
 
   describe('observeScheduledRewards', () => {
     beforeEach(async () => {
-      await pgPools.evaluate.query('DELETE FROM recent_station_details')
-      await pgPools.evaluate.query('DELETE FROM recent_participant_subnets')
       await pgPools.evaluate.query('DELETE FROM daily_participants')
       await pgPools.evaluate.query('DELETE FROM participants')
       await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
