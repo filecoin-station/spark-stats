@@ -13,7 +13,7 @@
     "test:observer": "npm t -w observer",
     "test:stats": "npm t -w stats",
     "test:types": "tsc -p .",
-    "test": "npm run lint && npm test --workspaces --if-present"
+    "test": "npm run lint && npm run test:types && npm test --workspaces --if-present"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.7",
