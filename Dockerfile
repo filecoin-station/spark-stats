@@ -2,7 +2,7 @@
 
 # Adjust NODE_VERSION as desired
 ARG NODE_VERSION=20.8.1
-FROM node:${NODE_VERSION}-slim as base
+FROM node:${NODE_VERSION}-slim AS base
 
 LABEL fly_launch_runtime="nodejs"
 
@@ -10,12 +10,12 @@ LABEL fly_launch_runtime="nodejs"
 WORKDIR /app
 
 # Set production environment
-ENV NODE_ENV production
-ENV SENTRY_ENVIRONMENT production
+ENV NODE_ENV=production
+ENV SENTRY_ENVIRONMENT=production
 
 #######################################################################
 # Throw-away build stage to reduce size of final image
-FROM base as build
+FROM base AS build
 
 # Install packages needed to build node modules
 RUN apt-get update -qq && \
@@ -46,7 +46,7 @@ FROM base
 COPY --from=build /app /app
 
 # Set to `stats` or `observer`
-# This argument controls the value passed to npm start --workspace parameter
-ENV SERVICE=""
+# This argument controls the value used by npm to choose which workspace (subdir) to start
+ENV NPM_CONFIG_WORKSPACE=""
 
-CMD npm start --workspace ${SERVICE}
+CMD [ "npm", "start" ]

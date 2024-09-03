@@ -3,7 +3,7 @@ primary_region = "cdg"
 
 [env]
   SENTRY_ENVIRONMENT = "production"
-  SERVICE = "observer"
+  NPM_CONFIG_WORKSPACE = "observer"
 
 [deploy]
   strategy = "rolling"
