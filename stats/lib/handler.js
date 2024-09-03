@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { json } from 'http-responders'
+import { redirect } from 'http-responders'
 
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 
@@ -22,18 +22,20 @@ import { handlePlatformRoutes } from './platform-routes.js'
 
 /**
  * @param {object} args
+ * @param {string} args.SPARK_API_BASE_URL
  * @param {import('@filecoin-station/spark-stats-db').PgPools} args.pgPools
  * @param {import('./typings.d.ts').Logger} args.logger
  * @returns
  */
 export const createHandler = ({
+  SPARK_API_BASE_URL,
   pgPools,
   logger
 }) => {
   return (req, res) => {
     const start = Date.now()
     logger.request(`${req.method} ${req.url} ...`)
-    handler(req, res, pgPools)
+    handler(req, res, pgPools, SPARK_API_BASE_URL)
       .catch(err => errorHandler(res, err, logger))
       .then(() => {
         logger.request(`${req.method} ${req.url} ${res.statusCode} (${Date.now() - start}ms)`)
@@ -73,8 +75,9 @@ const createRespondWithFetchFn =
  * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {string} SPARK_API_BASE_URL
  */
-const handler = async (req, res, pgPools) => {
+const handler = async (req, res, pgPools, SPARK_API_BASE_URL) => {
   // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
   const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
   const segs = pathname.split('/').filter(Boolean)
@@ -102,11 +105,11 @@ const handler = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/miners/retrieval-success-rate/summary') {
     await respond(fetchMinersRSRSummary)
   } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await getRetrievableDealsForMiner(req, res, pgPools.api, segs[1])
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (req.method === 'GET' && segs[0] === 'client' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await getRetrievableDealsForClient(req, res, pgPools.api, segs[1])
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (req.method === 'GET' && segs[0] === 'allocator' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {
-    await getRetrievableDealsForAllocator(req, res, pgPools.api, segs[1])
+    redirectToSparkApi(req, res, SPARK_API_BASE_URL)
   } else if (await handlePlatformRoutes(req, res, pgPools)) {
     // no-op, request was handled by handlePlatformRoute
   } else if (req.method === 'GET' && url === '/') {
@@ -141,86 +144,14 @@ const notFound = (res) => {
 }
 
 /**
- * @param {import('node:http').IncomingMessage} _req
+ * @param {import('node:http').IncomingMessage} req
  * @param {import('node:http').ServerResponse} res
- * @param {PgPools['api']} client
- * @param {string} minerId
+ * @param {string} SPARK_API_BASE_URL
  */
-const getRetrievableDealsForMiner = async (_req, res, client, minerId) => {
-  /** @type {{rows: {client_id: string; deal_count: number}[]}} */
-  const { rows } = await client.query(`
-    SELECT client_id, COUNT(cid)::INTEGER as deal_count FROM retrievable_deals
-    WHERE miner_id = $1 AND expires_at > now()
-    GROUP BY client_id
-    ORDER BY deal_count DESC, client_id ASC
-    `, [
-    minerId
-  ])
-
+const redirectToSparkApi = (req, res, SPARK_API_BASE_URL) => {
   // Cache the response for 6 hours
   res.setHeader('cache-control', `max-age=${6 * 3600}`)
 
-  const body = {
-    minerId,
-    dealCount: rows.reduce((sum, row) => sum + row.deal_count, 0),
-    clients:
-      rows.map(
-        // eslint-disable-next-line camelcase
-        ({ client_id, deal_count }) => ({ clientId: client_id, dealCount: deal_count })
-      )
-  }
-
-  json(res, body)
-}
-
-const getRetrievableDealsForClient = async (_req, res, client, clientId) => {
-  /** @type {{rows: {miner_id: string; deal_count: number}[]}} */
-  const { rows } = await client.query(`
-    SELECT miner_id, COUNT(cid)::INTEGER as deal_count FROM retrievable_deals
-    WHERE client_id = $1 AND expires_at > now()
-    GROUP BY miner_id
-    ORDER BY deal_count DESC, miner_id ASC
-    `, [
-    clientId
-  ])
-
-  // Cache the response for 6 hours
-  res.setHeader('cache-control', `max-age=${6 * 3600}`)
-
-  const body = {
-    clientId,
-    dealCount: rows.reduce((sum, row) => sum + row.deal_count, 0),
-    providers: rows.map(
-      // eslint-disable-next-line camelcase
-      ({ miner_id, deal_count }) => ({ minerId: miner_id, dealCount: deal_count })
-    )
-  }
-  json(res, body)
-}
-
-const getRetrievableDealsForAllocator = async (_req, res, client, allocatorId) => {
-  /** @type {{rows: {client_id: string; deal_count: number}[]}} */
-  const { rows } = await client.query(`
-    SELECT ac.client_id, COUNT(cid)::INTEGER as deal_count
-    FROM allocator_clients ac
-    LEFT JOIN retrievable_deals rd ON ac.client_id = rd.client_id
-    WHERE ac.allocator_id = $1 AND expires_at > now()
-    GROUP BY ac.client_id
-    ORDER BY deal_count DESC, ac.client_id ASC
-    `, [
-    allocatorId
-  ])
-
-  // Cache the response for 6 hours
-  res.setHeader('cache-control', `max-age=${6 * 3600}`)
-
-  const body = {
-    allocatorId,
-    dealCount: rows.reduce((sum, row) => sum + row.deal_count, 0),
-    clients: rows.map(
-      // eslint-disable-next-line camelcase
-      ({ client_id, deal_count }) => ({ clientId: client_id, dealCount: deal_count })
-    )
-  }
-  json(res, body)
+  const location = new URL(req.url, SPARK_API_BASE_URL).toString()
+  redirect(req, res, location, 302)
 }
