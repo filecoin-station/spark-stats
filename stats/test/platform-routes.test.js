@@ -43,7 +43,13 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   beforeEach(async () => {
-    await pgPools.evaluate.query('DELETE FROM daily_stations')
+    await pgPools.evaluate.query('DELETE FROM recent_station_details')
+    await pgPools.evaluate.query('DELETE FROM recent_participant_subnets')
+    await pgPools.evaluate.query('DELETE FROM daily_participants')
+    await pgPools.evaluate.query('DELETE FROM participants')
+    await pgPools.evaluate.query('DELETE FROM monthly_active_station_count')
+    await pgPools.evaluate.query('DELETE FROM daily_measurements_summary')
+
     await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
