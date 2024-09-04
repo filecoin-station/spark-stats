@@ -1,10 +1,5 @@
 import assert from 'http-assert'
-import {
-  getDailyDistinctCount,
-  getMonthlyDistinctCount,
-  today,
-  yesterday
-} from './request-helpers.js'
+import { today, yesterday } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
@@ -13,12 +8,13 @@ import {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyStationCount = async (pgPool, filter) => {
-  return await getDailyDistinctCount({
-    pgPool,
-    table: 'daily_stations',
-    column: 'station_id',
-    filter
-  })
+  const { rows } = await pgPool.query(`
+    SELECT day::TEXT, station_count
+    FROM daily_measurements_summary
+    WHERE day >= $1 AND day <= $2
+    ORDER BY day
+  `, [filter.from, filter.to])
+  return rows
 }
 
 /**
@@ -26,12 +22,13 @@ export const fetchDailyStationCount = async (pgPool, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchMonthlyStationCount = async (pgPool, filter) => {
-  return await getMonthlyDistinctCount({
-    pgPool,
-    table: 'daily_stations',
-    column: 'station_id',
-    filter
-  })
+  const { rows } = await pgPool.query(`
+    SELECT month::TEXT, station_count
+    FROM monthly_active_station_count
+    WHERE month >= $1 AND month <= $2
+    ORDER BY month
+  `, [filter.from, filter.to])
+  return rows
 }
 
 /**
@@ -40,12 +37,9 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
  */
 export const fetchDailyStationMeasurementCounts = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
-    SELECT day::TEXT,
-      SUM(accepted_measurement_count) as accepted_measurement_count,
-      SUM(total_measurement_count) as total_measurement_count
-    FROM daily_stations
+    SELECT day::TEXT, accepted_measurement_count, total_measurement_count
+    FROM daily_measurements_summary
     WHERE day >= $1 AND day <= $2
-    GROUP BY day
     ORDER BY day
   `, [filter.from, filter.to])
   return rows
@@ -60,7 +54,9 @@ export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
   assert(filter.to === yesterday(), 400, 'filter.to must be set to yesterday, other values are not supported yet')
   // Ignore the filter for this query
   // Get the top measurement stations from the Materialized View
-  return (await pgPool.query('SELECT * FROM top_measurement_participants_yesterday_mv')).rows
+  return (await pgPool.query(`
+    SELECT day::TEXT, participant_address, station_count, accepted_measurement_count, inet_group_count
+    FROM top_measurement_participants_yesterday_mv`)).rows
 }
 
 /**
