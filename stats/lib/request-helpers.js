@@ -5,10 +5,11 @@ import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
-export const getDateString = (d) => d.toLocaleDateString('en-CA')
+const getDayAsISOString = d => d.toISOString().split('T')[0]
+const todayDate = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
 
-export const today = () => getDateString(new Date())
-export const yesterday = () => getDateString(new Date(Date.now() - 24 * 60 * 60 * 1000))
+export const today = () => getDayAsISOString(todayDate())
+export const yesterday = () => getDayAsISOString(new Date(todayDate().getTime() - 24 * 60 * 60 * 1000))
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
@@ -89,7 +90,7 @@ export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchP
 const setCacheControlForStatsResponse = (res, filter) => {
   // We cannot simply compare filter.to vs today() because there may be a delay in finalizing
   // stats for the previous day. Let's allow up to one hour for the finalization.
-  const boundary = getDateString(new Date(Date.now() - 3600_000))
+  const boundary = getDayAsISOString(new Date(todayDate().getTime() - 3600_000))
 
   if (filter.to >= boundary) {
     // response includes partial data for today, cache it for 10 minutes only

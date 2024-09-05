@@ -7,7 +7,7 @@ import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.
 
 describe('observer', () => {
   let pgPools
-  const today = () => new Date().toLocaleDateString('en-CA')
+  const today = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0]
 
   before(async () => {
     pgPools = await getPgPools()
