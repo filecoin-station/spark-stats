@@ -56,7 +56,8 @@ export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
   // Get the top measurement stations from the Materialized View
   return (await pgPool.query(`
     SELECT day::TEXT, participant_address, station_count, accepted_measurement_count, inet_group_count
-    FROM top_measurement_participants_yesterday_mv`)).rows
+    FROM top_measurement_participants_yesterday_mv
+  `)).rows
 }
 
 /**
