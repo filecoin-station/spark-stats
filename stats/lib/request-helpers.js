@@ -5,8 +5,8 @@ import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
-const getDayAsISOString = d => d.toISOString().split('T')[0]
-const todayDate = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+export const getDayAsISOString = (d) => d.toISOString().split('T')[0]
+export const todayDate = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
 
 export const today = () => getDayAsISOString(todayDate())
 export const yesterday = () => getDayAsISOString(new Date(todayDate().getTime() - 24 * 60 * 60 * 1000))

@@ -6,7 +6,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { getDateString, today, yesterday } from '../lib/request-helpers.js'
+import { getDayAsISOString, todayDate, today, yesterday } from '../lib/request-helpers.js'
 
 const debug = createDebug('test')
 
@@ -58,7 +58,12 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /stations/daily', () => {
     it('returns daily station metrics for the given date range', async () => {
-      await givenDailyMeasurementsSummary(pgPools.evaluate)
+      await givenDailyMeasurementsSummary(pgPools.evaluate, [
+        { day: '2024-01-10', station_count: 3 },
+        { day: '2024-01-11', station_count: 1 },
+        { day: '2024-01-12', station_count: 2 },
+        { day: '2024-01-13', station_count: 4 }
+      ])
 
       const res = await fetch(
         new URL(
@@ -71,8 +76,8 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', station_count: 3 },
-        { day: '2024-01-12', station_count: 4 }
+        { day: '2024-01-11', station_count: 1 },
+        { day: '2024-01-12', station_count: 2 }
       ])
     })
   })
@@ -80,12 +85,12 @@ describe('Platform Routes HTTP request handler', () => {
   describe('GET /stations/monthly', () => {
     it('returns monthly station metrics for the given date range', async () => {
       // before the date range
-      await givenMonthlyActiveStationCount(pgPools.evaluate, '2023-12-01', 1)
+      await givenMonthlyActiveStationCount(pgPools.evaluate, '2023-12-01', 10)
       // in the date range
       await givenMonthlyActiveStationCount(pgPools.evaluate, '2024-01-01', 3)
       await givenMonthlyActiveStationCount(pgPools.evaluate, '2024-02-01', 1)
       // after the date range
-      await givenMonthlyActiveStationCount(pgPools.evaluate, '2024-03-01', 1)
+      await givenMonthlyActiveStationCount(pgPools.evaluate, '2024-03-01', 5)
 
       const res = await fetch(
         new URL(
@@ -106,7 +111,12 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /measurements/daily', () => {
     it('returns daily total accepted measurement count for the given date range', async () => {
-      await givenDailyMeasurementsSummary(pgPools.evaluate)
+      await givenDailyMeasurementsSummary(pgPools.evaluate, [
+        { day: '2024-01-10', accepted_measurement_count: 5, total_measurement_count: 6 },
+        { day: '2024-01-11', accepted_measurement_count: 1, total_measurement_count: 2 },
+        { day: '2024-01-12', accepted_measurement_count: 3, total_measurement_count: 4 },
+        { day: '2024-01-13', accepted_measurement_count: 7, total_measurement_count: 8 }
+      ])
 
       const res = await fetch(
         new URL(
@@ -119,8 +129,8 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', accepted_measurement_count: 11, total_measurement_count: 13 },
-        { day: '2024-01-12', accepted_measurement_count: 20, total_measurement_count: 22 }
+        { day: '2024-01-11', accepted_measurement_count: 1, total_measurement_count: 2 },
+        { day: '2024-01-12', accepted_measurement_count: 3, total_measurement_count: 4 }
       ])
     })
   })
@@ -240,9 +250,7 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   describe('GET /participants/top-earning', () => {
-    const oneWeekAgoDate = new Date()
-    oneWeekAgoDate.setDate(oneWeekAgoDate.getDate() - 7)
-    const oneWeekAgo = getDateString(oneWeekAgoDate)
+    const oneWeekAgo = getDayAsISOString(new Date(todayDate().getTime() - 7 * 24 * 60 * 60 * 1000))
 
     const setupScheduledRewardsData = async () => {
       await pgPools.stats.query(`
@@ -333,40 +341,24 @@ describe('Platform Routes HTTP request handler', () => {
   })
 })
 
-const givenDailyMeasurementsSummary = async (pgPoolEvaluate, dailyMeasurementsSummary = [
-  {
-    day: '2024-01-10',
-    acceptedMeasurementCount: 10,
-    totalMeasurementCount: 12,
-    stationCount: 3,
-    participantAddressCount: 2,
-    inetGroupCount: 4
-  },
-  {
-    day: '2024-01-11',
-    acceptedMeasurementCount: 11,
-    totalMeasurementCount: 13,
-    stationCount: 3,
-    participantAddressCount: 2,
-    inetGroupCount: 4
-  },
-  {
-    day: '2024-01-12',
-    acceptedMeasurementCount: 20,
-    totalMeasurementCount: 22,
-    stationCount: 4,
-    participantAddressCount: 2,
-    inetGroupCount: 4
-  },
-  {
-    day: '2024-01-13',
-    acceptedMeasurementCount: 11,
-    totalMeasurementCount: 13,
-    stationCount: 3,
-    participantAddressCount: 2,
-    inetGroupCount: 4
+const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData = []) => {
+  const defaultValues = {
+    accepted_measurement_count: 100,
+    total_measurement_count: 120,
+    station_count: 10,
+    participant_address_count: 5,
+    inet_group_count: 8
   }
-]) => {
+
+  const processedData = summaryData.map(row => ({
+    day: row.day,
+    accepted_measurement_count: row.accepted_measurement_count ?? defaultValues.accepted_measurement_count,
+    total_measurement_count: row.total_measurement_count ?? defaultValues.total_measurement_count,
+    station_count: row.station_count ?? defaultValues.station_count,
+    participant_address_count: row.participant_address_count ?? defaultValues.participant_address_count,
+    inet_group_count: row.inet_group_count ?? defaultValues.inet_group_count
+  }))
+
   await pgPoolEvaluate.query(`
     INSERT INTO daily_measurements_summary (
       day,
@@ -385,12 +377,12 @@ const givenDailyMeasurementsSummary = async (pgPoolEvaluate, dailyMeasurementsSu
       UNNEST($6::int[]) AS inet_group_count
     ON CONFLICT DO NOTHING
     `, [
-    dailyMeasurementsSummary.map(s => s.day),
-    dailyMeasurementsSummary.map(s => s.acceptedMeasurementCount),
-    dailyMeasurementsSummary.map(s => s.totalMeasurementCount),
-    dailyMeasurementsSummary.map(s => s.stationCount),
-    dailyMeasurementsSummary.map(s => s.participantAddressCount),
-    dailyMeasurementsSummary.map(s => s.inetGroupCount)
+    processedData.map(s => s.day),
+    processedData.map(s => s.accepted_measurement_count),
+    processedData.map(s => s.total_measurement_count),
+    processedData.map(s => s.station_count),
+    processedData.map(s => s.participant_address_count),
+    processedData.map(s => s.inet_group_count)
   ])
 }
 
