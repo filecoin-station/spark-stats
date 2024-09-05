@@ -139,7 +139,6 @@ describe('Platform Routes HTTP request handler', () => {
     it('returns top measurement stations for the given date', async () => {
       const day = yesterday()
 
-      // Insert test data into base tables
       await pgPools.evaluate.query(`
         INSERT INTO participants (id, participant_address) VALUES
           (1, 'f1abcdef'),
