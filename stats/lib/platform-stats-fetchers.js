@@ -25,7 +25,9 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT month::TEXT, station_count
     FROM monthly_active_station_count
-    WHERE month >= $1 AND month <= $2
+    WHERE
+      month >= date_trunc('month', $1::DATE)
+      AND month < date_trunc('month', $2::DATE) + INTERVAL '1 month'
     ORDER BY month
   `, [filter.from, filter.to])
   return rows

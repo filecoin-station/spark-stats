@@ -94,7 +94,7 @@ describe('Platform Routes HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/stations/monthly?from=2024-01-01&to=2024-02-11',
+          '/stations/monthly?from=2024-01-11&to=2024-02-11',
           baseUrl
         ), {
           redirect: 'manual'
