@@ -340,22 +340,14 @@ describe('Platform Routes HTTP request handler', () => {
   })
 })
 
-const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData = []) => {
-  const defaultValues = {
-    accepted_measurement_count: 100,
-    total_measurement_count: 120,
-    station_count: 10,
-    participant_address_count: 5,
-    inet_group_count: 8
-  }
-
-  const processedData = summaryData.map(row => ({
+const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData) => {
+  const processedSummaryData = summaryData.map(row => ({
     day: row.day,
-    accepted_measurement_count: row.accepted_measurement_count ?? defaultValues.accepted_measurement_count,
-    total_measurement_count: row.total_measurement_count ?? defaultValues.total_measurement_count,
-    station_count: row.station_count ?? defaultValues.station_count,
-    participant_address_count: row.participant_address_count ?? defaultValues.participant_address_count,
-    inet_group_count: row.inet_group_count ?? defaultValues.inet_group_count
+    accepted_measurement_count: row.accepted_measurement_count ?? 100,
+    total_measurement_count: row.total_measurement_count ?? 120,
+    station_count: row.station_count ?? 10,
+    participant_address_count: row.participant_address_count ?? 5,
+    inet_group_count: row.inet_group_count ?? 8
   }))
 
   await pgPoolEvaluate.query(`
@@ -376,12 +368,12 @@ const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData = []) =
       UNNEST($6::int[]) AS inet_group_count
     ON CONFLICT DO NOTHING
     `, [
-    processedData.map(s => s.day),
-    processedData.map(s => s.accepted_measurement_count),
-    processedData.map(s => s.total_measurement_count),
-    processedData.map(s => s.station_count),
-    processedData.map(s => s.participant_address_count),
-    processedData.map(s => s.inet_group_count)
+    processedSummaryData.map(s => s.day),
+    processedSummaryData.map(s => s.accepted_measurement_count),
+    processedSummaryData.map(s => s.total_measurement_count),
+    processedSummaryData.map(s => s.station_count),
+    processedSummaryData.map(s => s.participant_address_count),
+    processedSummaryData.map(s => s.inet_group_count)
   ])
 }
 
