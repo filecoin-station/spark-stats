@@ -1,5 +1,3 @@
-import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
-
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
  * @param {PgPools} pgPools
@@ -65,23 +63,34 @@ export const fetchDealSummary = async (pgPools, filter) => {
 }
 
 export const fetchDailyParticipants = async (pgPools, filter) => {
-  return await getDailyDistinctCount({
-    pgPool: pgPools.evaluate,
-    table: 'daily_participants',
-    column: 'participant_id',
-    filter,
-    asColumn: 'participants'
-  })
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::TEXT, COUNT(DISTINCT participant_id)::INT as participants
+    FROM daily_participants
+    WHERE day >= $1 AND day <= $2
+    GROUP BY day
+    ORDER BY day
+  `, [filter.from, filter.to])
+  return rows
 }
 
 export const fetchMonthlyParticipants = async (pgPools, filter) => {
-  return await getMonthlyDistinctCount({
-    pgPool: pgPools.evaluate,
-    table: 'daily_participants',
-    column: 'participant_id',
-    filter,
-    asColumn: 'participants'
-  })
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT
+      date_trunc('month', day)::DATE::TEXT as month,
+      COUNT(DISTINCT participant_id)::INT as participants
+    FROM daily_participants
+    WHERE
+      day >= date_trunc('month', $1::DATE)
+      AND day < date_trunc('month', $2::DATE) + INTERVAL '1 month'
+    GROUP BY month
+    ORDER BY month
+  `, [filter.from, filter.to]
+  )
+  return rows
 }
 
 /**

@@ -1,7 +1,6 @@
 import assert from 'http-assert'
 import { json } from 'http-responders'
 import { URLSearchParams } from 'node:url'
-import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
@@ -114,73 +113,4 @@ const handleDateKeyword = (date) => {
     default:
       return date
   }
-}
-
-/**
- * @param {object} args
- * @param {import('@filecoin-station/spark-stats-db').Queryable} args.pgPool
- * @param {string} args.table
- * @param {string} args.column
- * @param {import('./typings.js').DateRangeFilter} args.filter
- * @param {string} [args.asColumn]
- */
-export const getDailyDistinctCount = async ({
-  pgPool,
-  table,
-  column,
-  filter,
-  asColumn = null
-}) => {
-  if (!asColumn) asColumn = column + '_count'
-  const safeTable = pg.escapeIdentifier(table)
-  const safeColumn = pg.escapeIdentifier(column)
-  const safeAsColumn = pg.escapeIdentifier(asColumn)
-
-  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
-  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
-  const { rows } = await pgPool.query(`
-    SELECT day::TEXT, COUNT(DISTINCT ${safeColumn})::INT as ${safeAsColumn}
-    FROM ${safeTable}
-    WHERE day >= $1 AND day <= $2
-    GROUP BY day
-    ORDER BY day
-  `, [filter.from, filter.to])
-  return rows
-}
-
-/**
- * @param {object} args
- * @param {Queryable} args.pgPool
- * @param {string} args.table
- * @param {string} args.column
- * @param {import('./typings.js').DateRangeFilter} args.filter
- * @param {string} [args.asColumn]
- */
-export const getMonthlyDistinctCount = async ({
-  pgPool,
-  table,
-  column,
-  filter,
-  asColumn = null
-}) => {
-  if (!asColumn) asColumn = column + '_count'
-  const safeTable = pg.escapeIdentifier(table)
-  const safeColumn = pg.escapeIdentifier(column)
-  const safeAsColumn = pg.escapeIdentifier(asColumn)
-
-  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
-  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
-  const { rows } = await pgPool.query(`
-    SELECT
-      date_trunc('month', day)::DATE::TEXT as month,
-      COUNT(DISTINCT ${safeColumn})::INT as ${safeAsColumn}
-    FROM ${safeTable}
-    WHERE
-      day >= date_trunc('month', $1::DATE)
-      AND day < date_trunc('month', $2::DATE) + INTERVAL '1 month'
-    GROUP BY month
-    ORDER BY month
-  `, [filter.from, filter.to]
-  )
-  return rows
 }
