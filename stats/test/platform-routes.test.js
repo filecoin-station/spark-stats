@@ -48,7 +48,7 @@ describe('Platform Routes HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM daily_participants')
     await pgPools.evaluate.query('DELETE FROM participants')
     await pgPools.evaluate.query('DELETE FROM monthly_active_station_count')
-    await pgPools.evaluate.query('DELETE FROM daily_measurements_summary')
+    await pgPools.evaluate.query('DELETE FROM daily_platform_stats')
 
     await pgPools.evaluate.query('REFRESH MATERIALIZED VIEW top_measurement_participants_yesterday_mv')
 
@@ -351,7 +351,7 @@ const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData) => {
   }))
 
   await pgPoolEvaluate.query(`
-    INSERT INTO daily_measurements_summary (
+    INSERT INTO daily_platform_stats (
       day,
       accepted_measurement_count,
       total_measurement_count,

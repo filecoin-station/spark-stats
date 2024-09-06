@@ -10,7 +10,7 @@ import { today, yesterday } from './request-helpers.js'
 export const fetchDailyStationCount = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, station_count
-    FROM daily_measurements_summary
+    FROM daily_platform_stats
     WHERE day >= $1 AND day <= $2
     ORDER BY day
   `, [filter.from, filter.to])
@@ -40,7 +40,7 @@ export const fetchMonthlyStationCount = async (pgPool, filter) => {
 export const fetchDailyStationMeasurementCounts = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
     SELECT day::TEXT, accepted_measurement_count, total_measurement_count
-    FROM daily_measurements_summary
+    FROM daily_platform_stats
     WHERE day >= $1 AND day <= $2
     ORDER BY day
   `, [filter.from, filter.to])
