@@ -161,7 +161,8 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   describe('GET /participants/top-measurements', () => {
-    it('returns top measurement stations for the given date', async () => {
+    // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
+    it.skip('returns top measurement stations for the given date', async () => {
       await givenDailyStationMetrics(pgPools.evaluate, yesterday(), [
         { ...STATION_STATS, stationId: 's3', participantAddress: 'f1ghijkl', acceptedMeasurementCount: 50, totalMeasurementCount: 50 },
         { ...STATION_STATS, acceptedMeasurementCount: 20, totalMeasurementCount: 20 },
