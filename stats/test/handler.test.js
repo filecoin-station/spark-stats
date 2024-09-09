@@ -495,21 +495,77 @@ describe('HTTP request handler', () => {
       assert.deepStrictEqual(stats, [
         {
           day: '2024-01-11',
-          tested: 20,
-          indexMajorityFound: 10,
-          indexed: 6,
-          indexedHttp: 4,
-          retrievalMajorityFound: 5,
-          retrievable: 2
+          tested: '20',
+          indexMajorityFound: '10',
+          indexed: '6',
+          indexedHttp: '4',
+          retrievalMajorityFound: '5',
+          retrievable: '2'
         },
         {
           day: '2024-01-12',
-          tested: 30,
-          indexMajorityFound: 7,
-          indexed: 7,
-          indexedHttp: 7,
-          retrievalMajorityFound: 3,
-          retrievable: 3
+          tested: '30',
+          indexMajorityFound: '7',
+          indexed: '7',
+          indexedHttp: '7',
+          retrievalMajorityFound: '3',
+          retrievable: '3'
+        }
+      ])
+    })
+
+    it('aggregates stats over miners', async () => {
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1aa', tested: 10 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1bb', tested: 20 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1aa', tested: 30 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1bb', tested: 40 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = /** @type {any[]} */(await res.json())
+      assert.deepStrictEqual(stats.map(({ day, tested }) => ({ day, tested })), [
+        {
+          day: '2024-01-11',
+          tested: String(10 + 20)
+        },
+        {
+          day: '2024-01-12',
+          tested: String(30 + 40)
+        }
+      ])
+    })
+
+    it('aggregates stats over clients', async () => {
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', clientId: 'f1aa', tested: 10 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', clientId: 'f1bb', tested: 20 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', clientId: 'f1aa', tested: 30 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1bb', tested: 40 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = /** @type {any[]} */(await res.json())
+      assert.deepStrictEqual(stats.map(({ day, tested }) => ({ day, tested })), [
+        {
+          day: '2024-01-11',
+          tested: String(10 + 20)
+        },
+        {
+          day: '2024-01-12',
+          tested: String(30 + 40)
         }
       ])
     })
@@ -617,10 +673,10 @@ const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) 
  *  clientId?: string;
  *  tested: number;
  *  indexMajorityFound?: number;
- *  indexed: number;
+ *  indexed?: number;
  *  indexedHttp?: number;
  *  retrievalMajorityFound?: number;
- *  retrievable: number;
+ *  retrievable?: number;
  * }} stats
  */
 const givenDailyDealStats = async (pgPool, {
@@ -634,6 +690,13 @@ const givenDailyDealStats = async (pgPool, {
   retrievalMajorityFound,
   retrievable
 }) => {
+  indexed ??= tested
+  indexedHttp ??= indexed
+  indexMajorityFound ??= indexed
+
+  retrievable ??= tested
+  retrievalMajorityFound ??= retrievable
+
   await pgPool.query(`
     INSERT INTO daily_deals (
       day,
@@ -651,10 +714,10 @@ const givenDailyDealStats = async (pgPool, {
     minerId ?? 'f1miner',
     clientId ?? 'f1client',
     tested,
-    indexMajorityFound ?? indexed,
+    indexMajorityFound,
     indexed,
-    indexedHttp ?? indexed,
-    retrievalMajorityFound ?? retrievable,
+    indexedHttp,
+    retrievalMajorityFound,
     retrievable
   ])
 }
