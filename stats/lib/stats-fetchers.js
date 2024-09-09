@@ -35,7 +35,14 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
   // a JavaScript Date with a timezone, as that could change the date one day forward or back.
   const { rows } = await pgPools.evaluate.query(`
-    SELECT day::text, total, indexed, retrievable
+    SELECT
+      day::text,
+      tested,
+      index_majority_found AS "indexMajorityFound",
+      indexed,
+      indexed_http AS "indexedHttp",
+      retrieval_majority_found AS "retrievalMajorityFound",
+      retrievable
     FROM daily_deals
     WHERE day >= $1 AND day <= $2
     ORDER BY day
@@ -53,9 +60,12 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
 export const fetchDealSummary = async (pgPools, filter) => {
   const { rows: [summary] } = await pgPools.evaluate.query(`
     SELECT
-      SUM(total) as total,
-      SUM(indexed) as indexed,
-      SUM(retrievable) as retrievable
+      SUM(tested) AS tested,
+      SUM(index_majority_found) AS "indexMajorityFound",
+      SUM(indexed) AS indexed,
+      SUM(indexed_http) AS "indexedHttp",
+      SUM(retrieval_majority_found) AS "retrievalMajorityFound",
+      SUM(retrievable) AS retrievable
     FROM daily_deals
     WHERE day >= date_trunc('day', $1::DATE)
       AND day <= date_trunc('day', $2::DATE)
