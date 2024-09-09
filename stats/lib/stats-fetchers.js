@@ -44,8 +44,7 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
       SUM(retrieval_majority_found) AS "retrievalMajorityFound",
       SUM(retrievable) AS retrievable
     FROM daily_deals
-    WHERE day >= date_trunc('day', $1::DATE)
-      AND day <= date_trunc('day', $2::DATE)
+    WHERE day >= $1 AND day <= $2
     GROUP BY day
     ORDER BY day
     `, [
