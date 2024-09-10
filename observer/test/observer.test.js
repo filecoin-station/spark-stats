@@ -1,7 +1,9 @@
 import assert from 'node:assert'
 import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
-import { givenDailyParticipants } from '../../stats/test/test-helpers.js'
+// import { givenDailyParticipants } from '../../stats/test/test-helpers.js'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test/test-helpers.js'
+// import { givenDailyParticipants } from '@filecoin-station/spark-stats-monorepo/stats/test/test-helpers.js'
 
 import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.js'
 

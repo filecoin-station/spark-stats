@@ -3,8 +3,9 @@ import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test/test-helpers.js'
 
-import { assertResponseStatus, getPort, givenDailyParticipants } from './test-helpers.js'
+import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { today } from '../lib/request-helpers.js'
 
