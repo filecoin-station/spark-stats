@@ -11,6 +11,7 @@ import Postgrator from 'postgrator'
 /** @typedef {import('./typings.js').Queryable} Queryable */
 
 export { migrateEvaluateDB }
+export { givenDailyParticipants } from './test/test-helpers.js'
 
 const {
   // DATABASE_URL points to `spark_stats` database managed by this monorepo
