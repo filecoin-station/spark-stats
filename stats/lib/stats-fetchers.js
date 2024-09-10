@@ -35,14 +35,15 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
       day::text,
-      tested,
-      index_majority_found AS "indexMajorityFound",
-      indexed,
-      indexed_http AS "indexedHttp",
-      retrieval_majority_found AS "retrievalMajorityFound",
-      retrievable
+      SUM(tested) AS tested,
+      SUM(index_majority_found) AS "indexMajorityFound",
+      SUM(indexed) AS indexed,
+      SUM(indexed_http) AS "indexedHttp",
+      SUM(retrieval_majority_found) AS "retrievalMajorityFound",
+      SUM(retrievable) AS retrievable
     FROM daily_deals
     WHERE day >= $1 AND day <= $2
+    GROUP BY day
     ORDER BY day
     `, [
     filter.from,
