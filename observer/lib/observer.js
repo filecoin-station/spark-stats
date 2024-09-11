@@ -37,18 +37,14 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
 
 /**
  * Observe scheduled rewards on the Filecoin blockchain
- * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('@filecoin-station/spark-stats-db').Queryable} pgPoolStats
  * @param {import('ethers').Contract} ieContract
+ * @param {import('ethers').Contract} recentParticipantsContract
  */
-export const observeScheduledRewards = async (pgPools, ieContract) => {
+export const observeScheduledRewards = async (pgPoolStats, ieContract, recentParticipantsContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
-  const { rows } = await pgPools.evaluate.query(`
-    SELECT participant_address
-    FROM participants p
-    JOIN daily_participants d ON p.id = d.participant_id
-    WHERE d.day >= now() - interval '3 days'
-  `)
-  for (const { participant_address: address } of rows) {
+  const participants = await recentParticipantsContract.get()
+  for (const address of participants) {
     let scheduledRewards
     try {
       scheduledRewards = await ieContract.rewardsScheduledFor(address)
@@ -59,10 +55,10 @@ export const observeScheduledRewards = async (pgPools, ieContract) => {
         address,
         { cause: err }
       )
-      continue
+      continue  
     }
     console.log('Scheduled rewards for', address, scheduledRewards)
-    await pgPools.stats.query(`
+    await pgPoolStats.query(`
       INSERT INTO daily_scheduled_rewards
       (day, participant_address, scheduled_rewards)
       VALUES (now(), $1, $2)

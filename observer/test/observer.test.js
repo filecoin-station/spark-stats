@@ -131,11 +131,8 @@ describe('observer', () => {
     beforeEach(async () => {
       await pgPools.evaluate.query('DELETE FROM recent_station_details')
       await pgPools.evaluate.query('DELETE FROM recent_participant_subnets')
-      await pgPools.evaluate.query('DELETE FROM daily_participants')
       await pgPools.evaluate.query('DELETE FROM participants')
       await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
-      await givenDailyParticipants(pgPools.evaluate, today(), ['0xCURRENT'])
-      await givenDailyParticipants(pgPools.evaluate, '2000-01-01', ['0xOLD'])
     })
 
     it('observes scheduled rewards', async () => {
@@ -149,7 +146,15 @@ describe('observer', () => {
           }
         }
       }
-      await observeScheduledRewards(pgPools, ieContract)
+      /** @type {any} */
+      const recentParticipantsContract = {
+        get: async () => ['0xCURRENT']
+      }
+      await observeScheduledRewards(
+        pgPools.stats,
+        ieContract,
+        recentParticipantsContract
+      )
       const { rows } = await pgPools.stats.query(`
         SELECT participant_address, scheduled_rewards
         FROM daily_scheduled_rewards
@@ -164,7 +169,15 @@ describe('observer', () => {
       const ieContract = {
         rewardsScheduledFor: async () => 200n
       }
-      await observeScheduledRewards(pgPools, ieContract)
+      /** @type {any} */
+      const recentParticipantsContract = {
+        get: async () => ['0xCURRENT']
+      }
+      await observeScheduledRewards(
+        pgPools.stats,
+        ieContract,
+        recentParticipantsContract
+      )
       const { rows } = await pgPools.stats.query(`
         SELECT participant_address, scheduled_rewards
         FROM daily_scheduled_rewards

@@ -25,5 +25,8 @@
     "env": [
       "mocha"
     ]
+  },
+  "dependencies": {
+    "@filecoin-station/spark-evaluations-recent-participants": "^3.0.0"
   }
 }
