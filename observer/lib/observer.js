@@ -44,7 +44,14 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
 export const observeScheduledRewards = async (pgPoolStats, ieContract, recentParticipantsContract) => {
   console.log('Querying scheduled rewards from impact evaluator')
   const participants = await recentParticipantsContract.get()
+  const participantsSeen = new Map()
   for (const address of participants) {
+    // participants contains duplicates
+    if (participantsSeen.has(address)) {
+      continue
+    }
+    participantsSeen.set(address, true)
+
     let scheduledRewards
     try {
       scheduledRewards = await ieContract.rewardsScheduledFor(address)
