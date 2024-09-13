@@ -9,7 +9,7 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "standard": "^17.1.1"
   },
   "dependencies": {
     "pg": "^8.12.0",
