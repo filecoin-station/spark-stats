@@ -12,7 +12,7 @@
   "devDependencies": {
     "mocha": "^10.7.3",
     "spark-evaluate": "github:filecoin-station/spark-evaluate#main",
-    "standard": "^17.1.0"
+    "standard": "^17.1.1"
   },
   "dependencies": {
     "@filecoin-station/spark-impact-evaluator": "^1.1.1",

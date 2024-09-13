@@ -18,6 +18,8 @@ jobs:
           - ethers
           - typescript
           - postgrator
+          - '@types/'
+          - standard
     steps:
       - name: Dependabot metadata
         id: metadata
