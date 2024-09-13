@@ -1,5 +1,4 @@
 import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
-import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
 import pg from 'pg'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -109,21 +108,4 @@ export const migrateStatsDB = async (client) => {
   await postgrator.migrate()
 
   console.log('Migrated `spark-stats` DB schema to version', await postgrator.getDatabaseVersion())
-}
-
-/**
- * @param {import('./typings.js').Queryable} pgPool
- * @param {string} day
- * @param {string[]} participantAddresses
- */
-export const givenDailyParticipants = async (pgPool, day, participantAddresses) => {
-  const ids = await mapParticipantsToIds(pgPool, new Set(participantAddresses))
-  await pgPool.query(`
-    INSERT INTO daily_participants (day, participant_id)
-    SELECT $1 as day, UNNEST($2::INT[]) AS participant_id
-    ON CONFLICT DO NOTHING
-  `, [
-    day,
-    Array.from(ids.values())
-  ])
 }
