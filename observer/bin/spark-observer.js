@@ -1,23 +1,29 @@
 import '../lib/instrument.js'
 import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
+import * as SparkEvaluationsRecentParticipants from '@filecoin-station/spark-evaluations-recent-participants'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { getPgPools } from '@filecoin-station/spark-stats-db'
+import { getStatsPgPool } from '@filecoin-station/spark-stats-db'
 import {
   observeTransferEvents,
   observeScheduledRewards
 } from '../lib/observer.js'
 
-const pgPools = await getPgPools()
+const pgPoolStats = await getStatsPgPool()
 
 const fetchRequest = new ethers.FetchRequest(RPC_URL)
 fetchRequest.setHeader('Authorization', rpcHeaders.Authorization || '')
 const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true })
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
+const recentParticipantsContract = new ethers.Contract(
+  SparkEvaluationsRecentParticipants.ADDRESS,
+  SparkEvaluationsRecentParticipants.ABI,
+  provider
+)
 
 const ONE_HOUR = 60 * 60 * 1000
 
@@ -25,7 +31,7 @@ const loopObserveTransferEvents = async () => {
   while (true) {
     const start = Date.now()
     try {
-      await observeTransferEvents(pgPools.stats, ieContract, provider)
+      await observeTransferEvents(pgPoolStats, ieContract, provider)
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
@@ -40,7 +46,7 @@ const loopObserveScheduledRewards = async () => {
   while (true) {
     const start = Date.now()
     try {
-      await observeScheduledRewards(pgPools, ieContract)
+      await observeScheduledRewards(pgPoolStats, ieContract, recentParticipantsContract)
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
