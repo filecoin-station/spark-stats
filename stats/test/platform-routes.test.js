@@ -6,7 +6,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
-import { getDayAsISOString, todayDate, today, yesterday } from '../lib/request-helpers.js'
+import { getLocalDayAsISOString, today, yesterday } from '../lib/request-helpers.js'
 
 const debug = createDebug('test')
 
@@ -249,7 +249,7 @@ describe('Platform Routes HTTP request handler', () => {
   })
 
   describe('GET /participants/top-earning', () => {
-    const oneWeekAgo = getDayAsISOString(new Date(todayDate().getTime() - 7 * 24 * 60 * 60 * 1000))
+    const oneWeekAgo = getLocalDayAsISOString(new Date(Date.now() - 7 * 24 * 60 * 60 * 1000))
 
     const setupScheduledRewardsData = async () => {
       await pgPools.stats.query(`
