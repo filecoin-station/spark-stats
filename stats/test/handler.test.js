@@ -2,8 +2,8 @@ import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
-import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -225,8 +225,7 @@ describe('HTTP request handler', () => {
   })
 
   describe('GET /participants/daily', () => {
-    // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
-    it.skip('returns daily active participants for the given date range', async () => {
+    it('returns daily active participants for the given date range', async () => {
       await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
       await givenDailyParticipants(pgPools.evaluate, '2024-01-11', ['0x10', '0x20', '0x30'])
       await givenDailyParticipants(pgPools.evaluate, '2024-01-12', ['0x10', '0x20', '0x40', '0x50'])
@@ -250,8 +249,7 @@ describe('HTTP request handler', () => {
   })
 
   describe('GET /participants/monthly', () => {
-    // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
-    it.skip('returns monthly active participants for the given date range ignoring the day number', async () => {
+    it('returns monthly active participants for the given date range ignoring the day number', async () => {
       // before the range
       await givenDailyParticipants(pgPools.evaluate, '2023-12-31', ['0x01', '0x02'])
       // in the range
@@ -280,8 +278,7 @@ describe('HTTP request handler', () => {
   })
 
   describe('GET /participants/change-rates', () => {
-    // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
-    it.skip('returns monthly change rates for the given date range ignoring the day number', async () => {
+    it('returns monthly change rates for the given date range ignoring the day number', async () => {
       // before the range
       await givenDailyParticipants(pgPools.evaluate, '2023-12-31', ['0x01', '0x02'])
       // the last month before the range
@@ -333,8 +330,7 @@ describe('HTTP request handler', () => {
       ])
     })
 
-    // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
-    it.skip('handles a single-month range', async () => {
+    it('handles a single-month range', async () => {
       // the last month before the range
       await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x10', '0x20'])
       // the only month in the range - 0x20 is gone

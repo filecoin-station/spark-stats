@@ -1,14 +1,19 @@
 import assert from 'http-assert'
 import { json } from 'http-responders'
 import { URLSearchParams } from 'node:url'
-import pg from 'pg'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
-export const getDayAsISOString = (d) => d.toISOString().split('T')[0]
+export const getLocalDayAsISOString = (d) => {
+  return [
+    d.getFullYear(),
+    String(d.getMonth() + 1).padStart(2, '0'),
+    String(d.getDate()).padStart(2, '0')
+  ].join('-')
+}
 
-export const today = () => getDayAsISOString(new Date())
-export const yesterday = () => getDayAsISOString(new Date(Date.now() - 24 * 60 * 60 * 1000))
+export const today = () => getLocalDayAsISOString(new Date())
+export const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 * 60 * 60 * 1000))
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
@@ -89,7 +94,7 @@ export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchP
 const setCacheControlForStatsResponse = (res, filter) => {
   // We cannot simply compare filter.to vs today() because there may be a delay in finalizing
   // stats for the previous day. Let's allow up to one hour for the finalization.
-  const boundary = getDayAsISOString(new Date(Date.now() - 3600_000))
+  const boundary = getLocalDayAsISOString(new Date(Date.now() - 3600_000))
 
   if (filter.to >= boundary) {
     // response includes partial data for today, cache it for 10 minutes only
@@ -113,73 +118,4 @@ const handleDateKeyword = (date) => {
     default:
       return date
   }
-}
-
-/**
- * @param {object} args
- * @param {import('@filecoin-station/spark-stats-db').Queryable} args.pgPool
- * @param {string} args.table
- * @param {string} args.column
- * @param {import('./typings.js').DateRangeFilter} args.filter
- * @param {string} [args.asColumn]
- */
-export const getDailyDistinctCount = async ({
-  pgPool,
-  table,
-  column,
-  filter,
-  asColumn = null
-}) => {
-  if (!asColumn) asColumn = column + '_count'
-  const safeTable = pg.escapeIdentifier(table)
-  const safeColumn = pg.escapeIdentifier(column)
-  const safeAsColumn = pg.escapeIdentifier(asColumn)
-
-  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
-  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
-  const { rows } = await pgPool.query(`
-    SELECT day::TEXT, COUNT(DISTINCT ${safeColumn})::INT as ${safeAsColumn}
-    FROM ${safeTable}
-    WHERE day >= $1 AND day <= $2
-    GROUP BY day
-    ORDER BY day
-  `, [filter.from, filter.to])
-  return rows
-}
-
-/**
- * @param {object} args
- * @param {Queryable} args.pgPool
- * @param {string} args.table
- * @param {string} args.column
- * @param {import('./typings.js').DateRangeFilter} args.filter
- * @param {string} [args.asColumn]
- */
-export const getMonthlyDistinctCount = async ({
-  pgPool,
-  table,
-  column,
-  filter,
-  asColumn = null
-}) => {
-  if (!asColumn) asColumn = column + '_count'
-  const safeTable = pg.escapeIdentifier(table)
-  const safeColumn = pg.escapeIdentifier(column)
-  const safeAsColumn = pg.escapeIdentifier(asColumn)
-
-  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
-  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
-  const { rows } = await pgPool.query(`
-    SELECT
-      date_trunc('month', day)::DATE::TEXT as month,
-      COUNT(DISTINCT ${safeColumn})::INT as ${safeAsColumn}
-    FROM ${safeTable}
-    WHERE
-      day >= date_trunc('month', $1::DATE)
-      AND day < date_trunc('month', $2::DATE) + INTERVAL '1 month'
-    GROUP BY month
-    ORDER BY month
-  `, [filter.from, filter.to]
-  )
-  return rows
 }

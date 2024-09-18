@@ -1,14 +1,20 @@
 import assert from 'node:assert'
 import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
-import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
 import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.js'
 
 describe('observer', () => {
   let pgPools
-  const getDayAsISOString = d => d.toISOString().split('T')[0]
-  const today = () => getDayAsISOString(new Date())
+  const getLocalDayAsISOString = (d) => {
+    return [
+      d.getFullYear(),
+      String(d.getMonth() + 1).padStart(2, '0'),
+      String(d.getDate()).padStart(2, '0')
+    ].join('-')
+  }
+  const today = () => getLocalDayAsISOString(new Date())
 
   before(async () => {
     pgPools = await getPgPools()
@@ -126,8 +132,7 @@ describe('observer', () => {
     })
   })
 
-  // Will be fixed by https://github.com/filecoin-station/spark-stats/pull/210
-  describe.skip('observeScheduledRewards', () => {
+  describe('observeScheduledRewards', () => {
     beforeEach(async () => {
       await pgPools.evaluate.query('DELETE FROM recent_station_details')
       await pgPools.evaluate.query('DELETE FROM recent_participant_subnets')
