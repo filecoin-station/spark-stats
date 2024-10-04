@@ -9,6 +9,7 @@ import {
   fetchMinersRSRSummary,
   fetchMonthlyParticipants,
   fetchParticipantChangeRates,
+  fetchParticipantsFirstSeen,
   fetchParticipantScheduledRewards,
   fetchParticipantRewardTransfers,
   fetchRetrievalSuccessRate,
@@ -98,6 +99,8 @@ const handler = async (req, res, pgPools, SPARK_API_BASE_URL) => {
     await respond(fetchMonthlyParticipants)
   } else if (req.method === 'GET' && url === '/participants/change-rates') {
     await respond(fetchParticipantChangeRates)
+  } else if (req.method === 'GET' && url === '/participants/first-seen') {
+    await respond(fetchParticipantsFirstSeen)
   } else if (req.method === 'GET' && segs[0] === 'participant' && segs[1] && segs[2] === 'scheduled-rewards') {
     await respond(fetchParticipantScheduledRewards, segs[1])
   } else if (req.method === 'GET' && segs[0] === 'participant' && segs[1] && segs[2] === 'reward-transfers') {
