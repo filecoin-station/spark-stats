@@ -36,7 +36,7 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
 }
 
 const getScheduledRewards = async (address, ieContract) => {
-  const [fromContract, fromSparkRewards] = await Promise.allSettled([
+  const [fromContract, fromSparkRewards] = await Promise.all([
     ieContract.rewardsScheduledFor(address),
     (async () => {
       const res = await fetch(
@@ -48,15 +48,7 @@ const getScheduledRewards = async (address, ieContract) => {
         : 0n // `json` can be `null`
     })()
   ])
-  if (fromContract.status === 'rejected' && fromSparkRewards.status === 'rejected') {
-    throw new Error('Both contract and spark-rewards failed')
-  } else if (fromContract.status === 'fulfilled' && fromSparkRewards.status === 'fulfilled') {
-    return fromContract.value + fromSparkRewards.value
-  } else if (fromContract.status === 'fulfilled') {
-    return fromContract.value
-  } else if (fromSparkRewards.status === 'fulfilled') {
-    return fromSparkRewards.value
-  }
+  return fromContract + fromSparkRewards
 }
 
 /**
