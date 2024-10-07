@@ -35,8 +35,32 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
   return events.length
 }
 
+const getScheduledRewards = async (address, ieContract) => {
+  const [fromContract, fromSparkRewards] = await Promise.allSettled([
+    ieContract.rewardsScheduledFor(address),
+    (async () => {
+      const res = await fetch(
+        `https://spark-rewards.fly.dev/scheduled-rewards/${address}`
+      )
+      const json = await res.json()
+      return typeof json === 'string'
+        ? BigInt(json)
+        : 0n // `json` can be `null`
+    })()
+  ])
+  if (fromContract.status === 'rejected' && fromSparkRewards.status === 'rejected') {
+    throw new Error('Both contract and spark-rewards failed')
+  } else if (fromContract.status === 'fulfilled' && fromSparkRewards.status === 'fulfilled') {
+    return fromContract.value + fromSparkRewards.value
+  } else if (fromContract.status === 'fulfilled') {
+    return fromContract.value
+  } else if (fromSparkRewards.status === 'fulfilled') {
+    return fromSparkRewards.value
+  }
+}
+
 /**
- * Observe scheduled rewards on the Filecoin blockchain
+ * Observe scheduled rewards from blockchain and `spark-rewards`
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('ethers').Contract} ieContract
  */
@@ -51,7 +75,7 @@ export const observeScheduledRewards = async (pgPools, ieContract) => {
   for (const { participant_address: address } of rows) {
     let scheduledRewards
     try {
-      scheduledRewards = await ieContract.rewardsScheduledFor(address)
+      scheduledRewards = await getScheduledRewards(address, ieContract)
     } catch (err) {
       Sentry.captureException(err)
       console.error(
