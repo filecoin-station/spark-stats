@@ -357,6 +357,37 @@ describe('HTTP request handler', () => {
     })
   })
 
+  describe('GET /participants/first-seen', () => {
+    it('returns participant addresses first seen in the given date range', async () => {
+      // before the range
+      await givenDailyParticipants(pgPools.evaluate, '2023-12-31', ['0x00'])
+      // in the range
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-10', ['0x00', '0x10'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-11', ['0x10', '0x20'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-01-12', ['0x20', '0x30'])
+      await givenDailyParticipants(pgPools.evaluate, '2024-02-13', ['0x10', '0x40'])
+      // after the range
+      await givenDailyParticipants(pgPools.evaluate, '2024-03-01', ['0x99'])
+
+      const res = await fetch(
+        new URL(
+          '/participants/first-seen?from=2024-01-05&to=2024-02-25',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { participant_address: '0x10', first_seen: '2024-01-10' },
+        { participant_address: '0x20', first_seen: '2024-01-11' },
+        { participant_address: '0x30', first_seen: '2024-01-12' },
+        { participant_address: '0x40', first_seen: '2024-02-13' }
+      ])
+    })
+  })
+
   describe('GET /participant/:address/scheduled-rewards', () => {
     it('returns daily scheduled rewards for the given date range', async () => {
       await pgPools.stats.query(
