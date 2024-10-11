@@ -1,5 +1,6 @@
 import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
+import assert from 'node:assert'
 
 /**
  * Observe the transfer events on the Filecoin blockchain
@@ -43,9 +44,8 @@ const getScheduledRewards = async (address, ieContract) => {
         `https://spark-rewards.fly.dev/scheduled-rewards/${address}`
       )
       const json = await res.json()
-      return typeof json === 'string'
-        ? BigInt(json)
-        : 0n // `json` can be `null`
+      assert(typeof json === 'string')
+      return BigInt(json)
     })()
   ])
   return fromContract + fromSparkRewards
