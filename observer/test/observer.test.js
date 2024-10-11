@@ -154,14 +154,18 @@ describe('observer', () => {
           }
         }
       }
-      await observeScheduledRewards(pgPools, ieContract)
+      const fetchMock = async url => {
+        assert.strictEqual(url, 'https://spark-rewards.fly.dev/scheduled-rewards/0xCURRENT')
+        return new Response(JSON.stringify('10'))
+      }
+      await observeScheduledRewards(pgPools, ieContract, fetchMock)
       const { rows } = await pgPools.stats.query(`
         SELECT participant_address, scheduled_rewards
         FROM daily_scheduled_rewards
       `)
       assert.deepStrictEqual(rows, [{
         participant_address: '0xCURRENT',
-        scheduled_rewards: '100'
+        scheduled_rewards: '110'
       }])
     })
     it('updates scheduled rewards', async () => {

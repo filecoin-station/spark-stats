@@ -1,5 +1,6 @@
 import { updateDailyTransferStats } from './platform-stats.js'
 import * as Sentry from '@sentry/node'
+import assert from 'node:assert'
 
 /**
  * Observe the transfer events on the Filecoin blockchain
@@ -35,12 +36,28 @@ export const observeTransferEvents = async (pgPoolStats, ieContract, provider) =
   return events.length
 }
 
+const getScheduledRewards = async (address, ieContract, fetch) => {
+  const [fromContract, fromSparkRewards] = await Promise.all([
+    ieContract.rewardsScheduledFor(address),
+    (async () => {
+      const res = await fetch(
+        `https://spark-rewards.fly.dev/scheduled-rewards/${address}`
+      )
+      const json = await res.json()
+      assert(typeof json === 'string')
+      return BigInt(json)
+    })()
+  ])
+  return fromContract + fromSparkRewards
+}
+
 /**
- * Observe scheduled rewards on the Filecoin blockchain
+ * Observe scheduled rewards from blockchain and `spark-rewards`
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('ethers').Contract} ieContract
+ * @param {typeof globalThis.fetch} [fetch]
  */
-export const observeScheduledRewards = async (pgPools, ieContract) => {
+export const observeScheduledRewards = async (pgPools, ieContract, fetch = globalThis.fetch) => {
   console.log('Querying scheduled rewards from impact evaluator')
   const { rows } = await pgPools.evaluate.query(`
     SELECT participant_address
@@ -51,7 +68,7 @@ export const observeScheduledRewards = async (pgPools, ieContract) => {
   for (const { participant_address: address } of rows) {
     let scheduledRewards
     try {
-      scheduledRewards = await ieContract.rewardsScheduledFor(address)
+      scheduledRewards = await getScheduledRewards(address, ieContract, fetch)
     } catch (err) {
       Sentry.captureException(err)
       console.error(
