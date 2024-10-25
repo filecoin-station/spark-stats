@@ -12,7 +12,7 @@
     "standard": "^17.1.2"
   },
   "dependencies": {
-    "pg": "^8.13.0",
+    "pg": "^8.13.1",
     "postgrator": "^7.3.0",
     "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
