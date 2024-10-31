@@ -38,12 +38,12 @@ const loop = async (name, fn, interval) => {
 
 await Promise.all([
   loop(
-    'Observe Transfer events',
+    'Transfer events',
     () => observeTransferEvents(pgPools.stats, ieContract, provider),
     ONE_HOUR
   ),
   loop(
-    'Observe scheduled rewards',
+    'Scheduled rewards',
     () => observeScheduledRewards(pgPools, ieContract),
     24 * ONE_HOUR
   )
