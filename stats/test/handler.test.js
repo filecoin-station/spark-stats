@@ -50,6 +50,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM daily_deals')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
+    await pgPools.stats.query('DELETE FROM daily_retrieval_result_status')
   })
 
   it('returns 200 for GET /', async () => {
@@ -430,6 +431,37 @@ describe('HTTP request handler', () => {
       assert.deepStrictEqual(stats, [
         { miner_id: 'f1one', success_rate: 0.05, total: '20', successful: '1' },
         { miner_id: 'f1two', success_rate: 0.75, total: '200', successful: '150' }
+      ])
+    })
+  })
+
+  describe('GET /retrieval-result-status/daily', () => {
+    it('returns daily retrieval result status for the given date range', async () => {
+      await pgPools.stats.query(`
+        INSERT INTO daily_retrieval_result_status
+        (day, status, rate)
+        VALUES
+        ('2024-01-11', 'Error1', 0.1),
+        ('2024-01-11', 'Error2', 0.9),
+        ('2024-01-12', 'Error1', 1),
+        ('2024-01-13', 'Error1', 0.5),
+        ('2024-01-13', 'Error3', 0.5)
+      `)
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-result-status/daily?from=2024-01-11&to=2024-01-13',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', rates: { Error1: '0.1', Error2: '0.9' } },
+        { day: '2024-01-12', rates: { Error1: '1' } },
+        { day: '2024-01-13', rates: { Error1: '0.5', Error3: '0.5' } }
       ])
     })
   })

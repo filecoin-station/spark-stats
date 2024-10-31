@@ -17,6 +17,7 @@
   "dependencies": {
     "@filecoin-station/spark-impact-evaluator": "^1.1.1",
     "@filecoin-station/spark-stats-db": "^1.0.0",
+    "@influxdata/influxdb-client": "^1.35.0",
     "@sentry/node": "^8.36.0",
     "debug": "^4.3.7",
     "ethers": "^6.13.4",

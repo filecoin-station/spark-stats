@@ -222,3 +222,23 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
   }))
   return stats
 }
+
+export const fetchDailyRetrievalResultStatus = async (pgPools, filter) => {
+  const { rows } = await pgPools.stats.query(`
+    SELECT day::TEXT, status, rate
+    FROM daily_retrieval_result_status
+    WHERE day >= $1 AND day <= $2
+   `, [
+    filter.from,
+    filter.to
+  ])
+  const days = {}
+  for (const row of rows) {
+    if (!days[row.day]) {
+      days[row.day] = {}
+    }
+    days[row.day][row.status] = row.rate
+  }
+  const stats = Object.entries(days).map(([day, rates]) => ({ day, rates }))
+  return stats
+}

@@ -60,7 +60,6 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participant//0x000000000000000000000000000000000000dEaD/reward-transfers
 
-
 - `GET /stations/daily?from=<day>&to=<day>`
 
   http://stats.filspark.com/stations/daily
@@ -84,6 +83,10 @@ Base URL: http://stats.filspark.com/
 - `GET /deals/summary?from=2024-01-01&to=2024-01-31`
 
   http://stats.filspark.com/deals/summary
+
+- `GET /retrieval-result-status/daily?from=2024-01-01&to=2024-01-31`
+  
+  http://stats.filspark.com/retrieval-result-status/daily
 
 
 ## Development

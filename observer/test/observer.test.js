@@ -3,7 +3,7 @@ import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
-import { observeTransferEvents, observeScheduledRewards } from '../lib/observer.js'
+import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultStatus } from '../lib/observer.js'
 
 describe('observer', () => {
   let pgPools
@@ -182,6 +182,29 @@ describe('observer', () => {
         participant_address: '0xCURRENT',
         scheduled_rewards: '200'
       }])
+    })
+  })
+
+  describe('observeRetrievalResultStatus', () => {
+    beforeEach(async () => {
+      await pgPools.stats.query('DELETE FROM daily_retrieval_result_status')
+    })
+
+    it('observes retrieval result status', async () => {
+      await observeRetrievalResultStatus(pgPools.stats, {
+        collectRows: async () => [
+          { _time: today(), _field: 'success', _value: 0.5 },
+          { _time: today(), _field: 'failure', _value: 0.5 }
+        ]
+      })
+      const { rows } = await pgPools.stats.query(`
+        SELECT day::TEXT, status, rate
+        FROM daily_retrieval_result_status
+      `)
+      assert.deepStrictEqual(rows, [
+        { day: today(), status: 'success', rate: '0.5' },
+        { day: today(), status: 'failure', rate: '0.5' }
+      ])
     })
   })
 })

@@ -96,3 +96,28 @@ export const observeScheduledRewards = async (pgPools, ieContract, fetch = globa
 function isEventLog (logOrEventLog) {
   return 'args' in logOrEventLog
 }
+
+export const observeRetrievalResultStatus = async (pgPoolStats, influxQueryApi) => {
+  const rows = await influxQueryApi.collectRows(`
+    import "strings"
+    from(bucket: "spark-evaluate")
+      |> range(start: 0)
+      |> filter(fn: (r) => r["_measurement"] == "retrieval_stats_honest")
+      |> filter(fn: (r) => strings.hasPrefix(v: r._field, prefix: "result_rate_"))
+      |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)
+      |> keep(columns: ["_value", "_time", "_field"])
+      |> map(fn: (r) => ({ r with _field: strings.replace(v: r._field, t: "result_rate_", u: "", i: 1) }))
+  `)
+  for (const row of rows) {
+    await pgPoolStats.query(`
+      INSERT INTO daily_retrieval_result_status
+      (day, status, rate)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (day, status) DO UPDATE SET rate = EXCLUDED.rate
+    `, [
+      row._time,
+      row._field,
+      row._value
+    ])
+  }
+}
