@@ -21,37 +21,30 @@ const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpact
 
 const ONE_HOUR = 60 * 60 * 1000
 
-const loopObserveTransferEvents = async () => {
+const loop = async (name, fn, interval) => {
   while (true) {
     const start = Date.now()
     try {
-      await observeTransferEvents(pgPools.stats, ieContract, provider)
+      await fn()
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
     }
     const dt = Date.now() - start
-    console.log(`Observing Transfer events took ${dt}ms`)
-    await timers.setTimeout(ONE_HOUR - dt)
-  }
-}
-
-const loopObserveScheduledRewards = async () => {
-  while (true) {
-    const start = Date.now()
-    try {
-      await observeScheduledRewards(pgPools, ieContract)
-    } catch (e) {
-      console.error(e)
-      Sentry.captureException(e)
-    }
-    const dt = Date.now() - start
-    console.log(`Observing scheduled rewards took ${dt}ms`)
-    await timers.setTimeout((24 * ONE_HOUR) - dt)
+    console.log(`Loop "${name}" took ${dt}ms`)
+    await timers.setTimeout(interval - dt)
   }
 }
 
 await Promise.all([
-  loopObserveTransferEvents(),
-  loopObserveScheduledRewards()
+  loop(
+    'Observe Transfer events',
+    () => observeTransferEvents(pgPools.stats, ieContract, provider),
+    ONE_HOUR
+  ),
+  loop(
+    'Observe scheduled rewards',
+    () => observeScheduledRewards(pgPools, ieContract),
+    24 * ONE_HOUR
+  )
 ])
