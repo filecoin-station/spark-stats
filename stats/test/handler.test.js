@@ -441,11 +441,11 @@ describe('HTTP request handler', () => {
         INSERT INTO daily_retrieval_result_codes
         (day, code, rate)
         VALUES
-        ('2024-01-11', 'Error1', 0.1),
-        ('2024-01-11', 'Error2', 0.9),
-        ('2024-01-12', 'Error1', 1),
-        ('2024-01-13', 'Error1', 0.5),
-        ('2024-01-13', 'Error3', 0.5)
+        ('2024-01-11', 'OK', 0.1),
+        ('2024-01-11', 'CAR_TOO_LARGE', 0.9),
+        ('2024-01-12', 'OK', 1),
+        ('2024-01-13', 'OK', 0.5),
+        ('2024-01-13', 'IPNI_500', 0.5)
       `)
 
       const res = await fetch(
@@ -459,9 +459,9 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-11', rates: { Error1: '0.1', Error2: '0.9' } },
-        { day: '2024-01-12', rates: { Error1: '1' } },
-        { day: '2024-01-13', rates: { Error1: '0.5', Error3: '0.5' } }
+        { day: '2024-01-11', rates: { OK: '0.1', CAR_TOO_LARGE: '0.9' } },
+        { day: '2024-01-12', rates: { OK: '1' } },
+        { day: '2024-01-13', rates: { OK: '0.5', IPNI_500: '0.5' } }
       ])
     })
   })
