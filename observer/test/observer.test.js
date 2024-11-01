@@ -193,8 +193,8 @@ describe('observer', () => {
     it('observes retrieval result codes', async () => {
       await observeRetrievalResultCodes(pgPools.stats, {
         collectRows: async () => [
-          { _time: today(), _field: 'success', _value: 0.5 },
-          { _time: today(), _field: 'failure', _value: 0.5 }
+          { _time: today(), _field: 'OK', _value: 0.5 },
+          { _time: today(), _field: 'CAR_TOO_LARGE', _value: 0.5 }
         ]
       })
       const { rows } = await pgPools.stats.query(`
@@ -202,8 +202,8 @@ describe('observer', () => {
         FROM daily_retrieval_result_codes
       `)
       assert.deepStrictEqual(rows, [
-        { day: today(), code: 'success', rate: '0.5' },
-        { day: today(), code: 'failure', rate: '0.5' }
+        { day: today(), code: 'OK', rate: '0.5' },
+        { day: today(), code: 'CAR_TOO_LARGE', rate: '0.5' }
       ])
     })
   })
