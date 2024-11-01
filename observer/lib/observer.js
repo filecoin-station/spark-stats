@@ -104,6 +104,8 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
   // measurement count per round should be relatively stable, this should be
   // good enough for now. Please pick up and improve this.
   // Ref: https://github.com/filecoin-station/spark-stats/pull/244#discussion_r1824808007
+  // Note: Having a bucket retention policy is important for this query not to
+  // time out.
   const rows = await influxQueryApi.collectRows(`
     import "strings"
     from(bucket: "spark-evaluate")
