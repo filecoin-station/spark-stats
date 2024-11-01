@@ -3,13 +3,20 @@ import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
+import { InfluxDB } from '@influxdata/influxdb-client'
+import assert from 'node:assert/strict'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import {
   observeTransferEvents,
-  observeScheduledRewards
+  observeScheduledRewards,
+  observeRetrievalResultCodes
 } from '../lib/observer.js'
+
+const { INFLUXDB_TOKEN } = process.env
+
+assert(INFLUXDB_TOKEN, 'INFLUXDB_TOKEN required')
 
 const pgPools = await getPgPools()
 
@@ -19,39 +26,45 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
+const influx = new InfluxDB({
+  url: 'https://eu-central-1-1.aws.cloud2.influxdata.com',
+  // spark-stats-observer-read
+  token: INFLUXDB_TOKEN
+})
+
+const influxQueryApi = influx.getQueryApi('Filecoin Station')
+
 const ONE_HOUR = 60 * 60 * 1000
 
-const loopObserveTransferEvents = async () => {
+const loop = async (name, fn, interval) => {
   while (true) {
     const start = Date.now()
     try {
-      await observeTransferEvents(pgPools.stats, ieContract, provider)
+      await fn()
     } catch (e) {
       console.error(e)
       Sentry.captureException(e)
     }
     const dt = Date.now() - start
-    console.log(`Observing Transfer events took ${dt}ms`)
-    await timers.setTimeout(ONE_HOUR - dt)
-  }
-}
-
-const loopObserveScheduledRewards = async () => {
-  while (true) {
-    const start = Date.now()
-    try {
-      await observeScheduledRewards(pgPools, ieContract)
-    } catch (e) {
-      console.error(e)
-      Sentry.captureException(e)
-    }
-    const dt = Date.now() - start
-    console.log(`Observing scheduled rewards took ${dt}ms`)
-    await timers.setTimeout((24 * ONE_HOUR) - dt)
+    console.log(`Loop "${name}" took ${dt}ms`)
+    await timers.setTimeout(interval - dt)
   }
 }
 
 await Promise.all([
-  loopObserveTransferEvents(),
-  loopObserveScheduledRewards()
+  loop(
+    'Transfer events',
+    () => observeTransferEvents(pgPools.stats, ieContract, provider),
+    ONE_HOUR
+  ),
+  loop(
+    'Scheduled rewards',
+    () => observeScheduledRewards(pgPools, ieContract),
+    24 * ONE_HOUR
+  ),
+  loop(
+    'Retrieval result codes',
+    () => observeRetrievalResultCodes(pgPools.stats, influxQueryApi),
+    ONE_HOUR
+  )
 ])

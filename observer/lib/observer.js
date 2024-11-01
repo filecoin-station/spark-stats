@@ -96,3 +96,36 @@ export const observeScheduledRewards = async (pgPools, ieContract, fetch = globa
 function isEventLog (logOrEventLog) {
   return 'args' in logOrEventLog
 }
+
+export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) => {
+  // TODO: The `mean` aggregation will produce slightly wrong numbers, since
+  // the query is aggregating over relative numbers - with varying measurement
+  // counts, the relative numbers should be weighted differently. Since the
+  // measurement count per round should be relatively stable, this should be
+  // good enough for now. Please pick up and improve this.
+  // Ref: https://github.com/filecoin-station/spark-stats/pull/244#discussion_r1824808007
+  // Note: Having a bucket retention policy is important for this query not to
+  // time out.
+  const rows = await influxQueryApi.collectRows(`
+    import "strings"
+    from(bucket: "spark-evaluate")
+      |> range(start: 0)
+      |> filter(fn: (r) => r["_measurement"] == "retrieval_stats_honest")
+      |> filter(fn: (r) => strings.hasPrefix(v: r._field, prefix: "result_rate_"))
+      |> aggregateWindow(every: 1d, fn: mean, createEmpty: false)
+      |> keep(columns: ["_value", "_time", "_field"])
+      |> map(fn: (r) => ({ r with _field: strings.replace(v: r._field, t: "result_rate_", u: "", i: 1) }))
+  `)
+  for (const row of rows) {
+    await pgPoolStats.query(`
+      INSERT INTO daily_retrieval_result_codes
+      (day, code, rate)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (day, code) DO UPDATE SET rate = EXCLUDED.rate
+    `, [
+      row._time,
+      row._field,
+      row._value
+    ])
+  }
+}
