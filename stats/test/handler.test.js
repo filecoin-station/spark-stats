@@ -50,7 +50,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM daily_deals')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
-    await pgPools.stats.query('DELETE FROM daily_retrieval_result_status')
+    await pgPools.stats.query('DELETE FROM daily_retrieval_result_codes')
   })
 
   it('returns 200 for GET /', async () => {
@@ -435,11 +435,11 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('GET /retrieval-result-status/daily', () => {
-    it('returns daily retrieval result status for the given date range', async () => {
+  describe('GET /retrieval-result-codes/daily', () => {
+    it('returns daily retrieval result codes for the given date range', async () => {
       await pgPools.stats.query(`
-        INSERT INTO daily_retrieval_result_status
-        (day, status, rate)
+        INSERT INTO daily_retrieval_result_codes
+        (day, code, rate)
         VALUES
         ('2024-01-11', 'Error1', 0.1),
         ('2024-01-11', 'Error2', 0.9),
@@ -450,7 +450,7 @@ describe('HTTP request handler', () => {
 
       const res = await fetch(
         new URL(
-          '/retrieval-result-status/daily?from=2024-01-11&to=2024-01-13',
+          '/retrieval-result-codes/daily?from=2024-01-11&to=2024-01-13',
           baseUrl
         ), {
           redirect: 'manual'

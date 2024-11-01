@@ -223,10 +223,10 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
   return stats
 }
 
-export const fetchDailyRetrievalResultStatus = async (pgPools, filter) => {
+export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
   const { rows } = await pgPools.stats.query(`
-    SELECT day::TEXT, status, rate
-    FROM daily_retrieval_result_status
+    SELECT day::TEXT, code, rate
+    FROM daily_retrieval_result_codes
     WHERE day >= $1 AND day <= $2
    `, [
     filter.from,
@@ -237,7 +237,7 @@ export const fetchDailyRetrievalResultStatus = async (pgPools, filter) => {
     if (!days[row.day]) {
       days[row.day] = {}
     }
-    days[row.day][row.status] = row.rate
+    days[row.day][row.code] = row.rate
   }
   const stats = Object.entries(days).map(([day, rates]) => ({ day, rates }))
   return stats

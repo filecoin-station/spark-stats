@@ -11,7 +11,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 import {
   observeTransferEvents,
   observeScheduledRewards,
-  observeRetrievalResultStatus
+  observeRetrievalResultCodes
 } from '../lib/observer.js'
 
 const { INFLUXDB_TOKEN } = process.env
@@ -63,8 +63,8 @@ await Promise.all([
     24 * ONE_HOUR
   ),
   loop(
-    'Retrieval result status breakdown',
-    () => observeRetrievalResultStatus(pgPools.stats, influxQueryApi),
+    'Retrieval result codes',
+    () => observeRetrievalResultCodes(pgPools.stats, influxQueryApi),
     ONE_HOUR
   )
 ])

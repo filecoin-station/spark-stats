@@ -97,7 +97,7 @@ function isEventLog (logOrEventLog) {
   return 'args' in logOrEventLog
 }
 
-export const observeRetrievalResultStatus = async (pgPoolStats, influxQueryApi) => {
+export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) => {
   const rows = await influxQueryApi.collectRows(`
     import "strings"
     from(bucket: "spark-evaluate")
@@ -110,10 +110,10 @@ export const observeRetrievalResultStatus = async (pgPoolStats, influxQueryApi) 
   `)
   for (const row of rows) {
     await pgPoolStats.query(`
-      INSERT INTO daily_retrieval_result_status
-      (day, status, rate)
+      INSERT INTO daily_retrieval_result_codes
+      (day, code, rate)
       VALUES ($1, $2, $3)
-      ON CONFLICT (day, status) DO UPDATE SET rate = EXCLUDED.rate
+      ON CONFLICT (day, code) DO UPDATE SET rate = EXCLUDED.rate
     `, [
       row._time,
       row._field,

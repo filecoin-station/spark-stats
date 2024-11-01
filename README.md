@@ -84,9 +84,9 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/deals/summary
 
-- `GET /retrieval-result-status/daily?from=2024-01-01&to=2024-01-31`
+- `GET /retrieval-result-codes/daily?from=2024-01-01&to=2024-01-31`
   
-  http://stats.filspark.com/retrieval-result-status/daily
+  http://stats.filspark.com/retrieval-result-codes/daily
 
 
 ## Development
