@@ -98,6 +98,12 @@ function isEventLog (logOrEventLog) {
 }
 
 export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) => {
+  // TODO: The `mean` aggregation will produce slightly wrong numbers, since
+  // the query is aggregating over relative numbers - with varying measurement
+  // counts, the relative numbers should be weighted differently. Since the
+  // measurement count per round should be relatively stable, this should be
+  // good enough for now. Please pick up and improve this.
+  // Ref: https://github.com/filecoin-station/spark-stats/pull/244#discussion_r1824808007
   const rows = await influxQueryApi.collectRows(`
     import "strings"
     from(bucket: "spark-evaluate")
