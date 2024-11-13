@@ -7,6 +7,7 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
 import { getLocalDayAsISOString, today, yesterday } from '../lib/request-helpers.js'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
 const debug = createDebug('test')
 
@@ -336,6 +337,25 @@ describe('Platform Routes HTTP request handler', () => {
         }
       )
       await assertResponseStatus(res, 400)
+    })
+  })
+
+  describe('GET /participants/summary', () => {
+    it('counts participants', async () => {
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-01',
+        ['0x1', '0x2', '0x3']
+      )
+
+      const res = await fetch(
+        new URL('/participants/summary', baseUrl), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const summary = await res.json()
+      assert.deepStrictEqual(summary, { participant_count: 3 })
     })
   })
 })

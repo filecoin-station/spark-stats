@@ -104,3 +104,15 @@ export const fetchTopEarningParticipants = async (pgPool, filter) => {
   `, [filter.from, filter.to])
   return rows
 }
+
+/**
+ * @param {Queryable} pgPool
+ */
+export const fetchParticipantsSummary = async (pgPool) => {
+  const { rows } = await pgPool.query(`
+    SELECT COUNT(DISTINCT participant_id) FROM daily_participants
+  `)
+  return {
+    participant_count: rows[0].count
+  }
+}
