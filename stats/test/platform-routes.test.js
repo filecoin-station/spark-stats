@@ -356,6 +356,10 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const summary = await res.json()
       assert.deepStrictEqual(summary, { participant_count: 3 })
+      assert.strictEqual(
+        res.headers.get('cache-control'),
+        'public, max-age=86400'
+      )
     })
   })
 })

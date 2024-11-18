@@ -39,7 +39,9 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
   } else if (req.method === 'GET' && url === '/participants/summary') {
-    json(res, await fetchParticipantsSummary(pgPools.evaluate))
+    const summary = await fetchParticipantsSummary(pgPools.evaluate)
+    res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+    json(res, summary)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {
