@@ -39,8 +39,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
   } else if (req.method === 'GET' && url === '/participants/summary') {
-    json(res, await fetchParticipantsSummary(pgPools.stats))
-    await respond(pgPools.stats, fetchParticipantsSummary)
+    json(res, await fetchParticipantsSummary(pgPools.evaluate))
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {

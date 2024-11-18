@@ -113,6 +113,6 @@ export const fetchParticipantsSummary = async (pgPool) => {
     SELECT COUNT(DISTINCT participant_id) FROM daily_participants
   `)
   return {
-    participant_count: rows[0].count
+    participant_count: Number(rows[0].count)
   }
 }
