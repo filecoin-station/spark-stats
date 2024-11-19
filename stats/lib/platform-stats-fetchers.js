@@ -1,5 +1,6 @@
 import assert from 'http-assert'
 import { today, yesterday } from './request-helpers.js'
+import { json } from 'http-responders'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
@@ -115,4 +116,14 @@ export const fetchParticipantsSummary = async (pgPool) => {
   return {
     participant_count: Number(rows[0].count)
   }
+}
+
+/**
+ * @param {import('http').ServerResponse} res
+ * @param {Queryable} pgPool
+ */
+export const respondWithParticipantsSummary = async (res, pgPool) => {
+  const summary = await fetchParticipantsSummary(pgPool)
+  res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+  json(res, summary)
 }
