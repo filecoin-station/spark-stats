@@ -39,11 +39,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
   } else if (req.method === 'GET' && url === '/participants/summary') {
-    await respondWithCaching(
-      res,
-      24 * 3600 /* one day */,
-      await fetchParticipantsSummary(pgPools.evaluate),
-    )
+    await respondWithParticipantsSummary(res, pgPools)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {
@@ -52,12 +48,7 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   return true
 }
 
-/**
- * @param {import('http').ServerResponse} res
- * @param {number} maxAge
- * @param {any} payload
- */
-export const respondWithCaching = async (res, maxAge, payload) => {
-  res.setHeader('cache-control', `public, max-age=${String(maxAge)}`)
-  json(res, payload)
+export const respondWithParticipantsSummary = async (res, pgPools) => {
+  res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+  json(res, await fetchParticipantsSummary(pgPools.evaluate))
 }
