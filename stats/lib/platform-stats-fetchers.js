@@ -1,6 +1,5 @@
 import assert from 'http-assert'
 import { today, yesterday } from './request-helpers.js'
-import { json } from 'http-responders'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
