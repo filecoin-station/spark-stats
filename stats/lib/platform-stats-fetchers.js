@@ -117,13 +117,3 @@ export const fetchParticipantsSummary = async (pgPool) => {
     participant_count: Number(rows[0].count)
   }
 }
-
-/**
- * @param {import('http').ServerResponse} res
- * @param {Queryable} pgPool
- */
-export const respondWithParticipantsSummary = async (res, pgPool) => {
-  const summary = await fetchParticipantsSummary(pgPool)
-  res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
-  json(res, summary)
-}

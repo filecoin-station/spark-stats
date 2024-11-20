@@ -1,3 +1,4 @@
+import { json } from 'http-responders'
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 import {
   fetchDailyStationCount,
@@ -6,7 +7,7 @@ import {
   fetchTopEarningParticipants,
   fetchParticipantsWithTopMeasurements,
   fetchDailyStationMeasurementCounts,
-  respondWithParticipantsSummary
+  fetchParticipantsSummary
 } from './platform-stats-fetchers.js'
 
 const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
@@ -38,11 +39,25 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
   } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
   } else if (req.method === 'GET' && url === '/participants/summary') {
-    await respondWithParticipantsSummary(res, pgPools.evaluate)
+    await respondWithCaching(
+      res,
+      24 * 3600 /* one day */,
+      await fetchParticipantsSummary(pgPools.evaluate),
+    )
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {
     return false
   }
   return true
+}
+
+/**
+ * @param {import('http').ServerResponse} res
+ * @param {number} maxAge
+ * @param {any} payload
+ */
+export const respondWithCaching = async (res, maxAge, payload) => {
+  res.setHeader('cache-control', `public, max-age=${String(maxAge)}`)
+  json(res, payload)
 }
