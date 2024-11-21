@@ -21,6 +21,7 @@ jobs:
           - '@types/'
           - standard
           - cross-spawn
+          - '@filecoin-station/spark-impact-evaluator'
     steps:
       - name: Dependabot metadata
         id: metadata
