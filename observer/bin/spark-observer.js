@@ -51,8 +51,9 @@ const loop = async (name, fn, interval) => {
       point.intField('delay_ms', interval - dt)
     })
 
-    // This is safe to do because setTimeout(-10) has the same result as setTimeout(0)
-    await timers.setTimeout(interval - dt)
+    if (dt < interval) {
+      await timers.setTimeout(interval - dt)
+    }
   }
 }
 
