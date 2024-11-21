@@ -48,7 +48,6 @@ const loop = async (name, fn, interval) => {
     recordTelemetry(`loop_${slug(name, '_')}`, point => {
       point.intField('interval_ms', interval)
       point.intField('duration_ms', dt)
-      point.intField('delay_ms', interval - dt)
     })
 
     if (dt < interval) {
