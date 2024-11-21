@@ -5,6 +5,7 @@ import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
 import { createInflux } from '../lib/telemetry.js'
 import assert from 'node:assert/strict'
+import slug from 'slug'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
@@ -43,14 +44,15 @@ const loop = async (name, fn, interval) => {
     }
     const dt = Date.now() - start
     console.log(`Loop "${name}" took ${dt}ms`)
-    recordTelemetry(`loop_${name.replaceAll(' ', '_')}`, point => {
+
+    recordTelemetry(`loop_${slug(name, '_')}`, point => {
       point.intField('interval_ms', interval)
       point.intField('duration_ms', dt)
       point.intField('delay_ms', interval - dt)
     })
-    if (dt < interval) {
-      await timers.setTimeout(interval - dt)
-    }
+
+    // This is safe to do because setTimeout(-10) has the same result as setTimeout(0)
+    await timers.setTimeout(interval - dt)
   }
 }
 
