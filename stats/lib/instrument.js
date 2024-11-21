@@ -1,5 +1,5 @@
 import * as Sentry from '@sentry/node'
-import { nodeProfilingIntegration } from '@sentry/profiling-node';
+import { nodeProfilingIntegration } from '@sentry/profiling-node'
 import fs from 'node:fs/promises'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -22,9 +22,9 @@ Sentry.init({
   release: pkg.version,
   environment: SENTRY_ENVIRONMENT,
   integrations: [
-    nodeProfilingIntegration(),
+    nodeProfilingIntegration()
   ],
   tracesSampleRate: 0.1,
   // Set sampling rate for performance profiling. This is relative to tracesSampleRate.
-  profilesSampleRate: 1.0,
+  profilesSampleRate: 1.0
 })
