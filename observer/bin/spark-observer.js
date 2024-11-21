@@ -3,7 +3,7 @@ import * as SparkImpactEvaluator from '@filecoin-station/spark-impact-evaluator'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/node'
 import timers from 'node:timers/promises'
-import { InfluxDB } from '@influxdata/influxdb-client'
+import { createInflux } from '../lib/telemetry.js'
 import assert from 'node:assert/strict'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
@@ -26,11 +26,7 @@ const provider = new ethers.JsonRpcProvider(fetchRequest, null, { polling: true 
 
 const ieContract = new ethers.Contract(SparkImpactEvaluator.ADDRESS, SparkImpactEvaluator.ABI, provider)
 
-const influx = new InfluxDB({
-  url: 'https://eu-central-1-1.aws.cloud2.influxdata.com',
-  // spark-stats-observer-read
-  token: INFLUXDB_TOKEN
-})
+const { influx, recordTelemetry } = createInflux(INFLUXDB_TOKEN)
 
 const influxQueryApi = influx.getQueryApi('Filecoin Station')
 
@@ -47,7 +43,14 @@ const loop = async (name, fn, interval) => {
     }
     const dt = Date.now() - start
     console.log(`Loop "${name}" took ${dt}ms`)
-    await timers.setTimeout(interval - dt)
+    recordTelemetry(`loop_${name.replaceAll(' ', '_')}`, point => {
+      point.intField('interval_ms', interval)
+      point.intField('duration_ms', dt)
+      point.intField('delay_ms', interval - dt)
+    })
+    if (dt < interval) {
+      await timers.setTimeout(interval - dt)
+    }
   }
 }
 
