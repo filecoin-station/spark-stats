@@ -20,6 +20,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
 
+- `GET /miner/:id/retrieval-success-rate/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miner/f0814049/retrieval-success-rate/summary
+
 - `GET /miner/:id/deals/eligible/summary`
 
   http://stats.filspark.com/miner/f0814049/deals/eligible/summary

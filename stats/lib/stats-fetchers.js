@@ -201,6 +201,7 @@ export const fetchParticipantRewardTransfers = async (pgPools, { from, to }, add
 }
 
 /**
+ * Fetches the retrieval stats summary for all miners for given date range.
  * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
@@ -216,6 +217,33 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
   ])
   const stats = rows.map(r => ({
     miner_id: r.miner_id,
+    total: r.total,
+    successful: r.successful,
+    success_rate: r.total > 0 ? r.successful / r.total : null
+  }))
+  return stats
+}
+
+/**
+ * Fetches the retrieval stats summary for a single miner for given date range.
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ * @param {string} minerId
+ */
+export const fetchDailyMinerRSRSummary = async (pgPools, { from, to }, minerId) => {
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::TEXT, SUM(total) as total, SUM(successful) as successful
+    FROM retrieval_stats
+    WHERE miner_id = $1 AND day >= $2 AND day <= $3
+    GROUP BY day
+    ORDER BY day
+   `, [
+    minerId,
+    from,
+    to
+  ])
+  const stats = rows.map(r => ({
+    day: r.day,
     total: r.total,
     successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
