@@ -674,6 +674,40 @@ describe('HTTP request handler', () => {
       assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3000')
     })
   })
+
+  describe('GET /miner/{id}/retrieval-success-rate/summary', () => {
+    it('lists daily retrieval stats summary for specified miner in given date range', async () => {
+      // before the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1two', total: 100, successful: 20 })
+      // in the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1two', total: 200, successful: 60 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
+      // after the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', total: 30, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1two', total: 300, successful: 60 })
+
+      const res = await fetch(
+        new URL(
+          '/miner/f1one/retrieval-success-rate/summary?from=2024-01-10&to=2024-01-20',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', success_rate: 1 / 10, total: '10', successful: '1' },
+        { day: '2024-01-20', success_rate: 1 / 20, total: '20', successful: '1' }
+      ])
+    })
+  })
 })
 
 /**
