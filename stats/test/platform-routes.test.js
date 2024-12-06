@@ -362,6 +362,42 @@ describe('Platform Routes HTTP request handler', () => {
       )
     })
   })
+
+  describe('GET /participants/daily', () => {
+    it('counts daily participants', async () => {
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-01',
+        ['0x1', '0x2', '0x3']
+      )
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-03',
+        ['0x1']
+      )
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-04',
+        ['0x1']
+      )
+
+      const res = await fetch(
+        new URL('/participants/daily?from=2000-01-01&to=2000-01-03', baseUrl), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const daily = await res.json()
+      assert.deepStrictEqual(daily, [
+        { day: '2000-01-01', participants: 3 },
+        { day: '2000-01-03', participants: 1 }
+      ])
+      assert.strictEqual(
+        res.headers.get('cache-control'),
+        'public, max-age=86400'
+      )
+    })
+  })
 })
 
 const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData) => {
