@@ -9,12 +9,11 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "standard": "^17.1.0"
+    "standard": "^17.1.2"
   },
   "dependencies": {
-    "pg": "^8.12.0",
-    "postgrator": "^7.2.0",
-    "spark-api": "https://github.com/filecoin-station/spark-api/archive/7075fb55b253d48d5d5eb4846f13a3f688d80437.tar.gz",
+    "pg": "^8.13.1",
+    "postgrator": "^8.0.0",
     "spark-evaluate": "filecoin-station/spark-evaluate#main"
   },
   "standard": {

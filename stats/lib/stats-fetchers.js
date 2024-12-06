@@ -1,5 +1,3 @@
-import { getDailyDistinctCount, getMonthlyDistinctCount } from './request-helpers.js'
-
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
  * @param {PgPools} pgPools
@@ -35,9 +33,17 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
   // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
   // a JavaScript Date with a timezone, as that could change the date one day forward or back.
   const { rows } = await pgPools.evaluate.query(`
-    SELECT day::text, total, indexed, retrievable
+    SELECT
+      day::text,
+      SUM(tested) AS tested,
+      SUM(index_majority_found) AS "indexMajorityFound",
+      SUM(indexed) AS indexed,
+      SUM(indexed_http) AS "indexedHttp",
+      SUM(retrieval_majority_found) AS "retrievalMajorityFound",
+      SUM(retrievable) AS retrievable
     FROM daily_deals
     WHERE day >= $1 AND day <= $2
+    GROUP BY day
     ORDER BY day
     `, [
     filter.from,
@@ -53,9 +59,12 @@ export const fetchDailyDealStats = async (pgPools, filter) => {
 export const fetchDealSummary = async (pgPools, filter) => {
   const { rows: [summary] } = await pgPools.evaluate.query(`
     SELECT
-      SUM(total) as total,
-      SUM(indexed) as indexed,
-      SUM(retrievable) as retrievable
+      SUM(tested) AS tested,
+      SUM(index_majority_found) AS "indexMajorityFound",
+      SUM(indexed) AS indexed,
+      SUM(indexed_http) AS "indexedHttp",
+      SUM(retrieval_majority_found) AS "retrievalMajorityFound",
+      SUM(retrievable) AS retrievable
     FROM daily_deals
     WHERE day >= date_trunc('day', $1::DATE)
       AND day <= date_trunc('day', $2::DATE)
@@ -65,23 +74,34 @@ export const fetchDealSummary = async (pgPools, filter) => {
 }
 
 export const fetchDailyParticipants = async (pgPools, filter) => {
-  return await getDailyDistinctCount({
-    pgPool: pgPools.evaluate,
-    table: 'daily_participants',
-    column: 'participant_id',
-    filter,
-    asColumn: 'participants'
-  })
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::TEXT, COUNT(DISTINCT participant_id)::INT as participants
+    FROM daily_participants
+    WHERE day >= $1 AND day <= $2
+    GROUP BY day
+    ORDER BY day
+  `, [filter.from, filter.to])
+  return rows
 }
 
 export const fetchMonthlyParticipants = async (pgPools, filter) => {
-  return await getMonthlyDistinctCount({
-    pgPool: pgPools.evaluate,
-    table: 'daily_participants',
-    column: 'participant_id',
-    filter,
-    asColumn: 'participants'
-  })
+  // Fetch the "day" (DATE) as a string (TEXT) to prevent node-postgres from converting it into
+  // a JavaScript Date with a timezone, as that could change the date one day forward or back.
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT
+      date_trunc('month', day)::DATE::TEXT as month,
+      COUNT(DISTINCT participant_id)::INT as participants
+    FROM daily_participants
+    WHERE
+      day >= date_trunc('month', $1::DATE)
+      AND day < date_trunc('month', $2::DATE) + INTERVAL '1 month'
+    GROUP BY month
+    ORDER BY month
+  `, [filter.from, filter.to]
+  )
+  return rows
 }
 
 /**
@@ -181,6 +201,7 @@ export const fetchParticipantRewardTransfers = async (pgPools, { from, to }, add
 }
 
 /**
+ * Fetches the retrieval stats summary for all miners for given date range.
  * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
@@ -200,5 +221,52 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
     successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null
   }))
+  return stats
+}
+
+/**
+ * Fetches the retrieval stats summary for a single miner for given date range.
+ * @param {PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ * @param {string} minerId
+ */
+export const fetchDailyMinerRSRSummary = async (pgPools, { from, to }, minerId) => {
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT day::TEXT, SUM(total) as total, SUM(successful) as successful
+    FROM retrieval_stats
+    WHERE miner_id = $1 AND day >= $2 AND day <= $3
+    GROUP BY day
+    ORDER BY day
+   `, [
+    minerId,
+    from,
+    to
+  ])
+  const stats = rows.map(r => ({
+    day: r.day,
+    total: r.total,
+    successful: r.successful,
+    success_rate: r.total > 0 ? r.successful / r.total : null
+  }))
+  return stats
+}
+
+export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
+  const { rows } = await pgPools.stats.query(`
+    SELECT day::TEXT, code, rate
+    FROM daily_retrieval_result_codes
+    WHERE day >= $1 AND day <= $2
+   `, [
+    filter.from,
+    filter.to
+  ])
+  const days = {}
+  for (const row of rows) {
+    if (!days[row.day]) {
+      days[row.day] = {}
+    }
+    days[row.day][row.code] = row.rate
+  }
+  const stats = Object.entries(days).map(([day, rates]) => ({ day, rates }))
   return stats
 }

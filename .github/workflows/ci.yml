@@ -25,11 +25,9 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
-      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: stats
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
-      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -57,11 +55,9 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
-      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
-      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -100,11 +96,9 @@ jobs:
     env:
       DATABASE_URL: postgres://postgres:postgres@localhost:5432/spark_stats
       EVALUATE_DB_URL: postgres://postgres:postgres@localhost:5432/spark_evaluate
-      API_DB_URL: postgres://postgres:postgres@localhost:5432/spark
       NPM_CONFIG_WORKSPACE: observer
     steps:
       - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark_evaluate"
-      - run: psql "${DATABASE_URL}" -c "CREATE DATABASE spark"
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
@@ -149,11 +143,13 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
       - if: failure()
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
-          channel-id: alerts
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             {
+              "channel": "alerts",
               "text": "Deployment of `${{ github.event.repository.name }}` failed",
               "blocks": [
                 {
@@ -165,8 +161,6 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
 
   deploy-observer:
     if: github.ref == 'refs/heads/main'
@@ -179,14 +173,16 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN_OBSERVER }}
       - if: failure()
-        uses: slackapi/slack-github-action@v1.26.0
+        uses: slackapi/slack-github-action@v2.0.0
         with:
-          channel-id: alerts
+          method: chat.postMessage
+          token: ${{ secrets.SLACK_BOT_TOKEN }}
           payload: |
             {
               "text": "Deployment of `${{ github.event.repository.name }}` failed",
               "blocks": [
                 {
+                  "channel": "alerts",
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
@@ -195,5 +191,3 @@ jobs:
                 }
               ]
             }
-        env:
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

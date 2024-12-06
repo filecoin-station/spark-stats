@@ -20,6 +20,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
 
+- `GET /miner/:id/retrieval-success-rate/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miner/f0814049/retrieval-success-rate/summary
+
 - `GET /miner/:id/deals/eligible/summary`
 
   http://stats.filspark.com/miner/f0814049/deals/eligible/summary
@@ -52,6 +56,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/top-measurements?from=yesterday&to=yesterday
 
+- `GET /participants/summary`
+
+  http://stats.filspark.com/participants/summary
+
 - `GET /participant/:address/scheduled-rewards?address=<address>&from=<day>&to=<day>`
 
   http://stats.filspark.com/participant/0x000000000000000000000000000000000000dEaD/scheduled-rewards
@@ -59,7 +67,6 @@ Base URL: http://stats.filspark.com/
 - `GET /participant/:address/reward-transfers?from=<day>&to=<day>`
 
   http://stats.filspark.com/participant//0x000000000000000000000000000000000000dEaD/reward-transfers
-
 
 - `GET /stations/daily?from=<day>&to=<day>`
 
@@ -84,6 +91,10 @@ Base URL: http://stats.filspark.com/
 - `GET /deals/summary?from=2024-01-01&to=2024-01-31`
 
   http://stats.filspark.com/deals/summary
+
+- `GET /retrieval-result-codes/daily?from=2024-01-01&to=2024-01-31`
+  
+  http://stats.filspark.com/retrieval-result-codes/daily
 
 
 ## Development

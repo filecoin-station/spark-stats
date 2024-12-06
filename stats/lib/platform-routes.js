@@ -1,3 +1,4 @@
+import { json } from 'http-responders'
 import { getStatsWithFilterAndCaching } from './request-helpers.js'
 import {
   fetchDailyStationCount,
@@ -5,7 +6,8 @@ import {
   fetchDailyRewardTransfers,
   fetchTopEarningParticipants,
   fetchParticipantsWithTopMeasurements,
-  fetchDailyStationMeasurementCounts
+  fetchDailyStationMeasurementCounts,
+  fetchParticipantsSummary
 } from './platform-stats-fetchers.js'
 
 const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
@@ -36,10 +38,17 @@ export const handlePlatformRoutes = async (req, res, pgPools) => {
     await respond(pgPools.evaluate, fetchParticipantsWithTopMeasurements)
   } else if (req.method === 'GET' && url === '/participants/top-earning') {
     await respond(pgPools.stats, fetchTopEarningParticipants)
+  } else if (req.method === 'GET' && url === '/participants/summary') {
+    await respondWithParticipantsSummary(res, pgPools)
   } else if (req.method === 'GET' && url === '/transfers/daily') {
     await respond(pgPools.stats, fetchDailyRewardTransfers)
   } else {
     return false
   }
   return true
+}
+
+export const respondWithParticipantsSummary = async (res, pgPools) => {
+  res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+  json(res, await fetchParticipantsSummary(pgPools.evaluate))
 }

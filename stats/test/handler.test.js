@@ -2,8 +2,8 @@ import http from 'node:http'
 import { once } from 'node:events'
 import assert from 'node:assert'
 import createDebug from 'debug'
-import { givenDailyParticipants } from 'spark-evaluate/test/helpers/queries.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
+import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
 import { createHandler } from '../lib/handler.js'
@@ -23,6 +23,7 @@ describe('HTTP request handler', () => {
     pgPools = await getPgPools()
 
     const handler = createHandler({
+      SPARK_API_BASE_URL: 'https://api.filspark.com/',
       pgPools,
       logger: {
         info: debug,
@@ -49,6 +50,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM daily_deals')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
+    await pgPools.stats.query('DELETE FROM daily_retrieval_result_codes')
   })
 
   it('returns 200 for GET /', async () => {
@@ -433,128 +435,80 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('summary of eligible deals', () => {
-    before(async () => {
-      await pgPools.api.query(`
-        INSERT INTO retrievable_deals (cid, miner_id, client_id, expires_at)
+  describe('GET /retrieval-result-codes/daily', () => {
+    it('returns daily retrieval result codes for the given date range', async () => {
+      await pgPools.stats.query(`
+        INSERT INTO daily_retrieval_result_codes
+        (day, code, rate)
         VALUES
-        ('bafyone', 'f0210', 'f0800', '2100-01-01'),
-        ('bafyone', 'f0220', 'f0800', '2100-01-01'),
-        ('bafytwo', 'f0220', 'f0810', '2100-01-01'),
-        ('bafyone', 'f0230', 'f0800', '2100-01-01'),
-        ('bafytwo', 'f0230', 'f0800', '2100-01-01'),
-        ('bafythree', 'f0230', 'f0810', '2100-01-01'),
-        ('bafyfour', 'f0230', 'f0820', '2100-01-01'),
-        ('bafyexpired', 'f0230', 'f0800', '2020-01-01')
-        ON CONFLICT DO NOTHING
+        ('2024-01-11', 'OK', 0.1),
+        ('2024-01-11', 'CAR_TOO_LARGE', 0.9),
+        ('2024-01-12', 'OK', 1),
+        ('2024-01-13', 'OK', 0.5),
+        ('2024-01-13', 'IPNI_500', 0.5)
       `)
 
-      await pgPools.api.query(`
-        INSERT INTO allocator_clients (allocator_id, client_id)
-        VALUES
-        ('f0500', 'f0800'),
-        ('f0500', 'f0810'),
-        ('f0520', 'f0820')
-        ON CONFLICT DO NOTHING
-      `)
+      const res = await fetch(
+        new URL(
+          '/retrieval-result-codes/daily?from=2024-01-11&to=2024-01-13',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', rates: { OK: '0.1', CAR_TOO_LARGE: '0.9' } },
+        { day: '2024-01-12', rates: { OK: '1' } },
+        { day: '2024-01-13', rates: { OK: '0.5', IPNI_500: '0.5' } }
+      ])
     })
+  })
 
+  describe('summary of eligible deals', () => {
     describe('GET /miner/{id}/deals/eligible/summary', () => {
-      it('returns deal counts grouped by client id', async () => {
-        const res = await fetch(new URL('/miner/f0230/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
+      it('redirects to spark-api', async () => {
+        const res = await fetch(new URL('/miner/f0230/deals/eligible/summary', baseUrl), { redirect: 'manual' })
+        await assertResponseStatus(res, 302)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          minerId: 'f0230',
-          dealCount: 4,
-          clients: [
-            { clientId: 'f0800', dealCount: 2 },
-            { clientId: 'f0810', dealCount: 1 },
-            { clientId: 'f0820', dealCount: 1 }
-          ]
-        })
-      })
-
-      it('returns an empty array for miners with no deals in our DB', async () => {
-        const res = await fetch(new URL('/miner/f0000/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
-        assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          minerId: 'f0000',
-          dealCount: 0,
-          clients: []
-        })
+        assert.strictEqual(res.headers.get('location'), 'https://api.filspark.com/miner/f0230/deals/eligible/summary')
       })
     })
 
     describe('GET /client/{id}/deals/eligible/summary', () => {
-      it('returns deal counts grouped by miner id', async () => {
-        const res = await fetch(new URL('/client/f0800/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
+      it('redirects to spark-api', async () => {
+        const res = await fetch(new URL('/client/f0800/deals/eligible/summary', baseUrl), { redirect: 'manual' })
+        await assertResponseStatus(res, 302)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          clientId: 'f0800',
-          dealCount: 4,
-          providers: [
-            { minerId: 'f0230', dealCount: 2 },
-            { minerId: 'f0210', dealCount: 1 },
-            { minerId: 'f0220', dealCount: 1 }
-          ]
-        })
-      })
-
-      it('returns an empty array for miners with no deals in our DB', async () => {
-        const res = await fetch(new URL('/client/f0000/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
-        assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          clientId: 'f0000',
-          dealCount: 0,
-          providers: []
-        })
+        assert.strictEqual(res.headers.get('location'), 'https://api.filspark.com/client/f0800/deals/eligible/summary')
       })
     })
 
     describe('GET /allocator/{id}/deals/eligible/summary', () => {
-      it('returns deal counts grouped by client id', async () => {
-        const res = await fetch(new URL('/allocator/f0500/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
+      it('redirects to spark-api', async () => {
+        const res = await fetch(new URL('/allocator/f0500/deals/eligible/summary', baseUrl), { redirect: 'manual' })
+        await assertResponseStatus(res, 302)
         assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          allocatorId: 'f0500',
-          dealCount: 6,
-          clients: [
-            { clientId: 'f0800', dealCount: 4 },
-            { clientId: 'f0810', dealCount: 2 }
-          ]
-        })
-      })
-
-      it('returns an empty array for miners with no deals in our DB', async () => {
-        const res = await fetch(new URL('/allocator/f0000/deals/eligible/summary', baseUrl))
-        await assertResponseStatus(res, 200)
-        assert.strictEqual(res.headers.get('cache-control'), 'max-age=21600')
-        const body = await res.json()
-        assert.deepStrictEqual(body, {
-          allocatorId: 'f0000',
-          dealCount: 0,
-          clients: []
-        })
+        assert.strictEqual(res.headers.get('location'), 'https://api.filspark.com/allocator/f0500/deals/eligible/summary')
       })
     })
   })
 
   describe('GET /deals/daily', () => {
     it('returns daily deal stats for the given date range', async () => {
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-10', total: 10, indexed: 5, retrievable: 1 })
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 })
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 })
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-13', total: 40, indexed: 8, retrievable: 4 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-10', tested: 10, indexed: 5, retrievable: 1 })
+      await givenDailyDealStats(pgPools.evaluate, {
+        day: '2024-01-11',
+        tested: 20,
+        indexMajorityFound: 10,
+        indexed: 6,
+        indexedHttp: 4,
+        retrievalMajorityFound: 5,
+        retrievable: 2
+      })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', tested: 30, indexed: 7, retrievable: 3 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-13', tested: 40, indexed: 8, retrievable: 4 })
 
       const res = await fetch(
         new URL(
@@ -567,24 +521,96 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-11', total: 20, indexed: 6, retrievable: 2 },
-        { day: '2024-01-12', total: 30, indexed: 7, retrievable: 3 }
+        {
+          day: '2024-01-11',
+          tested: '20',
+          indexMajorityFound: '10',
+          indexed: '6',
+          indexedHttp: '4',
+          retrievalMajorityFound: '5',
+          retrievable: '2'
+        },
+        {
+          day: '2024-01-12',
+          tested: '30',
+          indexMajorityFound: '7',
+          indexed: '7',
+          indexedHttp: '7',
+          retrievalMajorityFound: '3',
+          retrievable: '3'
+        }
+      ])
+    })
+
+    it('aggregates stats over miners', async () => {
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1aa', tested: 10 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', minerId: 'f1bb', tested: 20 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1aa', tested: 30 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1bb', tested: 40 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = /** @type {any[]} */(await res.json())
+      assert.deepStrictEqual(stats.map(({ day, tested }) => ({ day, tested })), [
+        {
+          day: '2024-01-11',
+          tested: String(10 + 20)
+        },
+        {
+          day: '2024-01-12',
+          tested: String(30 + 40)
+        }
+      ])
+    })
+
+    it('aggregates stats over clients', async () => {
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', clientId: 'f1aa', tested: 10 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-11', clientId: 'f1bb', tested: 20 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', clientId: 'f1aa', tested: 30 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-01-12', minerId: 'f1bb', tested: 40 })
+
+      const res = await fetch(
+        new URL(
+          '/deals/daily?from=2024-01-11&to=2024-01-12',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = /** @type {any[]} */(await res.json())
+      assert.deepStrictEqual(stats.map(({ day, tested }) => ({ day, tested })), [
+        {
+          day: '2024-01-11',
+          tested: String(10 + 20)
+        },
+        {
+          day: '2024-01-12',
+          tested: String(30 + 40)
+        }
       ])
     })
   })
 
   describe('GET /deals/summary', () => {
     it('returns deal summary for the given date range (including the end day)', async () => {
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-12', total: 200, indexed: 52, retrievable: 2 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-12', tested: 200, indexed: 52, retrievable: 2 })
       // filter.to - 7 days -> should be excluded
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-23', total: 300, indexed: 53, retrievable: 3 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-23', tested: 300, indexed: 53, retrievable: 3 })
       // last 7 days
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-24', total: 400, indexed: 54, retrievable: 4 })
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-29', total: 500, indexed: 55, retrievable: 5 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-24', tested: 400, indexed: 54, retrievable: 4 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-29', tested: 500, indexed: 55, retrievable: 5 })
       // `filter.to` (e.g. today) - should be included
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-30', total: 6000, indexed: 600, retrievable: 60 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-30', tested: 6000, indexed: 600, retrievable: 60 })
       // after the requested range
-      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-31', total: 70000, indexed: 7000, retrievable: 700 })
+      await givenDailyDealStats(pgPools.evaluate, { day: '2024-03-31', tested: 70000, indexed: 7000, retrievable: 700 })
 
       const res = await fetch(
         new URL(
@@ -598,8 +624,11 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
 
       assert.deepStrictEqual(stats, {
-        total: '6900',
+        tested: '6900',
+        indexMajorityFound: '709',
         indexed: '709',
+        indexedHttp: '709',
+        retrievalMajorityFound: '69',
         retrievable: '69'
       })
     })
@@ -617,8 +646,11 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
 
       assert.deepStrictEqual(stats, {
-        total: null,
+        indexMajorityFound: null,
+        tested: null,
         indexed: null,
+        indexedHttp: null,
+        retrievalMajorityFound: null,
         retrievable: null
       })
     })
@@ -642,6 +674,40 @@ describe('HTTP request handler', () => {
       assert.strictEqual(res.headers.get('access-control-allow-origin'), 'http://localhost:3000')
     })
   })
+
+  describe('GET /miner/{id}/retrieval-success-rate/summary', () => {
+    it('lists daily retrieval stats summary for specified miner in given date range', async () => {
+      // before the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1two', total: 100, successful: 20 })
+      // in the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', total: 20, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1two', total: 200, successful: 60 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', total: 10, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', total: 100, successful: 50 })
+      // after the range
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', total: 30, successful: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1two', total: 300, successful: 60 })
+
+      const res = await fetch(
+        new URL(
+          '/miner/f1one/retrieval-success-rate/summary?from=2024-01-10&to=2024-01-20',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', success_rate: 1 / 10, total: '10', successful: '1' },
+        { day: '2024-01-20', success_rate: 1 / 20, total: '20', successful: '1' }
+      ])
+    })
+  })
 })
 
 /**
@@ -660,9 +726,60 @@ const givenRetrievalStats = async (pgPool, { day, minerId, total, successful }) 
   )
 }
 
-const givenDailyDealStats = async (pgPool, { day, total, indexed, retrievable }) => {
+/**
+ *
+ * @param {import('@filecoin-station/spark-stats-db').Queryable} pgPool
+ * @param {{
+ *  day: string;
+ *  minerId?: string;
+ *  clientId?: string;
+ *  tested: number;
+ *  indexMajorityFound?: number;
+ *  indexed?: number;
+ *  indexedHttp?: number;
+ *  retrievalMajorityFound?: number;
+ *  retrievable?: number;
+ * }} stats
+ */
+const givenDailyDealStats = async (pgPool, {
+  day,
+  minerId,
+  clientId,
+  tested,
+  indexMajorityFound,
+  indexed,
+  indexedHttp,
+  retrievalMajorityFound,
+  retrievable
+}) => {
+  indexed ??= tested
+  indexedHttp ??= indexed
+  indexMajorityFound ??= indexed
+
+  retrievable ??= tested
+  retrievalMajorityFound ??= retrievable
+
   await pgPool.query(`
-    INSERT INTO daily_deals (day, total, indexed, retrievable)
-    VALUES ($1, $2, $3, $4)
-  `, [day, total, indexed, retrievable])
+    INSERT INTO daily_deals (
+      day,
+      miner_id,
+      client_id,
+      tested,
+      index_majority_found,
+      indexed,
+      indexed_http,
+      retrieval_majority_found,
+      retrievable
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  `, [
+    day,
+    minerId ?? 'f1miner',
+    clientId ?? 'f1client',
+    tested,
+    indexMajorityFound,
+    indexed,
+    indexedHttp,
+    retrievalMajorityFound,
+    retrievable
+  ])
 }
