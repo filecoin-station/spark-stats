@@ -81,6 +81,40 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
  * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
  */
+export const fetchAccumulativeDailyParticipantCount = async (pgPool, filter) => {
+  const { rows } = await pgPool.query(`
+    WITH daily_participants_count AS (
+      SELECT
+        day,
+        participant_id,
+        ROW_NUMBER() OVER (PARTITION BY participant_id ORDER BY day) AS rn
+      FROM daily_participants
+    ),
+    first_appearance AS (
+      SELECT day, participant_id
+      FROM daily_participants_count
+      WHERE rn = 1
+    ),
+    cumulative_participants AS (
+      SELECT
+        day,
+        COUNT(participant_id) OVER (ORDER BY day) AS cumulative_participants
+      FROM first_appearance
+    )
+    SELECT
+        DISTINCT(day::TEXT),
+        cumulative_participants::INT as participants
+    FROM cumulative_participants
+    WHERE day >= $1 AND day <= $2
+    ORDER BY day
+  `, [filter.from, filter.to])
+  return rows
+}
+
+/**
+ * @param {Queryable} pgPool
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
 export const fetchTopEarningParticipants = async (pgPool, filter) => {
   // The query combines "transfers until filter.to" with "latest scheduled rewards as of today".
   // As a result, it produces incorrect result if `to` is different from `now()`.
