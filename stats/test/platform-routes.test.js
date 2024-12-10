@@ -365,7 +365,13 @@ describe('Platform Routes HTTP request handler', () => {
 
   describe('GET /participants/accumulative/daily', () => {
     it('counts accumulative daily participants', async () => {
-      // 3 new participants
+      // 3 new participants, out of range
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '1999-01-01',
+        ['0x10', '0x20', '0x30']
+      )
+      // 3 new participants -> 6
       await givenDailyParticipants(
         pgPools.evaluate,
         '2000-01-01',
@@ -377,13 +383,13 @@ describe('Platform Routes HTTP request handler', () => {
         '2000-01-02',
         ['0x1', '0x2']
       )
-      // 1 new participant, 1 old participant
+      // 1 new participant, 1 old participant -> 7
       await givenDailyParticipants(
         pgPools.evaluate,
         '2000-01-03',
         ['0x1', '0x4']
       )
-      // out of range
+      // 1 new participant, out of range
       await givenDailyParticipants(
         pgPools.evaluate,
         '2000-01-04',
@@ -398,8 +404,8 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const daily = await res.json()
       assert.deepStrictEqual(daily, [
-        { day: '2000-01-01', participants: 3 },
-        { day: '2000-01-03', participants: 4 }
+        { day: '2000-01-01', participants: 6 },
+        { day: '2000-01-03', participants: 7 }
       ])
       assert.strictEqual(
         res.headers.get('cache-control'),
