@@ -172,6 +172,22 @@ export const fetchParticipantChangeRates = async (pgPools, filter) => {
   return stats
 }
 
+export const fetchParticipantsFirstSeen = async (pgPools, filter) => {
+  const { rows } = await pgPools.evaluate.query(`
+    WITH participant_first_seen AS (
+      SELECT participant_id, MIN(day) as first_seen
+      FROM daily_participants
+      GROUP BY participant_id
+    )
+    SELECT participant_address, first_seen::TEXT
+    FROM participant_first_seen
+    LEFT JOIN participants ON participant_id = id
+    WHERE first_seen >= $1 AND first_seen <= $2
+    ORDER BY first_seen ASC, participant_address ASC
+  `, [filter.from, filter.to])
+  return rows
+}
+
 /**
  * @param {PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
