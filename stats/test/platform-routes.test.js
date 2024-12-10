@@ -371,11 +371,11 @@ describe('Platform Routes HTTP request handler', () => {
         '1999-01-01',
         ['0x10', '0x20', '0x30']
       )
-      // 3 new participants -> 6
+      // 3 new participants, 1 old participant -> 6
       await givenDailyParticipants(
         pgPools.evaluate,
         '2000-01-01',
-        ['0x1', '0x2', '0x3']
+        ['0x1', '0x2', '0x3', '0x10']
       )
       // 0 new participants, 2 old participants
       await givenDailyParticipants(
