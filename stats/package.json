@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@filecoin-station/spark-stats-db": "^1.0.0",
-    "@sentry/node": "^8.40.0",
+    "@sentry/node": "^8.43.0",
     "@sentry/profiling-node": "^8.42.0",
     "debug": "^4.4.0",
     "http-assert": "^1.5.0",
