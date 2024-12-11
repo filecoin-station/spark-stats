@@ -3,6 +3,8 @@ import { today, yesterday } from './request-helpers.js'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
 
+const ONE_DAY = 24 * 60 * 60 * 1000
+
 /**
  * @param {Queryable} pgPool
  * @param {import('./typings.js').DateRangeFilter} filter
@@ -67,14 +69,33 @@ export const fetchParticipantsWithTopMeasurements = async (pgPool, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  */
 export const fetchDailyRewardTransfers = async (pgPool, filter) => {
+  assert(
+    new Date(filter.to).getTime() - new Date(filter.from).getTime() <= 31 * ONE_DAY,
+    400,
+    'Date range must be 31 days max'
+  )
   const { rows } = await pgPool.query(`
-    SELECT day::TEXT, SUM(amount) as amount
+    SELECT day::TEXT, to_address, amount
     FROM daily_reward_transfers
     WHERE day >= $1 AND day <= $2
-    GROUP BY day
-    ORDER BY day
   `, [filter.from, filter.to])
-  return rows
+  const days = {}
+  for (const row of rows) {
+    if (!days[row.day]) {
+      days[row.day] = {
+        day: row.day,
+        amount: '0',
+        transfers: []
+      }
+    }
+    const day = days[row.day]
+    day.amount = String(BigInt(day.amount) + BigInt(row.amount))
+    day.transfers.push({
+      toAddress: row.to_address,
+      amount: row.amount
+    })
+  }
+  return Object.values(days)
 }
 
 /**
