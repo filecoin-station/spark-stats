@@ -269,6 +269,17 @@ describe('Platform Routes HTTP request handler', () => {
         }
       ])
     })
+    it('returns 400 if the date range is more than 31 days', async () => {
+      const res = await fetch(
+        new URL(
+          '/transfers/daily?from=2024-01-01&to=2024-02-02',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 400)
+    })
   })
 
   describe('GET /participants/top-earning', () => {
