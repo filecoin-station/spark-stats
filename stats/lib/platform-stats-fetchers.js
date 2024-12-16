@@ -83,17 +83,10 @@ export const fetchDailyRewardTransfers = async (pgPool, filter) => {
  */
 export const fetchAccumulativeDailyParticipantCount = async (pgPool, filter) => {
   const { rows } = await pgPool.query(`
-    WITH daily_participants_count AS (
-      SELECT
-        day,
-        participant_id,
-        ROW_NUMBER() OVER (PARTITION BY participant_id ORDER BY day) AS rn
+    WITH first_appearance AS (
+      SELECT participant_id, MIN(day) as day
       FROM daily_participants
-    ),
-    first_appearance AS (
-      SELECT day, participant_id
-      FROM daily_participants_count
-      WHERE rn = 1
+      GROUP BY participant_id
     ),
     cumulative_participants AS (
       SELECT
