@@ -243,9 +243,42 @@ describe('Platform Routes HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const metrics = await res.json()
       assert.deepStrictEqual(metrics, [
-        { day: '2024-01-11', amount: '150' },
-        { day: '2024-01-12', amount: '550' }
+        {
+          day: '2024-01-11',
+          amount: '150',
+          transfers: [
+            {
+              toAddress: 'to2',
+              amount: '150'
+            }
+          ]
+        },
+        {
+          day: '2024-01-12',
+          amount: '550',
+          transfers: [
+            {
+              toAddress: 'to2',
+              amount: '300'
+            },
+            {
+              toAddress: 'to3',
+              amount: '250'
+            }
+          ]
+        }
       ])
+    })
+    it('returns 400 if the date range is more than 31 days', async () => {
+      const res = await fetch(
+        new URL(
+          '/transfers/daily?from=2024-01-01&to=2024-02-02',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 400)
     })
   })
 
