@@ -395,6 +395,57 @@ describe('Platform Routes HTTP request handler', () => {
       )
     })
   })
+
+  describe('GET /participants/accumulative/daily', () => {
+    it('counts accumulative daily participants', async () => {
+      // 3 new participants, out of range
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '1999-01-01',
+        ['0x10', '0x20', '0x30']
+      )
+      // 3 new participants, 1 old participant -> 6
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-01',
+        ['0x1', '0x2', '0x3', '0x10']
+      )
+      // 0 new participants, 2 old participants
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-02',
+        ['0x1', '0x2']
+      )
+      // 1 new participant, 1 old participant -> 7
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-03',
+        ['0x1', '0x4']
+      )
+      // 1 new participant, out of range
+      await givenDailyParticipants(
+        pgPools.evaluate,
+        '2000-01-04',
+        ['0x5']
+      )
+
+      const res = await fetch(
+        new URL('/participants/accumulative/daily?from=2000-01-01&to=2000-01-03', baseUrl), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const daily = await res.json()
+      assert.deepStrictEqual(daily, [
+        { day: '2000-01-01', participants: 6 },
+        { day: '2000-01-03', participants: 7 }
+      ])
+      assert.strictEqual(
+        res.headers.get('cache-control'),
+        'public, max-age=31536000, immutable'
+      )
+    })
+  })
 })
 
 const givenDailyMeasurementsSummary = async (pgPoolEvaluate, summaryData) => {

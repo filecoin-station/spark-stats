@@ -44,6 +44,10 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/participants/monthly
 
+- `GET /participants/accumulative/daily?from=<day>&to=<day>`
+
+  http://stats.filspark.com/participants/accumulative/daily
+
 - `GET /participants/change-rates?from=<day>&to=<day>`
 
   http://stats.filspark.com/participants/change-rates
