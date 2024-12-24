@@ -48,6 +48,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM retrieval_stats')
     await pgPools.evaluate.query('DELETE FROM daily_participants')
     await pgPools.evaluate.query('DELETE FROM daily_deals')
+    await pgPools.evaluate.query('DELETE FROM retrieval_times')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
     await pgPools.stats.query('DELETE FROM daily_retrieval_result_codes')

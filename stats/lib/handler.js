@@ -15,9 +15,9 @@ import {
   fetchDealSummary,
   fetchDailyRetrievalResultCodes,
   fetchDailyMinerRSRSummary,
-  fetchDailyTTFBStats,
-  fetchDailyMinerTTFBStats,
-  fetchTTFBSummary
+  fetchDailyRetrievalTimes,
+  fetchDailyMinerRetrievalTimes,
+  fetchRetrievalTimesSummary
 } from './stats-fetchers.js'
 
 import { handlePlatformRoutes } from './platform-routes.js'
@@ -111,12 +111,12 @@ const handler = async (req, res, pgPools, SPARK_API_BASE_URL) => {
     await respond(fetchMinersRSRSummary)
   } else if (req.method === 'GET' && url === '/retrieval-result-codes/daily') {
     await respond(fetchDailyRetrievalResultCodes)
-  } else if (req.method === 'GET' && url === '/ttfb/summary') {
-    await respond(fetchTTFBSummary)
-  } else if (req.method === 'GET' && url === '/ttfb/daily') {
-    await respond(fetchDailyTTFBStats)
-  } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'ttfb' && segs[3] === 'summary') {
-    await respond(fetchDailyMinerTTFBStats, segs[1])
+  } else if (req.method === 'GET' && url === '/retrieval-times/summary') {
+    await respond(fetchRetrievalTimesSummary)
+  } else if (req.method === 'GET' && url === '/retrieval-times/daily') {
+    await respond(fetchDailyRetrievalTimes)
+  } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'retrieval-times' && segs[3] === 'summary') {
+    await respond(fetchDailyMinerRetrievalTimes, segs[1])
   } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'retrieval-success-rate' && segs[3] === 'summary') {
     await respond(fetchDailyMinerRSRSummary, segs[1])
   } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'deals' && segs[3] === 'eligible' && segs[4] === 'summary') {

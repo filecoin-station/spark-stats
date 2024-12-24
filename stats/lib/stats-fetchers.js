@@ -292,29 +292,29 @@ export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
 }
 
 /**
- * Fetches global median time-to-first-byte
+ * Fetches global retrieval time statistics
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchTTFBSummary = async (pgPools, filter) => {
+export const fetchRetrievalTimesSummary = async (pgPools, filter) => {
   const { rows } = await pgPools.evaluate.query(`
-    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_median) AS p50 
-    FROM ttfb_retreival_stats
+    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50 
+    FROM retrieval_times
   `)
   return rows
 }
 
 /**
- * Fetches daily global median time-to-first-byte
+ * Fetches daily global retrieval time statistics
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyTTFBStats = async (pgPools, filter) => {
+export const fetchDailyRetrievalTimes = async (pgPools, filter) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
       day::text,
-      percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_median) AS p50
-    FROM ttfb_retreival_stats
+      percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50
+    FROM retrieval_times
     WHERE day >= $1 AND day <= $2
     GROUP BY day
     ORDER BY day
@@ -326,18 +326,18 @@ export const fetchDailyTTFBStats = async (pgPools, filter) => {
 }
 
 /**
- * Fetches per miner median time-to-first-byte
+ * Fetches per miner daily retrieval time statistics
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  * @param {string} minerId
  */
-export const fetchDailyMinerTTFBStats = async (pgPools, { from, to }, minerId) => {
+export const fetchDailyMinerRetrievalTimes = async (pgPools, { from, to }, minerId) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
       day::text,
       miner_id,
-      percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_median) AS p50
-    FROM ttfb_retreival_stats
+      percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50
+    FROM retrieval_times
     WHERE miner_id = $1 AND day >= $2 AND day <= $3
     GROUP BY day, miner_id
     ORDER BY day
