@@ -292,19 +292,6 @@ export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
 }
 
 /**
- * Fetches global retrieval time statistics
- * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
- * @param {import('./typings.js').DateRangeFilter} filter
- */
-export const fetchRetrievalTimesSummary = async (pgPools, filter) => {
-  const { rows } = await pgPools.evaluate.query(`
-    SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50 
-    FROM retrieval_times
-  `)
-  return rows
-}
-
-/**
  * Fetches daily global retrieval time statistics
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
@@ -339,7 +326,7 @@ export const fetchDailyMinerRetrievalTimes = async (pgPools, { from, to }, miner
       percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50
     FROM retrieval_times
     WHERE miner_id = $1 AND day >= $2 AND day <= $3
-    GROUP BY day, miner_id
+    GROUP BY day, miner_id 
     ORDER BY day
     `, [
     minerId,

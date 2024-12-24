@@ -16,8 +16,7 @@ import {
   fetchDailyRetrievalResultCodes,
   fetchDailyMinerRSRSummary,
   fetchDailyRetrievalTimes,
-  fetchDailyMinerRetrievalTimes,
-  fetchRetrievalTimesSummary
+  fetchDailyMinerRetrievalTimes
 } from './stats-fetchers.js'
 
 import { handlePlatformRoutes } from './platform-routes.js'
@@ -111,8 +110,6 @@ const handler = async (req, res, pgPools, SPARK_API_BASE_URL) => {
     await respond(fetchMinersRSRSummary)
   } else if (req.method === 'GET' && url === '/retrieval-result-codes/daily') {
     await respond(fetchDailyRetrievalResultCodes)
-  } else if (req.method === 'GET' && url === '/retrieval-times/summary') {
-    await respond(fetchRetrievalTimesSummary)
   } else if (req.method === 'GET' && url === '/retrieval-times/daily') {
     await respond(fetchDailyRetrievalTimes)
   } else if (req.method === 'GET' && segs[0] === 'miner' && segs[1] && segs[2] === 'retrieval-times' && segs[3] === 'summary') {
