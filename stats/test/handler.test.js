@@ -75,12 +75,12 @@ describe('HTTP request handler', () => {
 
     it('returns today stats for no query string', async () => {
       const day = today()
-      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1, successfulHttp: 1 })
+      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1, successfulHttp: null })
       const res = await fetch(new URL('/retrieval-success-rate', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '1' }
+        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: null, success_rate_http: null }
       ])
     })
 
@@ -101,8 +101,8 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-11', success_rate: 0.05, successful: '1', total: '20', successful_http: '0' },
-        { day: '2024-01-12', success_rate: 0.1, successful: '3', total: '30', successful_http: '3' }
+        { day: '2024-01-11', success_rate: 0.05, successful: '1', total: '20', successful_http: '0', success_rate_http: 0 },
+        { day: '2024-01-12', success_rate: 0.1, successful: '3', total: '30', successful_http: '3', success_rate_http: 0.1 }
       ])
     })
 
@@ -164,8 +164,8 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', success_rate: 51 / 110, total: '110', successful: '51', successful_http: '36' },
-        { day: '2024-01-11', success_rate: 61 / 220, total: '220', successful: '61', successful_http: '50' }
+        { day: '2024-01-10', success_rate: 51 / 110, total: '110', successful: '51', successful_http: '36', success_rate_http: 36 / 110 },
+        { day: '2024-01-11', success_rate: 61 / 220, total: '220', successful: '61', successful_http: '50', success_rate_http: 50 / 220 }
       ])
     })
 
@@ -186,8 +186,8 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', success_rate: 5 / 10, total: '10', successful: '5', successful_http: '3' },
-        { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1', successful_http: '1' }
+        { day: '2024-01-10', success_rate: 5 / 10, total: '10', successful: '5', successful_http: '3', success_rate_http: 3 / 10 },
+        { day: '2024-01-20', success_rate: 1 / 10, total: '10', successful: '1', successful_http: '1', success_rate_http: 1 / 10 }
       ])
     })
 
@@ -208,7 +208,7 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10', successful_http: '1' }
+        { day: '2024-01-20', success_rate: 1 / 10, successful: '1', total: '10', successful_http: '1', success_rate_http: 1 / 10 }
       ])
     })
 
@@ -220,7 +220,7 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '1' }
+        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '1', success_rate_http: 0.1 }
       ])
     })
   })
@@ -429,8 +429,8 @@ describe('HTTP request handler', () => {
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { miner_id: 'f1one', success_rate: 0.05, total: '20', successful: '1', successful_http: '0' },
-        { miner_id: 'f1two', success_rate: 0.75, total: '200', successful: '150', successful_http: '100' }
+        { miner_id: 'f1one', success_rate: 0.05, total: '20', successful: '1', successful_http: '0', success_rate_http: 0 },
+        { miner_id: 'f1two', success_rate: 0.75, total: '200', successful: '150', successful_http: '100', success_rate_http: 100 / 200 }
       ])
     })
   })
@@ -703,8 +703,8 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', success_rate: 1 / 10, total: '10', successful: '1', successful_http: '1' },
-        { day: '2024-01-20', success_rate: 1 / 20, total: '20', successful: '1', successful_http: '0' }
+        { day: '2024-01-10', success_rate: 1 / 10, total: '10', successful: '1', successful_http: '1', success_rate_http: 1 / 10 },
+        { day: '2024-01-20', success_rate: 1 / 20, total: '20', successful: '1', successful_http: '0', success_rate_http: 0 }
       ])
     })
   })
