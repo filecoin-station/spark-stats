@@ -75,12 +75,12 @@ describe('HTTP request handler', () => {
 
     it('returns today stats for no query string', async () => {
       const day = today()
-      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1, successfulHttp: null })
+      await givenRetrievalStats(pgPools.evaluate, { day, total: 10, successful: 1, successfulHttp: 0 })
       const res = await fetch(new URL('/retrieval-success-rate', baseUrl), { redirect: 'follow' })
       await assertResponseStatus(res, 200)
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
-        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: null, success_rate_http: null }
+        { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '0', success_rate_http: 0 }
       ])
     })
 
@@ -221,6 +221,27 @@ describe('HTTP request handler', () => {
       const stats = await res.json()
       assert.deepStrictEqual(stats, [
         { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '1', success_rate_http: 0.1 }
+      ])
+    })
+    it('handles successfulhttp edge cases', async () => {
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', total: 10, successful: 1, successfulHttp: 0 })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', total: 10, successful: 1, successfulHttp: undefined })
+      await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-22', total: 10, successful: 1, successfulHttp: null })
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-success-rate?from=2024-01-20&to=2024-01-22',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-20', success_rate: 0.1, successful: '1', total: '10', successful_http: '0', success_rate_http: 0 },
+        { day: '2024-01-21', success_rate: 0.1, successful: '1', total: '10', successful_http: null, success_rate_http: null },
+        { day: '2024-01-22', success_rate: 0.1, successful: '1', total: '10', successful_http: null, success_rate_http: null }
       ])
     })
   })
