@@ -1,3 +1,8 @@
+/**
+ *
+ * @param { string } value
+ */
+const isValidNumber = value => value != null && !isNaN(+value)
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
  * @param {PgPools} pgPools
@@ -23,7 +28,7 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && !(r.successful_http === undefined || r.successful_http === null) ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && isValidNumber(r.successful_http) ? r.successful_http / r.total : null
   }))
   return stats
 }
@@ -225,7 +230,7 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && !(r.successful_http === undefined || r.successful_http === null) ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && isValidNumber(r.successful_http) ? r.successful_http / r.total : null
   }))
   return stats
 }
@@ -255,7 +260,7 @@ export const fetchDailyMinerRSRSummary = async (pgPools, { from, to }, minerId) 
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && !(r.successful_http === undefined || r.successful_http === null) ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && isValidNumber(r.successful_http) ? r.successful_http / r.total : null
   }))
   return stats
 }
