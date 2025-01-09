@@ -22,7 +22,7 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
     successful: r.successful,
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
-    // Successful http might be null because the column was added later
+    // `successful_http` might be null because the column was added later
     success_rate_http: r.total > 0 && r.successful_http ? r.successful_http / r.total : null
   }))
   return stats
