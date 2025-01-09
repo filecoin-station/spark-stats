@@ -123,7 +123,7 @@ needs full management permissions for the database.
 Next, you need to create `spark_evaluate` database.
 
 ```bash
-psql postgres://localhost:5432/ -c "  DATABASE spark_evaluate"
+psql postgres://localhost:5432/ -c "CREATE DATABASE spark_evaluate"
 ```
 
 ### Dockerized instance
