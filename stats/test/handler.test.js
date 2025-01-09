@@ -223,7 +223,7 @@ describe('HTTP request handler', () => {
         { day, success_rate: 0.1, successful: '1', total: '10', successful_http: '1', success_rate_http: 0.1 }
       ])
     })
-    it('handles successfulhttp edge cases', async () => {
+    it('handles successful_http values 0, null, undefined', async () => {
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', total: 10, successful: 1, successfulHttp: 0 })
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', total: 10, successful: 1, successfulHttp: undefined })
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-22', total: 10, successful: 1, successfulHttp: null })
