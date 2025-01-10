@@ -454,37 +454,6 @@ describe('HTTP request handler', () => {
         { miner_id: 'f1two', success_rate: 0.75, total: '200', successful: '150', successful_http: '100', success_rate_http: 100 / 200 }
       ])
     })
-  })
-
-  describe('GET /retrieval-result-codes/daily', () => {
-    it('returns daily retrieval result codes for the given date range', async () => {
-      await pgPools.stats.query(`
-        INSERT INTO daily_retrieval_result_codes
-        (day, code, rate)
-        VALUES
-        ('2024-01-11', 'OK', 0.1),
-        ('2024-01-11', 'CAR_TOO_LARGE', 0.9),
-        ('2024-01-12', 'OK', 1),
-        ('2024-01-13', 'OK', 0.5),
-        ('2024-01-13', 'IPNI_500', 0.5)
-      `)
-
-      const res = await fetch(
-        new URL(
-          '/retrieval-result-codes/daily?from=2024-01-11&to=2024-01-13',
-          baseUrl
-        ), {
-          redirect: 'manual'
-        }
-      )
-      await assertResponseStatus(res, 200)
-      const stats = await res.json()
-      assert.deepStrictEqual(stats, [
-        { day: '2024-01-11', rates: { OK: '0.1', CAR_TOO_LARGE: '0.9' } },
-        { day: '2024-01-12', rates: { OK: '1' } },
-        { day: '2024-01-13', rates: { OK: '0.5', IPNI_500: '0.5' } }
-      ])
-    })
     it('handles successful_http values 0, null, undefined', async () => {
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', total: 10, successful: 1, successfulHttp: 0 })
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', total: 10, successful: 1, successfulHttp: undefined })
@@ -522,6 +491,37 @@ describe('HTTP request handler', () => {
         { miner_id: 'f3three', total: '20', successful: '2', success_rate: 0.1, successful_http: null, success_rate_http: null }
       ]
       )
+    })
+  })
+
+  describe('GET /retrieval-result-codes/daily', () => {
+    it('returns daily retrieval result codes for the given date range', async () => {
+      await pgPools.stats.query(`
+        INSERT INTO daily_retrieval_result_codes
+        (day, code, rate)
+        VALUES
+        ('2024-01-11', 'OK', 0.1),
+        ('2024-01-11', 'CAR_TOO_LARGE', 0.9),
+        ('2024-01-12', 'OK', 1),
+        ('2024-01-13', 'OK', 0.5),
+        ('2024-01-13', 'IPNI_500', 0.5)
+      `)
+
+      const res = await fetch(
+        new URL(
+          '/retrieval-result-codes/daily?from=2024-01-11&to=2024-01-13',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+      const stats = await res.json()
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-11', rates: { OK: '0.1', CAR_TOO_LARGE: '0.9' } },
+        { day: '2024-01-12', rates: { OK: '1' } },
+        { day: '2024-01-13', rates: { OK: '0.5', IPNI_500: '0.5' } }
+      ])
     })
   })
 
