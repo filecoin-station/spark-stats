@@ -230,7 +230,6 @@ describe('HTTP request handler', () => {
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-23', minerId: 'f2two', total: 10, successful: 1, successfulHttp: undefined })
       await givenRetrievalStats(pgPools.evaluate, { day: '2024-01-24', minerId: 'f3three', total: 20, successful: 2, successfulHttp: null })
 
-      // First we test each case separately 0, undefined and null
       let res = await fetch(
         new URL(
           '/retrieval-success-rate?from=2024-01-20&to=2024-01-22',
