@@ -104,7 +104,10 @@ Base URL: http://stats.filspark.com/
 ## Development
 
 ### Database
+For running the tests you will need a postgresql database running on your machine. 
+You can either spin up your own postgres instance or use a prebuilt docker image. 
 
+### Custom instance
 Set up [PostgreSQL](https://www.postgresql.org/) with default settings:
  - Port: 5432
  - User: _your system user name_
@@ -117,22 +120,32 @@ Alternatively, set the environment variable `$DATABASE_URL` with
 The Postgres user and database need to exist already, and the user
 needs full management permissions for the database.
 
+Next, you need to create `spark_evaluate` database.
+
+```bash
+psql postgres://localhost:5432/ -c "CREATE DATABASE spark_evaluate"
+```
+
+### Dockerized instance
 You can also run the following command to set up the PostgreSQL server via Docker:
 
 ```bash
 docker run -d --name spark-db \
   -e POSTGRES_HOST_AUTH_METHOD=trust \
   -e POSTGRES_USER=$USER \
-  -e POSTGRES_DB=spark_stats \
+  -e POSTGRES_DB=$USER \
   -p 5432:5432 \
   postgres
 ```
 
-Next, you need to create `spark_evaluate` database.
-
+Afterwards, you need to create the databases `spark_evaluate`and `spark_stats`
 ```bash
-psql postgres://localhost:5432/ -c "CREATE DATABASE spark_evaluate"
+psql postgres://$USER@localhost/$USER -c 'CREATE DATABASE spark_stats'
 ```
+```bash
+psql postgres://$USER@localhost/$USER -c 'CREATE DATABASE spark_evaluate'
+```
+### Run migration
 
 Finally, run database schema migration scripts.
 
