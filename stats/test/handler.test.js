@@ -48,7 +48,7 @@ describe('HTTP request handler', () => {
     await pgPools.evaluate.query('DELETE FROM retrieval_stats')
     await pgPools.evaluate.query('DELETE FROM daily_participants')
     await pgPools.evaluate.query('DELETE FROM daily_deals')
-    await pgPools.evaluate.query('DELETE FROM retrieval_times')
+    await pgPools.evaluate.query('DELETE FROM retrieval_timings')
     await pgPools.stats.query('DELETE FROM daily_scheduled_rewards')
     await pgPools.stats.query('DELETE FROM daily_reward_transfers')
     await pgPools.stats.query('DELETE FROM daily_retrieval_result_codes')
@@ -769,28 +769,26 @@ describe('HTTP request handler', () => {
     })
   })
 
-  describe('miner retrieval time stats', () => {
+  describe('miner retrieval timing stats', () => {
     beforeEach(async () => {
       // before the range
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1one', taskId: 'cidone::f1one::0', timeToFirstByteP50: 1000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1two', taskId: 'cidone::f1two::0', timeToFirstByteP50: 1000 })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1one', timeToFirstByteP50: [1000] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-09', minerId: 'f1two', timeToFirstByteP50: [1000] })
       // in the range
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', taskId: 'cidone::f1one::1', timeToFirstByteP50: 1000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1two', taskId: 'cidone::f1two::1', timeToFirstByteP50: 1000 })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', timeToFirstByteP50: [1000] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1two', timeToFirstByteP50: [1000] })
 
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', taskId: 'cidone::f1one::2', timeToFirstByteP50: 3000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', taskId: 'cidone::f1two::2', timeToFirstByteP50: 3000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', taskId: 'cidone::f1one::3', timeToFirstByteP50: 1000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', taskId: 'cidone::f1two::3', timeToFirstByteP50: 1000 })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', timeToFirstByteP50: [3000, 1000] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', timeToFirstByteP50: [3000, 1000] })
       // after the range
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', taskId: 'cidone::f1one::4', timeToFirstByteP50: 1000 })
-      await givenRetrievalTimes(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1two', taskId: 'cidone::f1two::4', timeToFirstByteP50: 1000 })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', timeToFirstByteP50: [1000] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1two', timeToFirstByteP50: [1000] })
     })
 
-    it('lists daily retrieval times in given date range', async () => {
+    it('lists daily retrieval timings in given date range', async () => {
       const res = await fetch(
         new URL(
-          '/retrieval-times/daily?from=2024-01-10&to=2024-01-20',
+          '/retrieval-timings/daily?from=2024-01-10&to=2024-01-20',
           baseUrl
         ), {
           redirect: 'manual'
@@ -802,15 +800,15 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', ttfb_p50: 2000 },
-        { day: '2024-01-20', ttfb_p50: 1000 }
+        { day: '2024-01-10', ttfb_ms: 2000 },
+        { day: '2024-01-20', ttfb_ms: 1000 }
       ])
     })
 
-    it('lists daily retrieval times summary for specified miner in given date range', async () => {
+    it('lists daily retrieval timings summary for specified miner in given date range', async () => {
       const res = await fetch(
         new URL(
-          '/miner/f1one/retrieval-times/summary?from=2024-01-10&to=2024-01-20',
+          '/miner/f1one/retrieval-timings/summary?from=2024-01-10&to=2024-01-20',
           baseUrl
         ), {
           redirect: 'manual'
@@ -822,8 +820,8 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', miner_id: 'f1one', ttfb_p50: 2000 },
-        { day: '2024-01-20', miner_id: 'f1one', ttfb_p50: 1000 }
+        { day: '2024-01-10', miner_id: 'f1one', ttfb_ms: 2000 },
+        { day: '2024-01-20', miner_id: 'f1one', ttfb_ms: 1000 }
       ])
     })
   })
@@ -910,12 +908,11 @@ const givenDailyDealStats = async (pgPool, {
  * @param {object} data
  * @param {string} data.day
  * @param {string} data.minerId
- * @param {string} data.taskId
- * @param {number} data.timeToFirstByteP50
+ * @param {number[]} data.timeToFirstByteP50
  */
-const givenRetrievalTimes = async (pgPool, { day, minerId, taskId, timeToFirstByteP50 }) => {
+const givenRetrievalTimings = async (pgPool, { day, minerId, timeToFirstByteP50 }) => {
   await pgPool.query(
-    'INSERT INTO retrieval_times (day, miner_id, task_id, time_to_first_byte_p50) VALUES ($1, $2, $3, $4)',
-    [day, minerId ?? 'f1test', taskId ?? 'cidone::f1test::0', timeToFirstByteP50]
+    'INSERT INTO retrieval_timings (day, miner_id, ttfb_p50) VALUES ($1, $2, $3)',
+    [day, minerId ?? 'f1test', timeToFirstByteP50]
   )
 }

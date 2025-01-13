@@ -296,12 +296,12 @@ export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
  * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-export const fetchDailyRetrievalTimes = async (pgPools, filter) => {
+export const fetchDailyRetrievalTimings = async (pgPools, filter) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
       day::text,
-      percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50
-    FROM retrieval_times
+      CEIL(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_p50_values)) AS ttfb_ms
+    FROM retrieval_timings, UNNEST(ttfb_p50) AS ttfb_p50_values
     WHERE day >= $1 AND day <= $2
     GROUP BY day
     ORDER BY day
@@ -318,13 +318,13 @@ export const fetchDailyRetrievalTimes = async (pgPools, filter) => {
  * @param {import('./typings.js').DateRangeFilter} filter
  * @param {string} minerId
  */
-export const fetchDailyMinerRetrievalTimes = async (pgPools, { from, to }, minerId) => {
+export const fetchDailyMinerRetrievalTimings = async (pgPools, { from, to }, minerId) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
       day::text,
       miner_id,
-      percentile_cont(0.5) WITHIN GROUP (ORDER BY time_to_first_byte_p50) AS ttfb_p50
-    FROM retrieval_times
+      CEIL(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_p50_values)) AS ttfb_ms
+    FROM retrieval_timings, UNNEST(ttfb_p50) AS ttfb_p50_values
     WHERE miner_id = $1 AND day >= $2 AND day <= $3
     GROUP BY day, miner_id 
     ORDER BY day
