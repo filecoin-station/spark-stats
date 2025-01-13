@@ -778,8 +778,8 @@ describe('HTTP request handler', () => {
       await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1one', timeToFirstByteP50: [1000] })
       await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-20', minerId: 'f1two', timeToFirstByteP50: [1000] })
 
-      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', timeToFirstByteP50: [3000, 1000] })
-      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', timeToFirstByteP50: [3000, 1000] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1one', timeToFirstByteP50: [123, 345] })
+      await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-10', minerId: 'f1two', timeToFirstByteP50: [654, 789] })
       // after the range
       await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1one', timeToFirstByteP50: [1000] })
       await givenRetrievalTimings(pgPools.evaluate, { day: '2024-01-21', minerId: 'f1two', timeToFirstByteP50: [1000] })
@@ -800,7 +800,7 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', ttfb_ms: 2000 },
+        { day: '2024-01-10', ttfb_ms: 500 },
         { day: '2024-01-20', ttfb_ms: 1000 }
       ])
     })
@@ -820,7 +820,7 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', miner_id: 'f1one', ttfb_ms: 2000 },
+        { day: '2024-01-10', miner_id: 'f1one', ttfb_ms: 234 },
         { day: '2024-01-20', miner_id: 'f1one', ttfb_ms: 1000 }
       ])
     })
