@@ -290,3 +290,48 @@ export const fetchDailyRetrievalResultCodes = async (pgPools, filter) => {
   const stats = Object.entries(days).map(([day, rates]) => ({ day, rates }))
   return stats
 }
+
+/**
+ * Fetches daily global retrieval time statistics
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ */
+export const fetchDailyRetrievalTimings = async (pgPools, filter) => {
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT
+      day::text,
+      CEIL(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_p50_values)) AS ttfb_ms
+    FROM retrieval_timings, UNNEST(ttfb_p50) AS ttfb_p50_values
+    WHERE day >= $1 AND day <= $2
+    GROUP BY day
+    ORDER BY day
+    `, [
+    filter.from,
+    filter.to
+  ])
+  return rows
+}
+
+/**
+ * Fetches per miner daily retrieval time statistics
+ * @param {import('@filecoin-station/spark-stats-db').PgPools} pgPools
+ * @param {import('./typings.js').DateRangeFilter} filter
+ * @param {string} minerId
+ */
+export const fetchDailyMinerRetrievalTimings = async (pgPools, { from, to }, minerId) => {
+  const { rows } = await pgPools.evaluate.query(`
+    SELECT
+      day::text,
+      miner_id,
+      CEIL(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_p50_values)) AS ttfb_ms
+    FROM retrieval_timings, UNNEST(ttfb_p50) AS ttfb_p50_values
+    WHERE miner_id = $1 AND day >= $2 AND day <= $3
+    GROUP BY day, miner_id 
+    ORDER BY day
+    `, [
+    minerId,
+    from,
+    to
+  ])
+  return rows
+}
