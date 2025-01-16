@@ -344,13 +344,12 @@ export const fetchDailyMinerRetrievalTimings = async (pgPools, { from, to }, min
 export const fetchMinersTimingsSummary = async (pgPools, { from, to }) => {
   const { rows } = await pgPools.evaluate.query(`
     SELECT
-      day::text,
       miner_id,
       CEIL(percentile_cont(0.5) WITHIN GROUP (ORDER BY ttfb_p50_values)) AS ttfb_ms
     FROM retrieval_timings, UNNEST(ttfb_p50) AS ttfb_p50_values
     WHERE day >= $1 AND day <= $2
-    GROUP BY day, miner_id 
-    ORDER BY day
+    GROUP BY miner_id 
+    ORDER BY miner_id
     `, [
     from,
     to

@@ -840,10 +840,8 @@ describe('HTTP request handler', () => {
         await res.json()
       )
       assert.deepStrictEqual(stats, [
-        { day: '2024-01-10', miner_id: 'f1one', ttfb_ms: 234 },
-        { day: '2024-01-10', miner_id: 'f1two', ttfb_ms: 722 },
-        { day: '2024-01-20', miner_id: 'f1one', ttfb_ms: 1000 },
-        { day: '2024-01-20', miner_id: 'f1two', ttfb_ms: 1000 }
+        { miner_id: 'f1one', ttfb_ms: 345 },
+        { miner_id: 'f1two', ttfb_ms: 789 }
       ])
     })
   })
