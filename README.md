@@ -20,9 +20,17 @@ Base URL: http://stats.filspark.com/
 
   http://stats.filspark.com/miners/retrieval-success-rate/summary
 
+- `GET /miners/retrieval-timings/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miners/retrieval-timings/summary
+
 - `GET /miner/:id/retrieval-success-rate/summary?from=<day>&to=<day>`
 
   http://stats.filspark.com/miner/f0814049/retrieval-success-rate/summary
+
+- `GET /miner/:id/retrieval-timings/summary?from=<day>&to=<day>`
+
+  http://stats.filspark.com/miner/f0814049/retrieval-timings/summary
 
 - `GET /miner/:id/deals/eligible/summary`
 
@@ -100,6 +108,9 @@ Base URL: http://stats.filspark.com/
   
   http://stats.filspark.com/retrieval-result-codes/daily
 
+- `GET /retrieval-timings/daily?from=2024-01-01&to=2024-01-31`
+  
+  http://stats.filspark.com/retrieval-result-codes/daily
 
 ## Development
 
