@@ -824,6 +824,28 @@ describe('HTTP request handler', () => {
         { day: '2024-01-20', miner_id: 'f1one', ttfb_ms: 1000 }
       ])
     })
+
+    it('lists daily retrieval timings summary for all miners in given date range', async () => {
+      const res = await fetch(
+        new URL(
+          '/miners/retrieval-timings/summary?from=2024-01-10&to=2024-01-20',
+          baseUrl
+        ), {
+          redirect: 'manual'
+        }
+      )
+      await assertResponseStatus(res, 200)
+
+      const stats = /** @type {{ day: string, success_rate: number }[]} */(
+        await res.json()
+      )
+      assert.deepStrictEqual(stats, [
+        { day: '2024-01-10', miner_id: 'f1one', ttfb_ms: 234 },
+        { day: '2024-01-10', miner_id: 'f1two', ttfb_ms: 722 },
+        { day: '2024-01-20', miner_id: 'f1one', ttfb_ms: 1000 },
+        { day: '2024-01-20', miner_id: 'f1two', ttfb_ms: 1000 }
+      ])
+    })
   })
 })
 
