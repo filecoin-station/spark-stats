@@ -1,10 +1,16 @@
-export interface Logger {
-  info: typeof console.info;
-  error: typeof console.error;
-  request: typeof console.info;
-}
+import { FastifyRequest } from 'fastify'
 
 export interface DateRangeFilter {
   from: string;
   to: string;
 }
+
+export type RequestWithFilter = FastifyRequest<{
+  Querystring: { from: string?, to: string? }
+}>
+export type RequestWithFilterAndAddress = RequestWithFilter<{
+  Parameters: { address: string }
+}>
+export type RequestWithFilterAndMinerId = RequestWithFilter<{
+  Parameters: { minerId: string }
+}>

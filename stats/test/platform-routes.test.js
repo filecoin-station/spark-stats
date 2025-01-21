@@ -5,7 +5,7 @@ import createDebug from 'debug'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 import { assertResponseStatus, getPort } from './test-helpers.js'
-import { createHandler } from '../lib/handler.js'
+import { createApp } from '../lib/app.js'
 import { getLocalDayAsISOString, today, yesterday } from '../lib/request-helpers.js'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
@@ -14,32 +14,24 @@ const debug = createDebug('test')
 describe('Platform Routes HTTP request handler', () => {
   /** @type {import('@filecoin-station/spark-stats-db').PgPools} */
   let pgPools
-  let server
+  let app
   /** @type {string} */
   let baseUrl
 
   before(async () => {
     pgPools = await getPgPools()
 
-    const handler = createHandler({
+    app = createApp({
       SPARK_API_BASE_URL: 'https://api.filspark.com/',
       pgPools,
-      logger: {
-        info: debug,
-        error: console.error,
-        request: debug
-      }
+      logger: false
     })
 
-    server = http.createServer(handler)
-    server.listen()
-    await once(server, 'listening')
-    baseUrl = `http://127.0.0.1:${getPort(server)}`
+    baseUrl = await app.listen()
   })
 
   after(async () => {
-    server.closeAllConnections()
-    server.close()
+    await app.close()
     await pgPools.end()
   })
 
