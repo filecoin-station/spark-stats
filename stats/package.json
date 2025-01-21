@@ -11,10 +11,10 @@
   "devDependencies": {
     "@filecoin-station/spark-stats-db": "^1.0.0",
     "mocha": "^11.0.1",
-    "spark-evaluate": "filecoin-station/spark-evaluate#main",
     "standard": "^17.1.2"
   },
   "dependencies": {
+    "@filecoin-station/spark-evaluate": "^1.0.0",
     "@filecoin-station/spark-stats-db": "^1.0.0",
     "@sentry/node": "^8.48.0",
     "@sentry/profiling-node": "^8.50.0",

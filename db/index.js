@@ -1,4 +1,4 @@
-import { migrateWithPgClient as migrateEvaluateDB } from 'spark-evaluate/lib/migrate.js'
+import { migrateWithPgClient as migrateEvaluateDB } from '@filecoin-station/spark-evaluate/lib/migrate.js'
 import pg from 'pg'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
