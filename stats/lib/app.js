@@ -3,7 +3,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import urlData from '@fastify/url-data'
 
-import { withFilter } from './request-helpers.js'
+import { preHandlerHook, onSendHook } from './request-helpers.js'
 
 import {
   fetchDailyDealStats,
@@ -28,7 +28,7 @@ import { addPlatformRoutes } from './platform-routes.js'
 /** @typedef {import('./typings.js').DateRangeFilter} DateRangeFilter */
 /** @typedef {import('./typings.js').RequestWithFilter} RequestWithFilter */
 /** @typedef {import('./typings.js').RequestWithFilterAndAddress} RequestWithFilterAndAddress */
-/** @typedef {import('./typings.js').RequestWithFilterAndAddress} RequestWithFilterAndMinerId */
+/** @typedef {import('./typings.js').RequestWithFilterAndMinerId} RequestWithFilterAndMinerId */
 
 /**
  * @param {object} args
@@ -50,76 +50,54 @@ export const createApp = ({
   })
   app.register(urlData)
 
-  app.get('/deals/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyDealStats(pgPools, filter)
+  app.register(async app => {
+    app.addHook('preHandler', preHandlerHook)
+    app.addHook('onSend', onSendHook)
+
+    app.get('/deals/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyDealStats(pgPools, request.filter))
+    })
+    app.get('/deals/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDealSummary(pgPools, request.filter))
+    })
+    app.get('/retrieval-success-rate', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchRetrievalSuccessRate(pgPools, request.filter))
+    })
+    app.get('/participants/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyParticipants(pgPools, request.filter))
+    })
+    app.get('/participants/monthly', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchMonthlyParticipants(pgPools, request.filter))
+    })
+    app.get('/participants/change-rates', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchParticipantChangeRates(pgPools, request.filter))
+    })
+    app.get('/participant/:address/scheduled-rewards', async (/** @type {RequestWithFilterAndAddress} */ request, reply) => {
+      reply.send(await fetchParticipantScheduledRewards(pgPools, request.filter, request.params.address))
+    })
+    app.get('/participant/:address/reward-transfers', async (/** @type {RequestWithFilterAndAddress} */ request, reply) => {
+      reply.send(await fetchParticipantRewardTransfers(pgPools, request.filter, request.params.address))
+    })
+    app.get('/miners/retrieval-success-rate/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchMinersRSRSummary(pgPools, request.filter))
+    })
+    app.get('/miners/retrieval-timings/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchMinersTimingsSummary(pgPools, request.filter))
+    })
+    app.get('/retrieval-result-codes/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyRetrievalResultCodes(pgPools, request.filter))
+    })
+    app.get('/retrieval-timings/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyRetrievalTimings(pgPools, request.filter))
+    })
+    app.get('/miner/:minerId/retrieval-timings/summary', async (/** @type {RequestWithFilterAndMinerId} */ request, reply) => {
+      reply.send(await fetchDailyMinerRetrievalTimings(pgPools, request.filter, request.params.minerId))
+    })
+    app.get('/miner/:minerId/retrieval-success-rate/summary', async (/** @type {RequestWithFilterAndMinerId} */ request, reply) => {
+      reply.send(await fetchDailyMinerRSRSummary(pgPools, request.filter, request.params.minerId))
     })
   })
-  app.get('/deals/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDealSummary(pgPools, filter)
-    })
-  })
-  app.get('/retrieval-success-rate', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchRetrievalSuccessRate(pgPools, filter)
-    })
-  })
-  app.get('/participants/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyParticipants(pgPools, filter)
-    })
-  })
-  app.get('/participants/monthly', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchMonthlyParticipants(pgPools, filter)
-    })
-  })
-  app.get('/participants/change-rates', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchParticipantChangeRates(pgPools, filter)
-    })
-  })
-  app.get('/participant/:address/scheduled-rewards', async (/** @type {RequestWithFilterAndAddress} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchParticipantScheduledRewards(pgPools, filter, request.params.address)
-    })
-  })
-  app.get('/participant/:address/reward-transfers', async (/** @type {RequestWithFilterAndAddress} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchParticipantRewardTransfers(pgPools, filter, request.params.address)
-    })
-  })
-  app.get('/miners/retrieval-success-rate/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchMinersRSRSummary(pgPools, filter)
-    })
-  })
-  app.get('/miners/retrieval-timings/summary', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchMinersTimingsSummary(pgPools, filter)
-    })
-  })
-  app.get('/retrieval-result-codes/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyRetrievalResultCodes(pgPools, filter)
-    })
-  })
-  app.get('/retrieval-timings/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyRetrievalTimings(pgPools, filter)
-    })
-  })
-  app.get('/miner/:minerId/retrieval-timings/summary', async (/** @type {RequestWithFilterAndMinerId} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyMinerRetrievalTimings(pgPools, filter, request.params.minerId)
-    })
-  })
-  app.get('/miner/:minerId/retrieval-success-rate/summary', async (/** @type {RequestWithFilterAndMinerId} */ request, reply) => {
-    await withFilter(request, reply, filter => {
-      return fetchDailyMinerRSRSummary(pgPools, filter, request.params.minerId)
-    })
-  })
+
   app.get('/miner/:minerId/deals/eligible/summary', (request, reply) => {
     redirectToSparkApi(request, reply, SPARK_API_BASE_URL)
   })

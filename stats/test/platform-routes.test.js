@@ -1,15 +1,10 @@
-import http from 'node:http'
-import { once } from 'node:events'
 import assert from 'node:assert'
-import createDebug from 'debug'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 
-import { assertResponseStatus, getPort } from './test-helpers.js'
+import { assertResponseStatus } from './test-helpers.js'
 import { createApp } from '../lib/app.js'
 import { getLocalDayAsISOString, today, yesterday } from '../lib/request-helpers.js'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
-
-const debug = createDebug('test')
 
 describe('Platform Routes HTTP request handler', () => {
   /** @type {import('@filecoin-station/spark-stats-db').PgPools} */

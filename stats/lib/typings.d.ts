@@ -6,7 +6,7 @@ export interface DateRangeFilter {
 }
 
 export type RequestWithFilter = FastifyRequest<{
-  Querystring: { from: string?, to: string? }
+  Querystring: { from: string, to: string }
 }>
 export type RequestWithFilterAndAddress = RequestWithFilter<{
   Parameters: { address: string }
@@ -14,3 +14,9 @@ export type RequestWithFilterAndAddress = RequestWithFilter<{
 export type RequestWithFilterAndMinerId = RequestWithFilter<{
   Parameters: { minerId: string }
 }>
+
+declare module 'fastify' {
+  export interface FastifyRequest {
+    filter?: DateRangeFilter;
+  }
+}

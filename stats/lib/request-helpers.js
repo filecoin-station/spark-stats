@@ -17,12 +17,10 @@ export const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 *
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
- * @template {import('./typings.js').DateRangeFilter} FilterType
- * @param {RequestWithFilter} request
+ * @param {import('fastify').FastifyRequest<{ Querystring: { from: string?, to: string? } }>} request
  * @param {import('fastify').FastifyReply} reply
- * @param {(filter: FilterType) => Promise<object[]>} fn
  */
-export const withFilter = async (request, reply, fn) => {
+export const preHandlerHook = async (request, reply) => {
   const filter = request.query
   let shouldRedirect = false
 
@@ -69,17 +67,13 @@ export const withFilter = async (request, reply, fn) => {
     )
   }
 
-  // We have well-formed from & to dates now, let's fetch the requested stats from the DB
+  request.filter = filter
+}
 
-  // Workaround for the following TypeScript error:
-  // Argument of type '{ [k: string]: string; }' is not assignable to parameter
-  //   of type 'FilterType'.
-  // 'FilterType' could be instantiated with an arbitrary type which could be
-  //   unrelated to '{ [k: string]: string; }'
-  const typedFilter = /** @type {FilterType} */(/** @type {unknown} */(filter))
-  const stats = await fn(typedFilter)
-  setCacheControlForStatsResponse(reply, typedFilter)
-  reply.send(stats)
+export const onSendHook = async (request, reply, payload) => {
+  if (!request.filter) return payload
+  setCacheControlForStatsResponse(reply, request.filter)
+  return payload
 }
 
 /**
