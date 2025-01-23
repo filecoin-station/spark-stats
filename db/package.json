@@ -9,10 +9,10 @@
     "lint": "standard"
   },
   "devDependencies": {
-    "@filecoin-station/spark-evaluate": "^1.0.4",
     "standard": "^17.1.2"
   },
   "dependencies": {
+    "@filecoin-station/spark-evaluate": "^1.0.4",
     "pg": "^8.13.1",
     "postgrator": "^8.0.0"
   },
