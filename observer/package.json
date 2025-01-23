@@ -10,11 +10,11 @@
     "test": "mocha"
   },
   "devDependencies": {
+    "@filecoin-station/spark-evaluate": "^1.0.4",
     "mocha": "^11.0.1",
     "standard": "^17.1.2"
   },
   "dependencies": {
-    "@filecoin-station/spark-evaluate": "^1.0.0",
     "@filecoin-station/spark-impact-evaluator": "^1.2.4",
     "@filecoin-station/spark-stats-db": "^1.0.0",
     "@influxdata/influxdb-client": "^1.35.0",
