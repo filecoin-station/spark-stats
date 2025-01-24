@@ -17,7 +17,7 @@ export const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 *
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
- * @param {import('fastify').FastifyRequest<{ Querystring: { from: string?, to: string? } }>} request
+ * @param {RequestWithFilter} request
  * @param {import('fastify').FastifyReply} reply
  */
 export const filterPreHandlerHook = async (request, reply) => {
