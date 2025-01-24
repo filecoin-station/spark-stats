@@ -1,46 +1,37 @@
-import http from 'node:http'
-import { once } from 'node:events'
 import assert from 'node:assert'
-import createDebug from 'debug'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
-import { assertResponseStatus, getPort } from './test-helpers.js'
-import { createHandler } from '../lib/handler.js'
+import { assertResponseStatus } from './test-helpers.js'
+import { createApp } from '../lib/app.js'
 import { today } from '../lib/request-helpers.js'
-
-const debug = createDebug('test')
 
 describe('HTTP request handler', () => {
   /** @type {import('@filecoin-station/spark-stats-db').PgPools} */
   let pgPools
-  /** @type {http.Server} */
-  let server
+  /** @type {import('fastify').FastifyInstance} */
+  let app
   /** @type {string} */
   let baseUrl
 
   before(async () => {
     pgPools = await getPgPools()
 
-    const handler = createHandler({
+    app = createApp({
       SPARK_API_BASE_URL: 'https://api.filspark.com/',
       pgPools,
       logger: {
-        info: debug,
-        error: console.error,
-        request: debug
+        level: process.env.DEBUG === '*' || process.env.DEBUG?.includes('test')
+          ? 'debug'
+          : 'error'
       }
     })
 
-    server = http.createServer(handler)
-    server.listen()
-    await once(server, 'listening')
-    baseUrl = `http://127.0.0.1:${getPort(server)}`
+    baseUrl = await app.listen()
   })
 
   after(async () => {
-    server.closeAllConnections()
-    server.close()
+    await app.close()
     await pgPools.end()
   })
 
