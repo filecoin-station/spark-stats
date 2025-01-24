@@ -34,7 +34,7 @@ import { addPlatformRoutes } from './platform-routes.js'
  * @param {object} args
  * @param {string} args.SPARK_API_BASE_URL
  * @param {import('@filecoin-station/spark-stats-db').PgPools} args.pgPools
- * @param {boolean} args.logger
+ * @param {Fastify.FastifyLoggerOptions} args.logger
  * @returns
  */
 export const createApp = ({

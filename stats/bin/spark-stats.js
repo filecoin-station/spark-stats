@@ -14,7 +14,10 @@ const pgPools = await getPgPools()
 const app = await createApp({
   SPARK_API_BASE_URL,
   pgPools,
-  logger: ['1', 'true'].includes(REQUEST_LOGGING)
+  logger: {
+    level: ['1', 'true'].includes(REQUEST_LOGGING) ? 'info' : 'error'
+  }
 })
 console.log('Starting the http server on host %j port %s', HOST, PORT)
-console.log(app.listen({ port: Number(PORT), host: HOST }))
+const baseUrl = app.listen({ port: Number(PORT), host: HOST })
+console.log(baseUrl)

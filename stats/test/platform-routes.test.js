@@ -19,7 +19,11 @@ describe('Platform Routes HTTP request handler', () => {
     app = createApp({
       SPARK_API_BASE_URL: 'https://api.filspark.com/',
       pgPools,
-      logger: false
+      logger: {
+        level: process.env.DEBUG === '*' || process.env.DEBUG?.includes('test')
+          ? 'debug'
+          : 'error'
+      }
     })
 
     baseUrl = await app.listen()
