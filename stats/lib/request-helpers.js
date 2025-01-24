@@ -20,7 +20,7 @@ export const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 *
  * @param {import('fastify').FastifyRequest<{ Querystring: { from: string?, to: string? } }>} request
  * @param {import('fastify').FastifyReply} reply
  */
-export const preHandlerHook = async (request, reply) => {
+export const filterPreHandlerHook = async (request, reply) => {
   const filter = request.query
   let shouldRedirect = false
 
@@ -70,7 +70,7 @@ export const preHandlerHook = async (request, reply) => {
   request.filter = filter
 }
 
-export const onSendHook = async (request, reply, payload) => {
+export const filterOnSendHook = async (request, reply, payload) => {
   if (!request.filter) return payload
   setCacheControlForStatsResponse(reply, request.filter)
   return payload

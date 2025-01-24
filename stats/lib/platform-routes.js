@@ -9,14 +9,14 @@ import {
   fetchAccumulativeDailyParticipantCount
 } from './platform-stats-fetchers.js'
 
-import { preHandlerHook, onSendHook } from './request-helpers.js'
+import { filterPreHandlerHook, filterOnSendHook } from './request-helpers.js'
 
 /** @typedef {import('./typings.js').RequestWithFilter} RequestWithFilter */
 
 export const addPlatformRoutes = (app, pgPools) => {
   app.register(async app => {
-    app.addHook('preHandler', preHandlerHook)
-    app.addHook('onSend', onSendHook)
+    app.addHook('preHandler', filterPreHandlerHook)
+    app.addHook('onSend', filterOnSendHook)
 
     app.get('/stations/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
       reply.send(await fetchDailyStationCount(pgPools.evaluate, request.filter))

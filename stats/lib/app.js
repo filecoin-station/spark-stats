@@ -3,7 +3,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import urlData from '@fastify/url-data'
 
-import { preHandlerHook, onSendHook } from './request-helpers.js'
+import { filterPreHandlerHook, filterOnSendHook } from './request-helpers.js'
 
 import {
   fetchDailyDealStats,
@@ -51,8 +51,8 @@ export const createApp = ({
   app.register(urlData)
 
   app.register(async app => {
-    app.addHook('preHandler', preHandlerHook)
-    app.addHook('onSend', onSendHook)
+    app.addHook('preHandler', filterPreHandlerHook)
+    app.addHook('onSend', filterOnSendHook)
 
     app.get('/deals/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
       reply.send(await fetchDailyDealStats(pgPools, request.filter))
