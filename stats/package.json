@@ -9,17 +9,16 @@
     "test": "mocha"
   },
   "devDependencies": {
-    "@filecoin-station/spark-stats-db": "^1.0.0",
-    "mocha": "^11.0.1",
-    "spark-evaluate": "filecoin-station/spark-evaluate#main",
+    "@filecoin-station/spark-evaluate": "^1.0.4",
+    "mocha": "^11.1.0",
     "standard": "^17.1.2"
   },
   "dependencies": {
     "@fastify/cors": "^10.0.2",
     "@fastify/url-data": "^6.0.3",
     "@filecoin-station/spark-stats-db": "^1.0.0",
-    "@sentry/node": "^8.48.0",
-    "@sentry/profiling-node": "^8.50.0",
+    "@sentry/node": "^8.51.0",
+    "@sentry/profiling-node": "^8.51.0",
     "debug": "^4.4.0",
     "fastify": "^5.2.1",
     "http-assert": "^1.5.0",

@@ -1,4 +1,4 @@
-import { mapParticipantsToIds } from 'spark-evaluate/lib/platform-stats.js'
+import { mapParticipantsToIds } from '@filecoin-station/spark-evaluate/lib/platform-stats.js'
 
 /**
  * @param {import('./typings.js').Queryable} pgPool
