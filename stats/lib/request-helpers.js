@@ -1,8 +1,8 @@
 import assert from 'http-assert'
-import { json } from 'http-responders'
 import { URLSearchParams } from 'node:url'
 
 /** @typedef {import('@filecoin-station/spark-stats-db').Queryable} Queryable */
+/** @typedef {import('./typings.js').RequestWithFilter} RequestWithFilter */
 
 export const getLocalDayAsISOString = (d) => {
   return [
@@ -17,22 +17,15 @@ export const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 *
 
 /** @typedef {import('@filecoin-station/spark-stats-db').PgPools} PgPools */
 /**
- * @template {import('./typings.js').DateRangeFilter} FilterType
- * @param {string} pathname
- * @param {object} pathParams
- * @param {URLSearchParams} searchParams
- * @param {import('node:http').ServerResponse} res
- * @param {PgPools} pgPools
- * @param {(pgPools: PgPools, filter: FilterType, pathParams: object) => Promise<object[]>} fetchStatsFn
+ * @param {RequestWithFilter} request
+ * @param {import('fastify').FastifyReply} reply
  */
-export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchParams, res, pgPools, fetchStatsFn) => {
-  const filter = Object.fromEntries(searchParams)
+export const filterPreHandlerHook = async (request, reply) => {
+  const filter = request.query
   let shouldRedirect = false
 
   filter.from = handleDateKeyword(filter.from)
   filter.to = handleDateKeyword(filter.to)
-
-  // Provide default values for "from" and "to" when not specified
 
   if (!filter.to) {
     filter.to = today()
@@ -43,11 +36,11 @@ export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchP
     shouldRedirect = true
   }
   if (shouldRedirect) {
-    res.setHeader('cache-control', `public, max-age=${600 /* 10min */}`)
-    res.setHeader('location', `${pathname}?${new URLSearchParams(Object.entries(filter))}`)
-    res.writeHead(302) // Found
-    res.end()
-    return
+    reply.header('cache-control', `public, max-age=${600 /* 10min */}`)
+    return reply.redirect(
+      `${request.urlData().path}?${new URLSearchParams(Object.entries(filter))}`,
+      302 // Found
+    )
   }
 
   // Trim time from date-time values that are typically provided by Grafana
@@ -67,41 +60,37 @@ export const getStatsWithFilterAndCaching = async (pathname, pathParams, searchP
   }
 
   if (shouldRedirect) {
-    res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
-    res.setHeader('location', `${pathname}?${new URLSearchParams(Object.entries(filter))}`)
-    res.writeHead(301) // Found
-    res.end()
-    return
+    reply.header('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+    return reply.redirect(
+      `${request.urlData().path}?${new URLSearchParams(Object.entries(filter))}`,
+      301 // Found
+    )
   }
 
-  // We have well-formed from & to dates now, let's fetch the requested stats from the DB
+  request.filter = filter
+}
 
-  // Workaround for the following TypeScript error:
-  // Argument of type '{ [k: string]: string; }' is not assignable to parameter
-  //   of type 'FilterType'.
-  // 'FilterType' could be instantiated with an arbitrary type which could be
-  //   unrelated to '{ [k: string]: string; }'
-  const typedFilter = /** @type {FilterType} */(/** @type {unknown} */(filter))
-  const stats = await fetchStatsFn(pgPools, typedFilter, pathParams)
-  setCacheControlForStatsResponse(res, typedFilter)
-  json(res, stats)
+export const filterOnSendHook = async (request, reply, payload) => {
+  if (!request.filter) return payload
+  setCacheControlForStatsResponse(reply, request.filter)
+  return payload
 }
 
 /**
- * @param {import('node:http').ServerResponse} res
+ * @param {import('fastify').FastifyReply} reply
  * @param {import('./typings.js').DateRangeFilter} filter
  */
-const setCacheControlForStatsResponse = (res, filter) => {
+const setCacheControlForStatsResponse = (reply, filter) => {
   // We cannot simply compare filter.to vs today() because there may be a delay in finalizing
   // stats for the previous day. Let's allow up to one hour for the finalization.
   const boundary = getLocalDayAsISOString(new Date(Date.now() - 3600_000))
 
   if (filter.to >= boundary) {
     // response includes partial data for today, cache it for 10 minutes only
-    res.setHeader('cache-control', 'public, max-age=600')
+    reply.header('cache-control', 'public, max-age=600')
   } else {
     // historical data should never change, cache it for one year
-    res.setHeader('cache-control', `public, max-age=${365 * 24 * 3600}, immutable`)
+    reply.header('cache-control', `public, max-age=${365 * 24 * 3600}, immutable`)
   }
 }
 

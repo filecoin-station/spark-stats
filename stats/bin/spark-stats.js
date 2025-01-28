@@ -1,7 +1,5 @@
 import '../lib/instrument.js'
-import http from 'node:http'
-import { once } from 'node:events'
-import { createHandler } from '../lib/handler.js'
+import { createApp } from '../lib/app.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 
 const {
@@ -12,15 +10,14 @@ const {
 } = process.env
 
 const pgPools = await getPgPools()
-const logger = {
-  error: console.error,
-  info: console.info,
-  request: ['1', 'true'].includes(REQUEST_LOGGING) ? console.info : () => {}
-}
 
-const handler = createHandler({ SPARK_API_BASE_URL, pgPools, logger })
-const server = http.createServer(handler)
+const app = await createApp({
+  SPARK_API_BASE_URL,
+  pgPools,
+  logger: {
+    level: ['1', 'true'].includes(REQUEST_LOGGING) ? 'info' : 'error'
+  }
+})
 console.log('Starting the http server on host %j port %s', HOST, PORT)
-server.listen(Number(PORT), HOST)
-await once(server, 'listening')
-console.log(`http://${HOST}:${PORT}`)
+const baseUrl = app.listen({ port: Number(PORT), host: HOST })
+console.log(baseUrl)

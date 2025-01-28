@@ -1,5 +1,3 @@
-import { json } from 'http-responders'
-import { getStatsWithFilterAndCaching } from './request-helpers.js'
 import {
   fetchDailyStationCount,
   fetchMonthlyStationCount,
@@ -11,47 +9,40 @@ import {
   fetchAccumulativeDailyParticipantCount
 } from './platform-stats-fetchers.js'
 
-const createRespondWithFetchFn = (pathname, searchParams, res) => (pgPool, fetchFn) => {
-  return getStatsWithFilterAndCaching(
-    pathname,
-    {},
-    searchParams,
-    res,
-    pgPool,
-    fetchFn
-  )
-}
+import { filterPreHandlerHook, filterOnSendHook } from './request-helpers.js'
 
-export const handlePlatformRoutes = async (req, res, pgPools) => {
-  // Caveat! `new URL('//foo', 'http://127.0.0.1')` would produce "http://foo/" - not what we want!
-  const { pathname, searchParams } = new URL(`http://127.0.0.1${req.url}`)
-  const segs = pathname.split('/').filter(Boolean)
-  const url = `/${segs.join('/')}`
-  const respond = createRespondWithFetchFn(pathname, searchParams, res)
+/** @typedef {import('./typings.js').RequestWithFilter} RequestWithFilter */
 
-  if (req.method === 'GET' && url === '/stations/daily') {
-    await respond(pgPools.evaluate, fetchDailyStationCount)
-  } else if (req.method === 'GET' && url === '/stations/monthly') {
-    await respond(pgPools.evaluate, fetchMonthlyStationCount)
-  } else if (req.method === 'GET' && url === '/measurements/daily') {
-    await respond(pgPools.evaluate, fetchDailyStationMeasurementCounts)
-  } else if (req.method === 'GET' && url === '/participants/top-measurements') {
-    await respond(pgPools.evaluate, fetchParticipantsWithTopMeasurements)
-  } else if (req.method === 'GET' && url === '/participants/top-earning') {
-    await respond(pgPools.stats, fetchTopEarningParticipants)
-  } else if (req.method === 'GET' && url === '/participants/summary') {
-    await respondWithParticipantsSummary(res, pgPools)
-  } else if (req.method === 'GET' && url === '/participants/accumulative/daily') {
-    await respond(pgPools.evaluate, fetchAccumulativeDailyParticipantCount)
-  } else if (req.method === 'GET' && url === '/transfers/daily') {
-    await respond(pgPools.stats, fetchDailyRewardTransfers)
-  } else {
-    return false
-  }
-  return true
-}
+export const addPlatformRoutes = (app, pgPools) => {
+  app.register(async app => {
+    app.addHook('preHandler', filterPreHandlerHook)
+    app.addHook('onSend', filterOnSendHook)
 
-export const respondWithParticipantsSummary = async (res, pgPools) => {
-  res.setHeader('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
-  json(res, await fetchParticipantsSummary(pgPools.evaluate))
+    app.get('/stations/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyStationCount(pgPools.evaluate, request.filter))
+    })
+    app.get('/stations/monthly', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchMonthlyStationCount(pgPools.evaluate, request.filter))
+    })
+    app.get('/measurements/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyStationMeasurementCounts(pgPools.evaluate, request.filter))
+    })
+    app.get('/participants/top-measurements', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchParticipantsWithTopMeasurements(pgPools.evaluate, request.filter))
+    })
+    app.get('/participants/top-earning', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchTopEarningParticipants(pgPools.stats, request.filter))
+    })
+    app.get('/participants/accumulative/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchAccumulativeDailyParticipantCount(pgPools.evaluate, request.filter))
+    })
+    app.get('/transfers/daily', async (/** @type {RequestWithFilter} */ request, reply) => {
+      reply.send(await fetchDailyRewardTransfers(pgPools.stats, request.filter))
+    })
+  })
+
+  app.get('/participants/summary', async (request, reply) => {
+    reply.header('cache-control', `public, max-age=${24 * 3600 /* one day */}`)
+    reply.send(await fetchParticipantsSummary(pgPools.evaluate))
+  })
 }
