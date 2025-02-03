@@ -17,7 +17,7 @@
     "@fastify/cors": "^10.0.2",
     "@fastify/url-data": "^6.0.3",
     "@filecoin-station/spark-stats-db": "^1.0.0",
-    "@sentry/node": "^8.52.1",
+    "@sentry/node": "^8.53.0",
     "@sentry/profiling-node": "^8.52.1",
     "debug": "^4.4.0",
     "fastify": "^5.2.1",
