@@ -129,3 +129,32 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
     ])
   }
 }
+
+export const observeDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+  const rows = await influxQueryApi.collectRows(`
+    from(bucket: "station-machines")
+      |> range(start: -24h)
+      |> filter(fn: (r) => r._measurement == "machine" and exists r.platform)
+      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> map(fn: (r) => ({
+          _time: r._time,
+          station_id: r.station_id,
+          platform: r.platform,
+      }))
+      |> group()
+      |> unique(column: "station_id")
+      |> group(columns: ["platform"])
+      |> count(column: "station_id")
+      |> rename(columns: {station_id: "platform_count"})
+      |> group()
+  `)
+  await pgPoolStats.query(`
+    INSERT INTO daily_desktop_users
+    (day, platform, user_count)
+    VALUES (NOW(), UNNEST($1::TEXT[]), UNNEST($2::INT[]))
+    ON CONFLICT (day, platform) DO UPDATE SET user_count = EXCLUDED.user_count
+  `, [
+    rows.map(row => row.platform),
+    rows.map(row => row.platform_count)
+  ])
+}

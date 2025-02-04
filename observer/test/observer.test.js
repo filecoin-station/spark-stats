@@ -3,7 +3,7 @@ import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
-import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes } from '../lib/observer.js'
+import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes, observeDesktopUsers } from '../lib/observer.js'
 
 describe('observer', () => {
   let pgPools
@@ -204,6 +204,33 @@ describe('observer', () => {
       assert.deepStrictEqual(rows, [
         { day: today(), code: 'OK', rate: '0.5' },
         { day: today(), code: 'CAR_TOO_LARGE', rate: '0.5' }
+      ])
+    })
+  })
+
+  describe('observeDesktopUsers', () => {
+    beforeEach(async () => {
+      await pgPools.stats.query('DELETE FROM daily_desktop_users')
+    })
+
+    it('observes desktop users count', async () => {
+      await observeDesktopUsers(pgPools.stats, {
+        collectRows: async () => [
+          { platform: 'win32', platform_count: 10 },
+          { platform: 'darwin', platform_count: 5 },
+          { platform: 'linux', platform_count: 3 }
+        ]
+      })
+
+      const { rows } = await pgPools.stats.query(`
+        SELECT day::TEXT, platform, user_count
+        FROM daily_desktop_users
+        ORDER BY user_count DESC
+      `)
+      assert.deepStrictEqual(rows, [
+        { day: today(), platform: 'win32', user_count: 10 },
+        { day: today(), platform: 'darwin', user_count: 5 },
+        { day: today(), platform: 'linux', user_count: 3 }
       ])
     })
   })
