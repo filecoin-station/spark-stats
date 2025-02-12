@@ -130,17 +130,18 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
   }
 }
 
-export const observeDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+/**
+ * Observes the number of desktop users per platform for previous day.
+ */
+export const observeDailyDesktopUsers = async (pgPoolStats, influxQueryApi) => {
   const rows = await influxQueryApi.collectRows(`
+    import "experimental/date/boundaries"
+    yesterday = boundaries.yesterday()
     from(bucket: "station-machines")
-      |> range(start: -24h)
+      |> range(start: yesterday.start, stop: yesterday.stop)
       |> filter(fn: (r) => r._measurement == "machine" and exists r.platform)
-      |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")
-      |> map(fn: (r) => ({
-          _time: r._time,
-          station_id: r.station_id,
-          platform: r.platform,
-      }))
+      |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> map(fn: (r) => ({_time: r._time, station_id: r.station_id, platform: r.platform}))
       |> group()
       |> unique(column: "station_id")
       |> group(columns: ["platform"])
@@ -151,7 +152,7 @@ export const observeDesktopUsers = async (pgPoolStats, influxQueryApi) => {
   await pgPoolStats.query(`
     INSERT INTO daily_desktop_users
     (day, platform, user_count)
-    VALUES (NOW(), UNNEST($1::TEXT[]), UNNEST($2::INT[]))
+    VALUES (NOW() - INTERVAL '1 day', UNNEST($1::TEXT[]), UNNEST($2::INT[]))
     ON CONFLICT (day, platform) DO UPDATE SET user_count = EXCLUDED.user_count
   `, [
     rows.map(row => row.platform),
