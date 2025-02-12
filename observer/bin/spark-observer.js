@@ -13,7 +13,7 @@ import {
   observeTransferEvents,
   observeScheduledRewards,
   observeRetrievalResultCodes,
-  observeDailyDesktopUsers
+  observeYesterdayDesktopUsers
 } from '../lib/observer.js'
 
 const { INFLUXDB_TOKEN } = process.env
@@ -75,7 +75,7 @@ await Promise.all([
   ),
   loop(
     'Desktop users',
-    () => observeDailyDesktopUsers(pgPools.stats, influxQueryApi),
+    () => observeYesterdayDesktopUsers(pgPools.stats, influxQueryApi),
     24 * ONE_HOUR
   )
 ])

@@ -3,7 +3,7 @@ import { beforeEach, describe, it } from 'mocha'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
-import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes, observeDailyDesktopUsers } from '../lib/observer.js'
+import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes, observeYesterdayDesktopUsers } from '../lib/observer.js'
 import { yesterday } from '../../stats/lib/request-helpers.js'
 
 describe('observer', () => {
@@ -215,7 +215,7 @@ describe('observer', () => {
     })
 
     it('observes desktop users count', async () => {
-      await observeDailyDesktopUsers(pgPools.stats, {
+      await observeYesterdayDesktopUsers(pgPools.stats, {
         collectRows: async () => [
           { platform: 'win32', platform_count: 10 },
           { platform: 'darwin', platform_count: 5 },

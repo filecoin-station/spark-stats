@@ -130,10 +130,7 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
   }
 }
 
-/**
- * Observes the number of desktop users per platform for previous day.
- */
-export const observeDailyDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+export const observeYesterdayDesktopUsers = async (pgPoolStats, influxQueryApi) => {
   const rows = await influxQueryApi.collectRows(`
     import "experimental/date/boundaries"
     yesterday = boundaries.yesterday()
