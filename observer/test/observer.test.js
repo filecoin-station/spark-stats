@@ -4,7 +4,6 @@ import { getPgPools } from '@filecoin-station/spark-stats-db'
 import { givenDailyParticipants } from '@filecoin-station/spark-stats-db/test-helpers.js'
 
 import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes, observeYesterdayDesktopUsers } from '../lib/observer.js'
-import { yesterday } from '../../stats/lib/request-helpers.js'
 
 describe('observer', () => {
   let pgPools
@@ -16,6 +15,7 @@ describe('observer', () => {
     ].join('-')
   }
   const today = () => getLocalDayAsISOString(new Date())
+  const yesterday = () => getLocalDayAsISOString(new Date(Date.now() - 24 * 60 * 60 * 1000))
 
   before(async () => {
     pgPools = await getPgPools()
