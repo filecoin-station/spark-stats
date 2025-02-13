@@ -131,11 +131,10 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
 }
 
 export const observeYesterdayDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+  const yesterday = getYesterdayBoundaries()
   const rows = await influxQueryApi.collectRows(`
-    import "experimental/date/boundaries"
-    yesterday = boundaries.yesterday()
     from(bucket: "station-machines")
-      |> range(start: yesterday.start, stop: yesterday.stop)
+      |> range(start: ${yesterday.start}, stop: ${yesterday.stop})
       |> filter(fn: (r) => r._measurement == "machine" and exists r.platform)
       |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
       |> map(fn: (r) => ({_time: r._time, station_id: r.station_id, platform: r.platform}))
@@ -155,4 +154,28 @@ export const observeYesterdayDesktopUsers = async (pgPoolStats, influxQueryApi) 
     rows.map(row => row.platform),
     rows.map(row => row.platform_count)
   ])
+}
+
+/**
+ * Returns the start and end timestamps for yesterday's date in UTC
+ * @returns {Object} Object containing start and stop timestamps
+ */
+function getYesterdayBoundaries () {
+  // Get current date
+  const now = new Date()
+
+  // Create start of yesterday
+  const start = new Date(now)
+  start.setDate(start.getDate() - 1) // Move to yesterday
+  start.setUTCHours(0, 0, 0, 0) // Set to start of day
+
+  // Create end of yesterday
+  const stop = new Date(now)
+  stop.setDate(stop.getDate() - 1) // Move to yesterday
+  stop.setUTCHours(23, 59, 59, 999) // Set to end of day
+
+  return {
+    start: start.toISOString(),
+    stop: stop.toISOString()
+  }
 }
