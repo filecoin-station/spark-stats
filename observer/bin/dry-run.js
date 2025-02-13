@@ -3,7 +3,7 @@ import { ethers } from 'ethers'
 import assert from 'node:assert'
 
 import { RPC_URL, rpcHeaders } from '../lib/config.js'
-import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes } from '../lib/observer.js'
+import { observeTransferEvents, observeScheduledRewards, observeRetrievalResultCodes, observeYesterdayDesktopUsers } from '../lib/observer.js'
 import { createInflux } from '../lib/telemetry.js'
 import { getPgPools } from '@filecoin-station/spark-stats-db'
 
@@ -26,7 +26,8 @@ await pgPools.stats.query('DELETE FROM daily_reward_transfers')
 await Promise.all([
   observeTransferEvents(pgPools.stats, ieContract, provider),
   observeScheduledRewards(pgPools, ieContract),
-  observeRetrievalResultCodes(pgPools.stats, influxQueryApi)
+  observeRetrievalResultCodes(pgPools.stats, influxQueryApi),
+  observeYesterdayDesktopUsers(pgPools.stats, influxQueryApi)
 ])
 
 await pgPools.stats.end()
