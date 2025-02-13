@@ -108,6 +108,7 @@ jobs:
       - run: npm run dry-run
         env:
             GLIF_TOKEN: ${{ secrets.GLIF_TOKEN }}
+            INFLUXDB_TOKEN: ${{ secrets.INFLUXDB_TOKEN }}
 
   docker-build:
     runs-on: ubuntu-latest
