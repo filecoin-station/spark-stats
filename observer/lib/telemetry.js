@@ -6,7 +6,7 @@ const debug = createDebug('spark:observer:telemetry')
 export const createInflux = token => {
   const influx = new InfluxDB({
     url: 'https://eu-central-1-1.aws.cloud2.influxdata.com',
-    // bucket permissions: spark-evaluate:read spark-observer:write
+    // bucket permissions: spark-evaluate:read spark-observer:write station-machines:read
     token
   })
   const writeClient = influx.getWriteApi(

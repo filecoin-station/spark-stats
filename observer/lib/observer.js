@@ -130,3 +130,53 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
     rows.map(r => r._value)
   ])
 }
+
+export const observeYesterdayDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+  // TODO: Replace with Flux boundaries.yesterday() once it becomes part of stable API
+  const yesterday = getYesterdayBoundaries()
+  const rows = await influxQueryApi.collectRows(`
+    from(bucket: "station-machines")
+      |> range(start: ${yesterday.start}, stop: ${yesterday.stop})
+      |> filter(fn: (r) => r._measurement == "machine" and exists r.platform)
+      |> pivot(rowKey: ["_time"], columnKey: ["_field"], valueColumn: "_value")
+      |> map(fn: (r) => ({_time: r._time, station_id: r.station_id, platform: r.platform}))
+      |> group()
+      |> unique(column: "station_id")
+      |> group(columns: ["platform"])
+      |> count(column: "station_id")
+      |> rename(columns: {station_id: "platform_count"})
+      |> group()
+  `)
+  await pgPoolStats.query(`
+    INSERT INTO daily_desktop_users
+    (day, platform, user_count)
+    VALUES (NOW() - INTERVAL '1 day', UNNEST($1::TEXT[]), UNNEST($2::INT[]))
+    ON CONFLICT (day, platform) DO UPDATE SET user_count = EXCLUDED.user_count
+  `, [
+    rows.map(row => row.platform),
+    rows.map(row => row.platform_count)
+  ])
+}
+
+/**
+ * Returns the start and end timestamps for yesterday's date in UTC
+ * @returns {Object} Object containing start and stop timestamps
+ */
+function getYesterdayBoundaries () {
+  // Get current date
+  const now = new Date()
+
+  // Create start of yesterday
+  const start = new Date(now)
+  start.setDate(start.getDate() - 1) // Move to yesterday
+  start.setUTCHours(0, 0, 0, 0) // Set to start of day
+
+  // Create end of yesterday
+  const stop = new Date(now)
+  stop.setUTCHours(0, 0, 0, 0) // Set to end of day
+
+  return {
+    start: start.toISOString(),
+    stop: stop.toISOString()
+  }
+}
