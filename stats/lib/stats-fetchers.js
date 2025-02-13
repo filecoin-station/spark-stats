@@ -11,7 +11,8 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
     day::text, 
     SUM(total) as total, 
     SUM(successful) as successful, 
-    SUM(successful_http) as successful_http
+    SUM(successful_http) as successful_http,
+    SUM(successful_http_head) as successful_http_head
     FROM retrieval_stats
     WHERE day >= $1 AND day <= $2 ${filter.nonZero === 'true' ? 'AND successful > 0' : ''}
     GROUP BY day
@@ -27,7 +28,9 @@ export const fetchRetrievalSuccessRate = async (pgPools, filter) => {
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null,
+    // successful_http_head might be null because the column was added later
+    success_rate_http_head: r.total > 0 && r.successful_http_head !== null ? r.successful_http_head / r.total : null
   }))
   return stats
 }
@@ -218,7 +221,8 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
     miner_id, 
     SUM(total) as total, 
     SUM(successful) as successful, 
-    SUM(successful_http) as successful_http
+    SUM(successful_http) as successful_http,
+    SUM(successful_http_head) as successful_http_head
     FROM retrieval_stats
     WHERE day >= $1 AND day <= $2
     GROUP BY miner_id
@@ -233,7 +237,9 @@ export const fetchMinersRSRSummary = async (pgPools, filter) => {
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null,
+    // successful_http_head might be null because the column was added later
+    success_rate_http_head: r.total > 0 && r.successful_http_head !== null ? r.successful_http_head / r.total : null
   }))
   return stats
 }
@@ -249,7 +255,8 @@ export const fetchDailyMinerRSRSummary = async (pgPools, { from, to }, minerId) 
     SELECT 
     day::TEXT, 
     SUM(total) as total, SUM(successful) as successful, 
-    SUM(successful_http) as successful_http
+    SUM(successful_http) as successful_http,
+    SUM(successful_http_head) as successful_http_head
     FROM retrieval_stats
     WHERE miner_id = $1 AND day >= $2 AND day <= $3
     GROUP BY day
@@ -266,7 +273,9 @@ export const fetchDailyMinerRSRSummary = async (pgPools, { from, to }, minerId) 
     success_rate: r.total > 0 ? r.successful / r.total : null,
     successful_http: r.successful_http ?? null,
     // successful_http might be null because the column was added later
-    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null
+    success_rate_http: r.total > 0 && r.successful_http !== null ? r.successful_http / r.total : null,
+    // successful_http_head might be null because the column was added later
+    success_rate_http_head: r.total > 0 && r.successful_http_head !== null ? r.successful_http_head / r.total : null
   }))
   return stats
 }
