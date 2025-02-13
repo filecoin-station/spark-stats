@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@filecoin-station/spark-evaluate": "^1.0.4",
-    "pg": "^8.13.1",
+    "pg": "^8.13.3",
     "postgrator": "^8.0.0"
   },
   "standard": {
