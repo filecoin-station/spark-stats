@@ -173,8 +173,7 @@ function getYesterdayBoundaries () {
 
   // Create end of yesterday
   const stop = new Date(now)
-  stop.setDate(stop.getDate() - 1) // Move to yesterday
-  stop.setUTCHours(23, 59, 59, 999) // Set to end of day
+  stop.setUTCHours(0, 0, 0, 0) // Set to end of day
 
   return {
     start: start.toISOString(),
