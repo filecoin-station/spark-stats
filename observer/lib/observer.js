@@ -131,6 +131,7 @@ export const observeRetrievalResultCodes = async (pgPoolStats, influxQueryApi) =
 }
 
 export const observeYesterdayDesktopUsers = async (pgPoolStats, influxQueryApi) => {
+  // TODO: Replace with Flux boundaries.yesterday() once it becomes part of stable API
   const yesterday = getYesterdayBoundaries()
   const rows = await influxQueryApi.collectRows(`
     from(bucket: "station-machines")
