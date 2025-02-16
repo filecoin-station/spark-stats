@@ -131,25 +131,34 @@ export const fetchAccumulativeDailyParticipantCount = async (pgPool, filter) => 
  */
 export const fetchTopEarningParticipants = async (pgPool, filter) => {
   // The query combines "transfers until filter.to" with "latest scheduled rewards as of today".
-  // As a result, it produces incorrect result if `to` is different from `now()`.
-  // See https://github.com/filecoin-station/spark-stats/pull/170#discussion_r1664080395
   assert(filter.to === today(), 400, 'filter.to must be today, other values are not supported')
+  
   const { rows } = await pgPool.query(`
     WITH latest_scheduled_rewards AS (
-      SELECT DISTINCT ON (participant_address) participant_address, scheduled_rewards
-      FROM daily_scheduled_rewards
-      ORDER BY participant_address, day DESC
+      SELECT participant_id, scheduled_rewards, participant_address
+      FROM (
+        SELECT participant_id, scheduled_rewards, participant_address,
+               ROW_NUMBER() OVER (PARTITION BY participant_id ORDER BY day DESC) AS rn
+        FROM daily_scheduled_rewards
+        WHERE day <= $2
+      ) ranked
+      WHERE rn = 1
     )
     SELECT
+      COALESCE(drt.participant_id, lsr.participant_id) AS participant_id,
       COALESCE(drt.to_address, lsr.participant_address) as participant_address,
       COALESCE(SUM(drt.amount), 0) + COALESCE(lsr.scheduled_rewards, 0) as total_rewards
     FROM daily_reward_transfers drt
     FULL OUTER JOIN latest_scheduled_rewards lsr
-      ON drt.to_address = lsr.participant_address
+      ON drt.participant_id = lsr.participant_id
     WHERE (drt.day >= $1 AND drt.day <= $2) OR drt.day IS NULL
-    GROUP BY COALESCE(drt.to_address, lsr.participant_address), lsr.scheduled_rewards
+    GROUP BY 
+      COALESCE(drt.participant_id, lsr.participant_id),
+      COALESCE(drt.to_address, lsr.participant_address),
+      lsr.scheduled_rewards
     ORDER BY total_rewards DESC
   `, [filter.from, filter.to])
+  
   return rows
 }
 
